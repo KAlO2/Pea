@@ -1,0 +1,48 @@
+#ifndef PEA_MATH_POLAR_H_
+#define PEA_MATH_POLAR_H_
+
+#include <cmath>
+
+#include "math/vec2.h"
+#include "math/vec3.h"
+
+namespace pea {
+
+/**
+ * polar coordinate system (rho, theta)
+ *
+ * @param[in] v coordinate system
+ * @return polar coordinate system (rho, theta). Rho is the magnitude of the vector, theta is the 
+ *         return value is in the range [-pi, pi].
+ */
+vec2<T> polar(const vec2<T>& v)
+{
+	T _rho = v.length();
+	T _theta = std::atan2(y, x);
+	return vec2<T>(_rho, _theta);
+}
+
+/**
+ * give the vector v a spherical coordinate system(rho, theta, phi) view.
+ * http://en.wikipedia.org/wiki/Spherical_coordinate_system
+ * r ≥ 0, 0° ≤ θ ≤ 180° (π rad), 0° ≤ φ < 360° (2π rad)
+ * However, the azimuth φ is often restricted to the interval (−180°, +180°],
+ * or (−π, +π] in radians, instead of [0, 360°). This is the standard
+ * convention for geographic longitude.
+ *
+ * @return vec3(rho, theta, phi) where rho >= 0, theta in [-pi/2, pi/2], phi in [-pi, pi].
+ */
+vec3<T> polar(const vec3<T>& v)
+{
+	T _rho = v.length(), _theta = 0, _phi = 0;
+	if(!isZero<T>(_rho))
+	{
+		_theta = std::acos(z / rho);
+//			_theta == 0 means vector parallel to y axis in OpenGL
+		_phi = (isZero<T>(theta))?  0 : std::atan2(y, x);
+	}
+	return vec3<T>(_rho, _theta, _phi);
+}
+
+}  // namespace pea
+#endif  // PEA_MATH_POLAR_H_
