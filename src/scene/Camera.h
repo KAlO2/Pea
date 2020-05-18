@@ -193,7 +193,7 @@ public:
 	void  setAspectRatio(float ratio);
 	float getAspectRatio() const;
 	
-	void  setDepth(float near, float far);
+	void  setDepthRange(float near, float far);
 	float getNear() const;
 	float getFar() const;
 
@@ -240,7 +240,11 @@ public:
 	 */
 	void orbit(const vec3f& pivot, float pitch, float yaw, bool constrainPitch = true);
 	
-
+	/**
+	 * orient around self
+	 */
+	void orbit(float pitch, float yaw, bool constrainPitch = true);
+	
 	// Translation
 	void walk(float offset);    // walk/surge, moving forward and backward
 	void strafe(float offset);  // strafe/sway, moving left and right

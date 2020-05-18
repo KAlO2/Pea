@@ -57,7 +57,6 @@ link_libraries(pea
 	${OPENGL_LIBRARY}
 	${GLUT_LIBRARY}
 	${GLEW_LIBRARY}
-	${ASSIMP_LIBRARY}
 	${PNG_LIBRARY}
 	${JPEG_LIBRARY}
 )

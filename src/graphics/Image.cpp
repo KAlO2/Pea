@@ -163,9 +163,14 @@ void Image::setPixel(uint32_t x, uint32_t y, uint32_t color)
 		break;
 		
 	case Color::RGB_888:
+#if 0
 		p[0] = color & 0xFF;
 		p[1] = (color & 0xFF00) >> 8;
-		p[2] = (color & 0xFF00) >> 8;
+		p[2] = (color & 0xFF0000) >> 8;
+#else
+		*reinterpret_cast<uint16_t*>(p) = *reinterpret_cast<uint16_t*>(&color);
+		p[2] = reinterpret_cast<uint8_t*>(&color)[2];
+#endif
 		break;
 	
 	case Color::RGBA_8888:

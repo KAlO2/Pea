@@ -102,6 +102,8 @@ std::vector<uint32_t> triangleFanToTriangles(const uint32_t* fan, size_t length)
 std::vector<uint32_t> quadrilateralsToTriangles(const uint32_t* quad, size_t length)
 {
 	assert((length & 3) == 0);
+	if(length == 0)
+		return {};
 	
 	std::vector<uint32_t> triangles;
 	triangles.reserve((length - 2) * 3);

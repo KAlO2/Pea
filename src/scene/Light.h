@@ -101,8 +101,8 @@ public:
 
 	float innerAngle;  //< the angle of spot light's inner cone.
 	float outerAngle;  //< the angle of spot light's outer cone.
-	float falloff;     //< the light strength's decrease between inner and outer cone.
-
+//	vec2f cutoff;     //< the light strength's decrease between inner and outer cone.
+	
 public:
 	static const char* SOURCE;
 

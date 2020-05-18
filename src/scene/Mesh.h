@@ -13,7 +13,7 @@
 //#include <list>
 #include <memory>
 #include <string>
-//#include <unordered_map>
+#include <unordered_map>
 #include <vector>
 
 namespace pea {
@@ -32,11 +32,13 @@ enum class RenderMode
 };
 
 // our meshes are triangulated
+// http://danenglesson.com/images/portfolio/MoA/halfedge.pdf
 class Mesh: public Object
 {
 public:
 	friend class Model_OBJ;
-
+	static constexpr int32_t VBO_COUNT = 11;
+	
 private:
 	std::string name;
 
@@ -49,13 +51,17 @@ private:
 	std::vector<vec3f> bitangents;
 	
 	std::vector<uint32_t> indices;
+//	std::unordered_map<std::string, uint64_t> groups;  // <group name, min max pair>, can be empty
 	
 	// instances0 takes higher priorty than instances1 on instance rendering.
 	std::vector<vec4f> instances0;  // vec4 = vec3 position + float scale;
 	std::vector<mat4f> instances1;  // mat4 transform;
 	
-	std::vector<std::shared_ptr<Texture>> textures;
-
+	// key is texture type|index, value is texture unit
+	std::unordered_map<uint32_t, uint32_t> textureMap;
+	
+	// key is texture unit
+	std::unordered_map<uint32_t, const Texture*> textures;
 //	std::string materialName;  // empty for no material
 	Material* material;
 	std::vector<Light*> lights;
@@ -79,7 +85,7 @@ private:
 	static constexpr uint32_t VA_COUNT    = 8;
 */
 	uint32_t vao;
-	uint32_t vbo[11];
+	uint32_t vbo[VBO_COUNT];
 	Primitive primitive;
 	
 	int32_t viewPositionLocation;
@@ -140,16 +146,32 @@ public:
 	void setViewPosition(const vec3f& position);
 	const vec3f& getViewPosition() const;
 	
-	void setTexture(const std::vector<std::shared_ptr<Texture>>& textures);
-	void setTexture(std::vector<std::shared_ptr<Texture>>&& textures);
-//	const std::unordered_map<std::string, std::shared_ptr<Texture>>& getTexture() const;
-
+	bool hasTextureUnit(Texture::Type type, uint32_t index) const;
+	
+	/**
+	 * @param[in] texture The new texture to be replaced.
+	 * @param[in] index textureUnit 0 for GL_TEXTURE0.
+	 */
+	void setTexture(const Texture& texture, uint32_t index);
+	
+	/**
+	 * Allocate VAO, VBO and specify the primitive to draw.
+	 * @param[in] primitive Draw call primitive.
+	 */
 	void prepare(Primitive primitive = Primitive::TRIANGLES);
+	
+	/**
+	 * must call after preprare(), or you will get zero.
+	 */
+	uint32_t getVertexBufferObject(uint32_t attributeIndex) const;
 	
 	/**
 	 * Store object positions, normals and/or indices in graphic card buffers
 	 */
 	void upload() const;
+	
+	// TODO: 
+	void upload(uint32_t vboFlag[VBO_COUNT]) const;
 	
 	// not virtual function
 	void setProgram(uint32_t program);
@@ -174,15 +196,6 @@ inline const Material* Mesh::getMaterial() const { return material; }
 inline void Mesh::setViewPosition(const vec3f& position) { viewPosition = position; }
 inline const vec3f& Mesh::getViewPosition() const { return viewPosition; }
 
-inline void Mesh::setTexture(const std::vector<std::shared_ptr<Texture>>& textures)
-{
-	this->textures = textures;
-}
-
-inline void Mesh::setTexture(std::vector<std::shared_ptr<Texture>>&& textures)
-{
-	this->textures = std::move(textures);
-}
 
 class Mesh::Builder
 {

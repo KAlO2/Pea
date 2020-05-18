@@ -1,11 +1,12 @@
 #ifndef PEA_GEOMETRY_GRID_H_
 #define PEA_GEOMETRY_GRID_H_
 
+#include <vector>
+
 #include "math/vec2.h"
 #include "math/vec3.h"
+#include "geometry/Primitive.h"
 
-#include <string>
-#include <vector>
 
 namespace pea {
 
@@ -91,7 +92,7 @@ public:
 	
 	static std::vector<vec2f> getTexcoordData(const float& width, const float& height, const uint32_t& stepsX, const uint32_t& stepsY);
 	
-	static constexpr size_t getIndexSize(uint32_t stepsX, uint32_t stepsY, bool strip = true);
+	static constexpr size_t getIndexSize(uint32_t stepsX, uint32_t stepsY, Primitive primitive);
 	
 	/**
 	 * create triangle strip indices (from left to right, bottom to top).
@@ -99,9 +100,8 @@ public:
 	 * @param[in] stepsY subdivision on Y axis, at least 1.
 	 * @param[in] strip  true for triangle strip; otherwise triangles.
 	 */
-	static std::vector<uint32_t> getIndexData(const uint32_t& stepsX, const uint32_t& stepsY, bool strip = true);
+	static std::vector<uint32_t> getIndexData(uint32_t stepsX, uint32_t stepsY, Primitive primitive);
 
-//	std::string toString() const;
 };
 
 constexpr size_t Grid::getVertexSize(uint32_t stepsX, uint32_t stepsY)
@@ -109,12 +109,30 @@ constexpr size_t Grid::getVertexSize(uint32_t stepsX, uint32_t stepsY)
 	return (stepsX + 1) * (stepsY + 1);
 }
 
-constexpr size_t Grid::getIndexSize(uint32_t stepsX, uint32_t stepsY, bool strip/* = true*/)
+constexpr size_t Grid::getIndexSize(uint32_t stepsX, uint32_t stepsY, Primitive primitive)
 {
-	if(strip)
-		return (stepsX + 2) * 2 * stepsY - 2;
-	else
+	switch(primitive)
+	{
+	case Primitive::POINTS:
+		return getVertexSize(stepsX, stepsY);
+	
+	case Primitive::LINES:
+		// stepsX * (stepsY + 1) + (stepX + 1) * stepsY  lines
+		return (stepsX * stepsY * 2 + stepsX + stepsY) << 1U;
+	
+	case Primitive::TRIANGLES:
 		return stepsX * stepsY * 6;
+	
+	case Primitive::TRIANGLE_STRIP:
+	case Primitive::QUADRILATERAL_STRIP:
+		return (stepsX + 2) * 2 * stepsY - 2;
+	
+	case Primitive::QUADRILATERALS:
+		return stepsX * stepsY * 4;
+	
+	default:
+		return 0;
+	}
 }
 
 }  // namespace pea

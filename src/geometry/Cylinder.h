@@ -13,7 +13,7 @@ enum class CapFillType: uint8_t
 {
 	NONE,
 	TRIANGLE_FAN,
-	NGON,
+	POLYGON,
 };
 
 /**

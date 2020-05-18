@@ -15,10 +15,6 @@ const Color Color::CYAN    = Color(  0, 255, 255);
 const Color Color::MAGENTA = Color(255,   0, 255);
 const Color Color::YELLOW  = Color(255, 255,   0);
 */
-uint32_t Color::rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a/* = 255 */)
-{
-	return r | (g << 8) | (b << 16) | (a << 24);
-}
 
 uint32_t Color::from_G8(uint8_t x)
 {
@@ -73,6 +69,16 @@ uint32_t Color::from_RGBA4444(uint16_t x)
 uint32_t Color::from_RGB565(uint16_t x)
 {
 	return ((x & 0x001F) << 3) | ((x & 0x07E0) << 5) | ((x & 0xF800) << 8) | 0xFF000000;
+}
+
+uint32_t Color::from_RGB888(uint8_t r, uint8_t g, uint8_t b)
+{
+	return r | (g << 8) | (b << 16);
+}
+
+uint32_t Color::from_RGBA8888(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+	return r | (g << 8) | (b << 16) | (a << 24);
 }
 
 uint8_t Color::to_G8(uint32_t rgba)
@@ -134,7 +140,7 @@ uint32_t ColorF::getColor() const
 	uint8_t g = static_cast<uint8_t>(color.g * s);
 	uint8_t b = static_cast<uint8_t>(color.b * s);
 	uint8_t a = static_cast<uint8_t>(color.a * s);
-	return Color::rgba(r, g, b, a);
+	return Color::from_RGBA8888(r, g, b, a);
 }
 
 void ColorF::clamp()

@@ -1,10 +1,9 @@
-#include "util/unit_test.h"
-
-#include "geometry/algorithm.h"
-
 #include <iostream>
 #include <vector>
 #include <random>
+
+#include "geometry/algorithm.h"
+#include "util/unit_test.h"
 
 #include <GL/glut.h>
 // use fixed function pipeline for drawing.

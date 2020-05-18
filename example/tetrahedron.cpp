@@ -370,10 +370,8 @@ int main()
 	int32_t maxLevel = 10;  //(std::max(image.getWidth(), image.getHeight()));
 	Texture::Parameter parameter(maxLevel);
 	glActiveTexture(GL_TEXTURE0);
-//	texture0.load(FileSystem::getRelativePath("res/image/lena_std.jpg"), parameter);
 	texture0.load(image, parameter);
 
-	glUseProgram(program);
 #if USE_INSTANCING
 	assert(glGetAttribLocation(program, "instance") == Shader::ATTRIBUTE_VEC_INSTANCE);
 #else
@@ -394,6 +392,7 @@ int main()
 	float nearValue = 1.0F, farValue = 1024.0F;
 	mat4f projectionMatrix = Camera::perspective(fieldOfView, aspectRatio, nearValue, farValue);
 	
+	glUseProgram(program);
 	Program::setUniform(Shader::UNIFORM_MAT_PROJECTION, projectionMatrix);
 	
 //	glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
@@ -453,7 +452,7 @@ int32_t frameIndex = 0;
 		glfwPollEvents();
 	}
 
-	// de-allocate all resources once they've outlived their purpose:
+	// de-allocate all resources once they've outlived their purpose
 	glDeleteVertexArrays(sizeofArray(vao), vao);
 	glDeleteBuffers(sizeofArray(vbo), vbo);
 	glDeleteProgram(program);

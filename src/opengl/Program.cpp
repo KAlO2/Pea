@@ -13,10 +13,10 @@
 static const char* TAG = "Program";
 
 using namespace pea;
-
+/*
 const char* Program::ATTRIBUTE_TEXT_COLOR = "text_color";
 const char* Program::UNIFORM_TEXTURE_FONT = "texture_font";
-
+*/
 
 Program::Program():
 		program(NULL_PROGRAM)
@@ -117,33 +117,17 @@ void Program::use() const
 	glUseProgram(program);
 }
 
-void Program::listVariables() const
+void Program::printVariables() const
 {
-	int32_t count;
-	GLint size; // size of the variable
-	GLenum type; // type of the variable (float, vec3 or mat4, etc)
+	std::unordered_map<std::string, Program::Variable> uniforms = getActiveUniforms(program);
+	printf("Active uniforms: %zu\n", uniforms.size());
+	for(const auto& [name, variable]: uniforms)
+		printf("layout(location =%2d) uniform %s %s;  // size=%d\n", variable.location, GL::glslTypeToString(variable.type), name.c_str(), variable.size);
 	
-	const GLsizei bufSize = 64; // maximum name length
-	GLchar name[bufSize]; // variable name in GLSL
-	GLsizei length; // name length
-	
-	glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
-	printf("Active uniforms: %d\n", count);
-	for(int32_t i = 0; i < count; ++i)
-	{
-		glGetActiveUniform(program, (GLuint)i, bufSize, &length, &size, &type, name);
-		uint32_t location = glGetUniformLocation(program, name);
-		printf("layout(location = %2d) uniform %s %s;  // size=%d\n", location, GL::glslTypeToString(type), name, size);
-	}
-	
-	glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
-	printf("Active attributes: %d\n", count);
-	for(int32_t i = 0; i < count; ++i)
-	{
-		glGetActiveAttrib(program, (GLuint)i, bufSize, &length, &size, &type, name);
-		uint32_t location = glGetAttribLocation(program, name);
-		printf("layout(location = %2d) in %s %s;  // size=%d\n", location, GL::glslTypeToString(type), name, size);
-	}
+	std::unordered_map<std::string, Program::Variable> attributes = getActiveAttributes(program);
+	printf("Active attributes: %zu\n", attributes.size());
+	for(const auto& [name, variable]: attributes)
+		printf("layout(location =%2d) in %s %s;  // size=%d\n", variable.location, GL::glslTypeToString(variable.type), name.c_str(), variable.size);
 }
 
 int32_t Program::getAttributeLocation(const char* name) const
@@ -155,6 +139,50 @@ int32_t Program::getUniformLocation(const char* name) const
 {
 	return glGetUniformLocation(program, name);
 }
+
+static std::unordered_map<std::string, Program::Variable> _getUniforms(const uint32_t& program, GLenum param)
+{
+	std::unordered_map<std::string, Program::Variable> variables;
+	
+	Program::Variable variable;
+	const GLsizei bufSize = 256; // maximum name length
+	GLchar name[bufSize]; // variable name in GLSL
+	GLsizei length; // name length
+	
+	int32_t count;
+	glGetProgramiv(program, param, &count);
+	for(int32_t i = 0; i < count; ++i)
+	{
+		const GLuint index = static_cast<GLuint>(i);
+		if(param == GL_ACTIVE_UNIFORMS)
+		{
+			glGetActiveUniform(program, index, bufSize, &length, &variable.size, &variable.type, name);
+			variable.location = glGetUniformLocation(program, name);
+		}
+		else if(param == GL_ACTIVE_ATTRIBUTES)
+		{
+			glGetActiveAttrib(program, index, bufSize, &length, &variable.size, &variable.type, name);
+			variable.location = glGetAttribLocation(program, name);
+		}
+		else
+			assert(false);
+		
+		variables.emplace(std::string(name), variable);
+	}
+	
+	return variables;
+}
+
+std::unordered_map<std::string, Program::Variable> Program::getActiveUniforms(const uint32_t& program)
+{
+	return _getUniforms(program, GL_ACTIVE_UNIFORMS);
+}
+
+std::unordered_map<std::string, Program::Variable> Program::getActiveAttributes(const uint32_t& program)
+{
+	return _getUniforms(program, GL_ACTIVE_ATTRIBUTES);
+}
+
 //static bool printed = false;
 void Program::setLight(uint32_t program, const char* name, const Light& light)
 {
@@ -184,13 +212,13 @@ void Program::setLight(uint32_t program, const char* name, const Light& light)
 	case Light::Type::SPOT:
 		{
 			int32_t directionLocation = getMemberLocation("direction");
-			int32_t falloffLocation = getMemberLocation("falloff");
+			int32_t cutoffLocation = getMemberLocation("cutoff");
 			
 			const SpotLight& _light = static_cast<const SpotLight&>(light);
 			Program::setUniform(directionLocation, _light.direction);
-		
-			vec3f falloff(_light.innerAngle, _light.outerAngle, _light.falloff);
-			Program::setUniform(falloffLocation, falloff);
+			
+			vec2f cutoff(_light.innerAngle, _light.outerAngle);
+			Program::setUniform(cutoffLocation, cutoff);
 		}
 		[[fallthrough]];
 	

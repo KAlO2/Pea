@@ -23,9 +23,8 @@ void Object::setProgram(uint32_t program)
 	if(program != Program::NULL_PROGRAM)
 	{
 //		assert(glGetUniformLocation(program, "model") == Shader::UNIFORM_MAT_MODEL);
-		assert(glGetUniformLocation(program, "viewProjection") == Shader::UNIFORM_MAT_VIEW_PROJECTION);
-	
-		assert(glGetAttribLocation(program, "position") == Shader::ATTRIBUTE_VEC_POSITION);
+//		assert(glGetUniformLocation(program, "viewProjection") == Shader::UNIFORM_MAT_VIEW_PROJECTION);
+//		assert(glGetAttribLocation(program, "position") == Shader::ATTRIBUTE_VEC_POSITION);
 	}
 }
 

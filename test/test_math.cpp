@@ -9,6 +9,7 @@
 #include "math/mat4.h"
 #include "math/quaternion.h"
 #include "math/scalar.h"
+#include "math/Transform.h"
 #include "math/vec2.h"
 #include "math/vec3.h"
 #include "math/vec4.h"
@@ -467,4 +468,25 @@ TEST_CASE("integer power", tag)
 	REQUIRE(pea::pow(2, 1) == 2);
 	REQUIRE(pea::pow(2, 3) == 8);
 	REQUIRE(pea::pow<uint32_t>(2u, 3u) == 8u);
+}
+
+TEST_CASE("Transform", tag)
+{
+	Transform transform;
+	transform.translation = vec3f(1, 2, 3);
+	transform.rotation = vec3f(M_PI * 2 + M_PI / 2, 0, 0);
+	transform.scaling = vec3f(2, 3, 4);
+/*
+	[1,  ,  , 1]   [1,  ,  ,  ]   [2,  ,  ,  ]   
+	[ , 1,  , 2] * [ ,  ,-1, 1] * [ , 3,  ,  ] = 
+	[ ,  , 1, 3]   [ , 1,  , 1]   [ ,  , 4,  ]   
+	[ ,  ,  , 1]   [ ,  , 0, 1]   [ ,  ,  , 1]   
+*/
+	mat4f matrixExpect(
+			2, 0, 0, 1,
+			0, 0,-4, 2,
+			0, 3, 0, 3,
+			0, 0, 0, 1);
+	
+	REQUIRE(matrixExpect == transform.getTransform());
 }

@@ -20,9 +20,6 @@ namespace pea {
  * @see http://www.opengl.org/registry/specs/NV/bindless_texture.txt
  * @see https://www.khronos.org/opengl/wiki/Common_Mistakes
  */
-/**
- * 
- */
 class Texture
 {
 public:
@@ -36,17 +33,18 @@ public:
 		CUBIC,
 	};
 
-	enum Type: uint32_t
+	enum Type: uint8_t
 	{
-		NONE = 0,
-
-		AMBIENT,
-		DIFFUSE,
-		SPECULAR,
-		SHININESS,
-		EMISSIVE,
-		HEIGHT,
-		NORMAL,
+		NONE      = 0,
+		AMBIENT   = 1,
+		DIFFUSE   = 2,
+		SPECULAR  = 3,
+		SHININESS = 4,
+		EMISSIVE  = 5,
+		HEIGHT    = 6,
+		NORMAL    = 7,
+		
+//		UNDIFINED = 255,
 	};
 
 	enum Mapping: uint32_t
@@ -107,13 +105,15 @@ protected:
 	Type type;
 
 // vim /home/martin/Source/irrlicht-1.8.4/source/Irrlicht/COpenGLTexture.h
-	bool is_compressed;
+//	bool is_compressed;
 
 public:
 //	static Texture generateCheckboard()
 	static int32_t nextPowerOfTwo(int32_t n);
 
 	static void setParameter(uint32_t target, const Parameter& parameter);
+	
+	static uint32_t getKey(Type type, uint32_t index);
 	
 public:
 	explicit Texture(uint32_t target);
@@ -136,6 +136,8 @@ public:
 	void setType(Type type);
 	Type getType() const;
 	
+	uint32_t getKey(uint32_t index) const;
+	
 	bool load(const std::string& path, const Parameter& parameter);
 	bool load(const Image& image, const Parameter& parameter);
 	
@@ -152,7 +154,10 @@ public:
 	bool loadCube(const std::string paths[6], const Parameter& parameter);
 	bool loadCube(const Image* images[6], const Parameter& parameter);
 
-	
+	/**
+	 * KTX file format https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+	 */
+	bool loadKTX(const std::string& path);
 	
 	/**
 	 * Update texture data. It use gl*TexSubImage() to replace all or part of an existing texture
@@ -167,11 +172,6 @@ public:
 
 	void bind(uint32_t textureUnit) const;
 
-	/**
-	 * @param[in] location sampler location
-	 * @param[in] textureUnit
-	 */
-	void bind(uint32_t location, uint32_t textureUnit) const;
 //	bool isCompressed() const { return is_compressed; }
 //	bool hasMipmaps()   const { return mipmap != nullptr; }
 

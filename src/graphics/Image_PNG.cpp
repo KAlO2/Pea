@@ -1,7 +1,7 @@
 #include "graphics/Image_PNG.h"
 
 #include <fstream>
-#include <string.h>
+#include <cstring>
 #include <vector>
 
 #include <png.h>
@@ -54,7 +54,7 @@ bool Image_PNG::probe(const uint8_t* data, size_t length)
 	if(length <= sizeof(MAGIC))
 		return false;
 
-	return memcmp(data, MAGIC, sizeof(MAGIC)) == 0;
+	return std::memcmp(data, MAGIC, sizeof(MAGIC)) == 0;
 }
 
 std::shared_ptr<Image_PNG> Image_PNG::decodeByteArray(const uint8_t* data, size_t length)

@@ -736,7 +736,7 @@ bool Model_OBJ::save_OBJ(const std::string& path, const std::string& materialFil
 		for(size_t i = 0; i < groupArraySize; ++i)
 		{
 			stream << 'g' << _;
-			for(const std::pair<std::string, std::set<uint32_t>>& pair: groups)
+			for(const std::pair<const std::string, std::set<uint32_t>>& pair: groups)
 			{
 				const std::set<uint32_t>& groupIds = pair.second;
 				if(groupIds.find(i) != groupIds.end())

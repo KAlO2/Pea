@@ -7,7 +7,7 @@
 #include <map>
 
 #include "math/vec2.h"
-#include "math/vec3.h"
+#include "math/Transform.h"
 #include "io/Group.h"
 
 namespace pea {
@@ -40,6 +40,8 @@ public:
 		}
 	};
 private:
+	Transform transform;
+	
 	std::vector<vec3f> vertices;
 	std::vector<vec2f> texcoords;
 	std::vector<vec3f> normals;
@@ -70,6 +72,15 @@ public:
 	Model();
 	virtual ~Model();
 	
+	// object operations
+	void setTransform(const Transform& transform);
+	const Transform& getTransform() const;
+	
+	/**
+	 * @param[in] mask, {T|R|S} combinations
+	 */
+	void applyTransform(uint8_t mask);
+	
 	// vertex operations
 	const std::vector<vec3f>& getVertexData() const;
 	
@@ -94,7 +105,12 @@ public:
 	
 	
 	// edge operations
-	std::vector<uint32_t> getEdgeIndex() const;
+	/**
+	 * @return all edges, each edge is composed by vertex pair.
+	 */
+	std::vector<uint32_t> getEdgeIndices() const;
+	const std::vector<uint32_t>& getTriangleIndices() const;
+	const std::vector<uint32_t>& getQuadrilateralIndices() const;
 	
 	// face operations
 	size_t getFaceSize() const;
@@ -109,6 +125,9 @@ public:
 	void flipFaceDirection(size_t index);
 	
 	std::vector<uint32_t> getTriangulatedIndex() const;
+	
+	void addTriangleFaces(const uint32_t* index, uint32_t length);
+	void addQuadrilateralFaces(const uint32_t* index, uint32_t length);
 	
 	/**
 	 * @param[in] index vertex index
@@ -156,7 +175,12 @@ public:
 	
 	void removeGroup(const std::string& name);
 	
-	bool findGroup(const std::string& name, Group& group) const;
+	/**
+	 * @param[in] name Group name.
+	 * @param[out] group access the group if found.
+	 * @return true if group is found, otherwise false.
+	 */
+	bool findGroup(const std::string& name, const Group* &group) const;
 	
 	Model subdivide() const;
 	
@@ -167,9 +191,15 @@ public:
 	
 //	void removeDoubles();
 	
-	
 
 };
+
+inline void Model::setTransform(const Transform& transform) { this->transform = transform; }
+inline const Transform& Model::getTransform() const { return transform; }
+
+inline const std::vector<uint32_t>& Model::getTriangleIndices() const { return triangleIndices; }
+inline const std::vector<uint32_t>& Model::getQuadrilateralIndices() const { return quadrilateralIndices; }
+
 
 }  // namespace pea
 #endif  // PEA_IO_MODEL_H_

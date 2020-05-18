@@ -12,7 +12,7 @@ namespace pea {
  * https://software.intel.com/en-us/articles/optimized-matrix-library-for-use-with-the-intel-pentiumr-4-processors-sse2-instructions/
  */
 template <typename T>
-class vec4
+class alignas(4 * sizeof(T)) vec4
 {
 public:
 // https://msdn.microsoft.com/en-us/library/2c8f766e.aspx

@@ -57,7 +57,7 @@ public:
 	constexpr Color(uint32_t color): rgba(color) {}
 	constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255): r(r), g(g), b(b), a(a) {}
 */
-	static uint32_t rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
+//	static uint32_t rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
 
 	static uint32_t from_G8      (uint8_t  x);
 	static uint32_t from_GA88    (uint16_t x);
@@ -65,6 +65,8 @@ public:
 	static uint32_t from_RGBA5551(uint16_t x);
 	static uint32_t from_RGBA4444(uint16_t x);
 	static uint32_t from_RGB565  (uint16_t x);
+	static uint32_t from_RGB888  (uint8_t r, uint8_t g, uint8_t b);
+	static uint32_t from_RGBA8888(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 	static uint8_t  to_G8(uint32_t rgba);
 	static uint16_t to_GA88(uint32_t rgba);

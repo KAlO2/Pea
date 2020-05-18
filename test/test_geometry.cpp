@@ -407,14 +407,64 @@ TEST_CASE("Grid", tag)
 	std::vector<vec2f> texcoords = Grid::getTexcoordData(1.0F, 1.0F, stepsX, stepsY);
 	MATCH_ARRAY(texcoords, texcoordsExpected);
 	
-	const uint32_t indicesExpect[] =
+/*
+	8---9---10--11
+	|   |   |   |
+	4---5---6---7
+	|   |   |   |
+	0---1---2---3
+*/
+	const uint32_t pointIndicesExpect[] =
+	{
+		0, 1, 2, 3,
+		4, 5, 6, 7,
+		8, 9, 10, 11,
+	};
+	
+	const uint32_t lineIndicesExpect[] =
+	{
+		0, 1, 1, 2, 2, 3,
+		0, 4, 1, 5, 2, 6, 3, 7,
+		4, 5, 5, 6, 6, 7,
+		4, 8, 5, 9, 6, 10, 7, 11,
+		8, 9, 9, 10, 10, 11
+	};
+	
+	const uint32_t triangleIndicesExpect[] =
+	{
+		4, 0, 5, 5, 0, 1,  5, 1, 6, 6, 1, 2,  6, 2, 7, 7, 2, 3,
+		8, 4, 9, 9, 4, 5,  9, 5, 10, 10, 5, 6, 10, 6, 11, 11, 6, 7,
+	};
+	
+	const uint32_t triangleStripIndicesExpect[] =
 	{
 		4, 0, 5, 1, 6, 2, 7, 3,  3, 8,
 		8, 4, 9, 5,10, 6,11, 7,
 	};
 	
-	std::vector<uint32_t> indices = Grid::getIndexData(stepsX, stepsY);
-	MATCH_ARRAY(indices, indicesExpect);
+	const uint32_t quadrilateralIndicesExpect[] =
+	{
+		4, 0, 1, 5,  5, 1, 2, 6,  6, 2, 3, 7,
+		8, 4, 5, 9,  9, 5, 6, 10, 10, 6, 7, 11,
+	};
+	
+	std::vector<uint32_t> indices = Grid::getIndexData(stepsX, stepsY, Primitive::POINTS);
+	MATCH_ARRAY(indices, pointIndicesExpect);
+	
+	indices = Grid::getIndexData(stepsX, stepsY, Primitive::LINES);
+	MATCH_ARRAY(indices, lineIndicesExpect);
+	
+	indices = Grid::getIndexData(stepsX, stepsY, Primitive::TRIANGLES);
+	MATCH_ARRAY(indices, triangleIndicesExpect);
+	
+	indices = Grid::getIndexData(stepsX, stepsY, Primitive::TRIANGLE_STRIP);
+	MATCH_ARRAY(indices, triangleStripIndicesExpect);
+	
+	indices = Grid::getIndexData(stepsX, stepsY, Primitive::QUADRILATERAL_STRIP);
+	MATCH_ARRAY(indices, triangleStripIndicesExpect);  // same result
+	
+	indices = Grid::getIndexData(stepsX, stepsY, Primitive::QUADRILATERALS);
+	MATCH_ARRAY(indices, quadrilateralIndicesExpect);
 }
 
 TEST_CASE("Cylinder without cap", tag)
@@ -450,29 +500,11 @@ TEST_CASE("Cylinder without cap", tag)
 	};
 	std::vector<vec3f> normals = Cylinder::getNormalData();
 	MATCH_ARRAY(normals, normalsExpected);
-/*
-	constexpr float t = height / (2 * M_PI * radius);
-	const vec2f texcoordsExpected[] =
-	{
-		vec2f(0.00, t), vec2f(0.00, 0),
-		vec2f(0.25, t), vec2f(0.25, 0),
-		vec2f(0.50, t), vec2f(0.50, 0),
-		vec2f(0.75, t), vec2f(0.75, 0),
-		vec2f(1.00, t), vec2f(1.00, 0),
-	};
-	std::vector<vec2f> texcoords = cylinder.getTexcoordData();
-	MATCH_ARRAY(texcoords, texcoordsExpected);
-*/
-	//	std::cout << i << " position:" << positions[i] << ", expect " << verticesExpected[i] << '\n';
 	
-	/*
-	REQUIRE(vertices.size() == vertexCount);
-	for(size_t i = 0; i < vertexCount; ++i)
-		REQUIRE(vertices[i] == verticesExpected[i]);
-	*/
+	
 }
 
-TEST_CASE("Cylinder with cap", tag)
+TEST_CASE("Cylinder with triangle fan", tag)
 {
 	constexpr float radius = 1, height = 2;
 	Cylinder cylinder(radius, height);
@@ -488,6 +520,16 @@ TEST_CASE("Cylinder with cap", tag)
 		vec3f( 0,  0, +1), vec3f( 0,  0, -1),
 	};
 	
+	const uint32_t trianglesIndicesExpected[] =
+	{
+		8, 0, 2, 8, 2, 4, 8, 4, 6, 8, 6, 0,  // top
+		0, 1, 2, 2, 1, 3,
+		2, 3, 4, 4, 3, 5,
+		4, 5, 6, 6, 5, 7,
+		6, 7, 0, 0, 7, 1,
+		9, 1, 7, 9, 7, 5, 9, 5, 3, 9, 3, 1,  // bottom
+	};
+	
 	const uint32_t triangleStripIndicesExpected[] =
 	{
 		0, 1, 2, 3, 4, 5, 6, 7, 0, 1
@@ -496,7 +538,7 @@ TEST_CASE("Cylinder with cap", tag)
 	const uint32_t triangleFanIndicesExpected[] =
 	{
 		8, 0, 2, 4, 6, 0,  // top fan
-		9, 1, 3, 5, 7, 1,  // bootom fan
+		9, 1, 7, 5, 3, 1,  // bottom fan
 	};
 	
 	const uint32_t lineStripIndicesExpected[] =
@@ -511,7 +553,10 @@ TEST_CASE("Cylinder with cap", tag)
 	std::vector<vec3f> positions = cylinder.getVertexData();
 	MATCH_ARRAY(positions, positionsExpected);
 	
-	std::vector<uint32_t> indices = Cylinder::getVertexIndex(Primitive::TRIANGLE_STRIP);
+	std::vector<uint32_t> indices = Cylinder::getVertexIndex(Primitive::TRIANGLES);
+	MATCH_ARRAY(indices, trianglesIndicesExpected);
+	
+	indices = Cylinder::getVertexIndex(Primitive::TRIANGLE_STRIP);
 	MATCH_ARRAY(indices, triangleStripIndicesExpected);
 	
 	indices = Cylinder::getVertexIndex(Primitive::TRIANGLE_FAN);
@@ -519,6 +564,42 @@ TEST_CASE("Cylinder with cap", tag)
 	
 	indices = Cylinder::getVertexIndex(Primitive::LINE_STRIP);
 	MATCH_ARRAY(indices, lineStripIndicesExpected);
+}
+
+TEST_CASE("Cylinder with polygon", tag)
+{
+	constexpr float radius = 1, height = 2;
+	Cylinder cylinder(radius, height);
+	Cylinder::setSlice(4);
+	Cylinder::setCapFillType(CapFillType::POLYGON);
+	
+	const vec3f positionsExpected[] =
+	{
+		vec3f(+1,  0, +1), vec3f(+1,  0, -1),
+		vec3f( 0,  1, +1), vec3f( 0,  1, -1),
+		vec3f(-1,  0, +1), vec3f(-1,  0, -1),
+		vec3f( 0, -1, +1), vec3f( 0, -1, -1),
+	};
+	
+	std::vector<vec3f> positions = cylinder.getVertexData();
+	MATCH_ARRAY(positions, positionsExpected);
+	
+	const uint32_t triangleStripIndicesExpected[] =
+	{
+		0, 1, 2, 3, 4, 5, 6, 7, 0, 1
+	};
+	
+	const uint32_t polygonsIndicesExpected[] =
+	{
+		0, 2, 4, 6,
+		1, 7, 5, 3,  // 1, 3, 5, 7 CCW
+	};
+	
+	std::vector<uint32_t> indices = Cylinder::getVertexIndex(Primitive::TRIANGLE_STRIP);
+	MATCH_ARRAY(indices, triangleStripIndicesExpected);
+	
+	indices = Cylinder::getVertexIndex(Primitive::POLYGON);
+	MATCH_ARRAY(indices, polygonsIndicesExpected);
 }
 
 TEST_CASE("Torus without seam", tag)

@@ -15,6 +15,13 @@ namespace pea {
 class Model_MTL final
 {
 public:
+/*	union
+	{
+		vec3f rgb;
+		vec3f xyz;
+		
+	};
+*/
 /*
 	std::unordered_map<std::string, size_t> table;
 	std::vector<Material> materials;

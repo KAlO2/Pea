@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 namespace pea {
+// https://www.boost.org/community/error_handling.html
 
 class BadTypeException: public std::runtime_error
 {

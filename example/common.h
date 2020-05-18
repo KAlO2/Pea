@@ -10,6 +10,7 @@
 #include "opengl/Program.h"
 #include "opengl/Shader.h"
 #include "opengl/ShaderFactory.h"
+#include "opengl/Texture.h"
 #include "util/Log.h"
 
 namespace pea {
@@ -32,6 +33,9 @@ inline vec2i getMousePosition(GLFWwindow* window)
 // GLFW: whenever the window size changes (by OS or user resize), this callback function executes.
 void onWindowResize(GLFWwindow* window, int width, int height);
 
+/**
+ * @return time in milliseconds
+ */
 int64_t getCurrentTime();
 
 /**

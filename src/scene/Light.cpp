@@ -101,8 +101,7 @@ SpotLight::SpotLight(const vec3f& position, const vec3f& direction):
 		PointLight(Light::Type::SPOT, position),
 		direction(direction),
 		innerAngle(0.0F),
-		outerAngle(M_PI / 4),
-		falloff(1.0F)
+		outerAngle(M_PI / 4)
 {
 }
 

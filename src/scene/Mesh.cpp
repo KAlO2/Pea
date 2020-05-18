@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cstring>
 
 #include "io/Group.h"
 #include "math/hash.h"
@@ -266,6 +267,12 @@ void Mesh::prepare(Primitive primitive/* = Primitive::TRIANGLES*/)
 			vbo_position, vbo_normal, vbo_texcoord, vbo_color, vbo_index, primitive);
 }
 
+uint32_t Mesh::getVertexBufferObject(uint32_t attributeIndex) const
+{
+	assert(attributeIndex < sizeofArray(vbo));
+	return vbo[attributeIndex];
+}
+
 void Mesh::upload() const
 {
 	assert(vao != 0);
@@ -274,13 +281,64 @@ void Mesh::upload() const
 	assert(vbo[Shader::ATTRIBUTE_VEC_POSITION] != 0);  // prepare() needs to be called before.
 	slog.d(TAG, "size: vertex=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
 			vertices.size(), colors.size(), texcoords.size(), normals.size(), indices.size());
-	GL::bindVertexBuffer(vbo[Shader::ATTRIBUTE_VEC_POSITION], Shader::ATTRIBUTE_VEC_POSITION, vertices);
 	
 	auto bindVertexBuffer = [&vbo = vbo](uint32_t attributeIndex, const std::vector<vec3f> data)
 	{
 		if(!data.empty())
 			GL::bindVertexBuffer(vbo[attributeIndex], attributeIndex, data);
 	};
+	
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_POSITION, vertices);
+	
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_COLOR, colors);
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_NORMAL, normals);
+	
+	if(!texcoords.empty())
+		GL::bindVertexBuffer(vbo[Shader::ATTRIBUTE_VEC_TEXCOORD], Shader::ATTRIBUTE_VEC_TEXCOORD, texcoords);
+	
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_TANGENT, tangents);
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_BITANGENT, bitangents);
+	
+	if(!indices.empty())
+		GL::bindIndexBuffer(vbo[Shader::ATTRIBUTE_INT_INDEX], indices);
+	
+	if(!instances0.empty())
+	{
+		uint32_t startIndex = Shader::ATTRIBUTE_VEC_INSTANCE;
+		GL::bindVertexBuffer(vbo[startIndex], startIndex, instances0);
+		glVertexAttribDivisor(Shader::ATTRIBUTE_VEC_INSTANCE, 1);
+	}
+	else if(!instances1.empty())
+	{
+		uint32_t startIndex = Shader::ATTRIBUTE_MAT_INSTANCE;
+		GL::bindVertexBuffer(vbo[startIndex], startIndex, instances1);
+		for(uint32_t i = 0; i < 4; ++i)  // a mat4 attribute takes up 4 attribute locations
+			glVertexAttribDivisor(startIndex + i, 1);
+	}
+	
+	// non-constant condition for static assertion
+//	static_assert(sizeofArray(vbo) == Shader::ATTRIBUTE_INT_INDEX + 1);
+	static_assert(sizeof(vbo) / sizeof(vbo[0]) == Shader::ATTRIBUTE_INT_INDEX + 1);
+		
+	glBindVertexArray(0);
+}
+
+void Mesh::upload(uint32_t vboFlag[Mesh::VBO_COUNT]) const
+{
+	assert(vao != 0);
+	glBindVertexArray(vao);
+
+	assert(vbo[Shader::ATTRIBUTE_VEC_POSITION] != 0);  // prepare() needs to be called before.
+	slog.d(TAG, "size: vertex=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
+			vertices.size(), colors.size(), texcoords.size(), normals.size(), indices.size());
+	
+	auto bindVertexBuffer = [&vbo = vbo, &vboFlag](uint32_t attributeIndex, const std::vector<vec3f> data)
+	{
+		if(!data.empty())
+			GL::bindVertexBuffer(vbo[attributeIndex], attributeIndex, data, vboFlag[attributeIndex]);
+	};
+	
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_POSITION, vertices);
 	
 	bindVertexBuffer(Shader::ATTRIBUTE_VEC_COLOR, colors);
 	bindVertexBuffer(Shader::ATTRIBUTE_VEC_NORMAL, normals);
@@ -336,8 +394,25 @@ void Mesh::removeLight(const Light* light)
 		lights.erase(it);
 }
 
+static const char* TEXTURE_PREFIX = "texture";
+
+static bool startWith(const char* &start, const char* prefix, size_t prefixLength)
+{
+	if(std::strncmp(start, prefix, prefixLength) == 0)
+	{
+		start += prefixLength;
+		return true;
+	}
+	
+	return false;
+}
+
 void Mesh::setProgram(uint32_t program)
 {
+	uint32_t oldProgram = getProgram();
+	if(oldProgram == program)
+		return;
+	
 	Object::setProgram(program);
 	
 	if(!texcoords.empty())
@@ -346,6 +421,7 @@ void Mesh::setProgram(uint32_t program)
 	if(!colors.empty())
 		assert(glGetAttribLocation(program, "color") == Shader::ATTRIBUTE_VEC_COLOR);
 	
+	// if normal is specified but not used in program, assertion fails.
 	if(!normals.empty())
 		assert(glGetAttribLocation(program, "normal") == Shader::ATTRIBUTE_VEC_NORMAL);
 	
@@ -358,13 +434,101 @@ void Mesh::setProgram(uint32_t program)
 	
 	viewPositionLocation = glGetUniformLocation(program, "viewPosition");
 	assert(viewPositionLocation == Shader::INVALID_LOCATION || viewPositionLocation == Shader::UNIFORM_VEC_VIEW_POSITION);
+	
+	if(oldProgram != 0)
+	{
+		textureMap.clear();
+		textures.clear();
+	}
+
+	std::unordered_map<std::string, Program::Variable> variables = Program::getActiveUniforms(program);
+	uint32_t textureUnit = 0;
+	
+	Program::use(program);
+	for(const auto& [name, variable]: variables)
+	{
+		// type+index -> location
+		if(variable.type < GL_SAMPLER_1D || variable.type > GL_SAMPLER_CUBE)
+			continue;
+		
+		// convention, texture variable name must begin with "texture".
+		const size_t length = 7;  // std::strlen(TEXTURE_PREFIX)
+		const char* str = name.c_str();
+		assert(std::strncmp(str, TEXTURE_PREFIX, length) == 0);
+		size_t end = name.size();
+		for(; std::isdigit(name[end - 1]); --end);
+		
+		Texture::Type type;
+		const char* start = str + length;
+		if(length == end)
+			type = Texture::Type::NONE;
+		else if(startWith(start, "Diffuse", 7))
+			type = Texture::Type::DIFFUSE;
+		else if(startWith(start, "Specular", 8))
+			type = Texture::Type::SPECULAR;
+		else if(startWith(start, "Shininess", 9))
+			type = Texture::Type::SHININESS;
+		else if(startWith(start, "Normal", 6))
+			type = Texture::Type::NORMAL;
+		else if(startWith(start, "Height", 6))
+			type = Texture::Type::HEIGHT;
+		else
+		{
+			slog.w(TAG, "texture type %s is not defined", start);
+			continue;
+		}
+
+		uint32_t index;
+		if(length < end)
+			index = static_cast<uint32_t>(std::atoi(start));
+		else  // no trailing digits
+			index = 0U;
+		
+		uint32_t key = Texture::getKey(type, index);
+		glUniform1i(variable.location, textureUnit);
+		textureMap[key] = textureUnit;
+		slog.d(TAG, "%s key=0x%08X, occupies texture unit #%d", str, key, textureUnit);
+		++textureUnit;
+	}
+}
+
+bool Mesh::hasTextureUnit(Texture::Type type, uint32_t index) const
+{
+	uint32_t key = Texture::getKey(type, index);
+	return textureMap.find(key) != textureMap.end();
+}
+
+void Mesh::setTexture(const Texture& texture, uint32_t index)
+{
+	assert(getProgram() != Program::NULL_PROGRAM);  // setProgram() must be called ahead.
+/*
+	const uint32_t program = getProgram();
+	assert(program != Program::NULL_PROGRAM);
+
+	std::string textureName;
+	switch(texture->getType())
+	{
+	case Texture::Type::DIFFUSE:   textureName = "Diffuse";   break;
+	case Texture::Type::SPECULAR:  textureName = "Specular";  break;
+	case Texture::Type::NORMAL:    textureName = "Normal";    break;
+	case Texture::Type::HEIGHT:    textureName = "Height";    break;
+	case Texture::Type::NONE:      textureName = "";          break;
+	}
+	textureName = TEXTURE_PREFIX + textureName + std::to_string(index);
+	uint32_t location = glGetUniformLocation(program, textureName.c_str());
+*/
+	uint32_t key = texture.getKey(index);
+	assert(textureMap.find(key) != textureMap.end());
+	uint32_t textureUnit = textureMap.at(key);
+	textures.emplace(textureUnit, &texture);
+//	texture.bind(textureUnit);
 }
 
 void Mesh::render(const mat4f& viewProjection) const
 {
 //	Object::render(viewProjection);
 	uint32_t program = getProgram();
-	assert(program != 0);
+	assert(program != 0);  // make sure that setProgram() is called
 	Program::use(program);
 	
 	const int32_t instanceCount = instances0.size() > 0? instances0.size(): instances1.size();
@@ -372,45 +536,14 @@ void Mesh::render(const mat4f& viewProjection) const
 		Program::setUniform(Shader::UNIFORM_MAT_MODEL, getTransform());
 	Program::setUniform(Shader::UNIFORM_MAT_VIEW_PROJECTION, viewProjection);
 	
-	uint32_t textureIndices[5] = {0};
-	auto& [diffuseIndex, specularIndex, normalIndex, heightIndex, defaultIndex] = textureIndices;
-
-	uint32_t textureIndex = 0;
-	for(const std::shared_ptr<Texture>& texture: textures)
+	// textures binding
+	for(const std::pair<const uint32_t, const Texture*>& pair: textures)
 	{
-		assert(texture.get() != nullptr);
-		
-		std::string textureName = "texture";
-		switch(texture->getType())
-		{
-		case Texture::Type::DIFFUSE:
-			textureName = "Diffuse" + std::to_string(diffuseIndex);
-			++diffuseIndex;
-			break;
-		case Texture::Type::SPECULAR:
-			textureName = "Specular" + std::to_string(specularIndex);
-			++specularIndex;
-			break;
-		case Texture::Type::NORMAL:
-			textureName = "Normal" + std::to_string(normalIndex);
-			++normalIndex;
-			break;
-		case Texture::Type::HEIGHT:
-			textureName = "Height" + std::to_string(heightIndex);
-			++heightIndex;
-			break;
-		case Texture::Type::NONE:
-			textureName = std::to_string(defaultIndex);
-			++defaultIndex;
-			break;
-		default:
-			assert(false);
-			break;
-		}
-		
-		uint32_t location = glGetUniformLocation(program, textureName.c_str());
-		texture->bind(location, textureIndex);
-		++textureIndex;
+		const uint32_t& textureUnit = pair.first;
+		const Texture* const &texture = pair.second;
+		assert(texture != nullptr);
+		texture->bind(textureUnit);
+//		slog.d(TAG, "bind texture %d to unit #%d", texture->getName(), textureUnit);
 	}
 	
 //	slog.d(TAG, "setMaterial mesh %s, count=%d, this.count=%d", name.c_str(), (int32_t)material.use_count(),
@@ -434,7 +567,7 @@ void Mesh::render(const mat4f& viewProjection) const
 	GLenum mode = GL::getPrimitive(primitive);
 	// TODO: primitive restart
 //	slog.i(TAG, "vertices.size()=%zu, normals.size()=%zu, indices.size()=%zu, mode=0x%X", vertices.size(), normals.size(), indices.size(), mode);
-	assert(vao != 0);
+	assert(vao != 0);  // make sure that prepare() is called
 	glBindVertexArray(vao);
 	const int32_t indexCount = indices.size();
 	if(instanceCount > 0)  // instance rendering
@@ -462,7 +595,9 @@ void Mesh::render(const mat4f& viewProjection) const
 			"lines", "line_loop", "line_strip",
 			"triangles", "triangle_strip", "triangle_fan",
 			"quadrilaterals", "quadrilateral_strip",
-			"polygon"
+			"polygon",
+			"lines_adjacency", "line_strip_adjacency", "triangles_adjacency", "triangle_strip_adjacency",
+			"patches"
 		};
 		const char* mode = PRIMITIVE_STRINGS[underlying_cast<Primitive>(primitive)];
 		if(instanceCount > 0)
@@ -533,7 +668,7 @@ Mesh::Builder& Mesh::Builder::setIndex(const std::vector<uint32_t>& indices)
 	this->indices = indices;
 	return *this;
 }
-	
+
 Mesh::Builder::Builder(std::vector<vec3f>&& vertices):
 		vertices(std::move(vertices))
 {

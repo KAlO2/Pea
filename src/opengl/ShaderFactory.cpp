@@ -101,6 +101,7 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::VERT_VP] =
 #include "./shader/viewProjection.vert"
 	;
+	
 	map[ShaderFactory::VERT_TEXCOORD] =
 #include "./shader/texcoord.vert"
 	;
@@ -109,6 +110,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	;
 	map[ShaderFactory::VERT_M_VP_TEXCOORD] =
 #include "./shader/model_viewProjection_texcoord.vert"
+	;
+	map[ShaderFactory::VERT_VP_TEXCOORD] =
+#include "./shader/viewProjection_texcoord.vert"
 	;
 	map[ShaderFactory::VERT_M_VP_TEXCOORD_INSTANCE0] =
 #include "./shader/model_viewProjection_texcoord_instance0.vert"
@@ -131,11 +135,18 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 //	map[ShaderFactory::VERT_M_V_P_TEXCOORD_COLOR] =
 //#include "./shader/model_view_projection_texcoord_color.vert"
 //	;
+
+	map[ShaderFactory::VERT_M_VP_HEIGHT_TEXCOORD] =
+#include "./shader/model_viewProjection_height_texcoord.vert"
+	;
 	map[ShaderFactory::VERT_M_V_P_NORMAL] =
 #include "./shader/model_view_projection_normal.vert"
 	;
 	map[ShaderFactory::VERT_M_VP_NORMAL] =
 #include "./shader/model_viewProjection_normal.vert"
+	;
+	map[ShaderFactory::VERT_M_VP_NORMAL2] =
+#include "./shader/model_viewProjection_normal2.vert"
 	;
 	map[ShaderFactory::VERT_M_VP_NORMAL_FLAT] =
 #include "./shader/model_viewProjection_normal.flat.vert"
@@ -162,6 +173,12 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::VERT_MOTION_BLUR] =
 #include "./shader/motion_blur.vert"
 	;
+	map[ShaderFactory::VERT_DEFERRED_COLOR] =
+#include "./shader/deferred_color.vert"
+	;
+	map[ShaderFactory::VERT_GBUFFER] =
+#include "./shader/gbuffer.vert"
+	;
 	
 	
 	// geometry shaders
@@ -179,6 +196,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	;
 	map[ShaderFactory::FRAG_TEXTURE_RGB] =
 #include "./shader/texture_rgb.frag"
+	;
+	map[ShaderFactory::FRAG_TEXTURE_RECT_RGB] =
+#include "./shader/textureRect_rgb.frag"
 	;
 	map[ShaderFactory::FRAG_TEXTURE_RGBA] =
 #include "./shader/texture_rgba.frag"
@@ -198,6 +218,7 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::FRAG_TEXTURE_CUBE] =
 #include "./shader/textureCube.frag"
 	;
+
 	map[ShaderFactory::FRAG_NOISE3] =
 #include "./shader/noise3.frag"
 	;
@@ -243,13 +264,28 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::FRAG_NORMAL_MAPPING] =
 #include "./shader/normal_mapping.frag"
 	;
+	map[ShaderFactory::FRAG_BLUR_HORIZONTAL] =
+#include "./shader/blur.horizontal.frag"
+	;
+	map[ShaderFactory::FRAG_BLUR_VERTICAL] =
+#include "./shader/blur.vertical.frag"
+	;
 	map[ShaderFactory::FRAG_MOTION_BLUR] =
 #include "./shader/motion_blur.frag"
 	;
 	map[ShaderFactory::FRAG_MATCAP] =
 #include "./shader/matcap.frag"
 	;
-	return map; 
+	map[ShaderFactory::FRAG_DEFERRED_COLOR] =
+#include "./shader/deferred_color.frag"
+	;
+	map[ShaderFactory::FRAG_GBUFFER] =
+#include "./shader/gbuffer.frag"
+	;
+	map[ShaderFactory::FRAG_DEFERRED_SHADING] =
+#include "./shader/deferred_shading.frag"
+	;
+	return map;
 };
 
 static const std::unordered_map<ShaderFactory::Index, const char*> builtinShaderMap = createIndexNameMap();

@@ -249,7 +249,7 @@ std::unordered_map<std::string, std::shared_ptr<Texture>> Model_MTL::loadTexture
 		}
 	};
 	
-	for(const std::pair<std::string, std::shared_ptr<Material>>& pair: materials)
+	for(const std::pair<const std::string, std::shared_ptr<Material>>& pair: materials)
 	{
 		Material* material = pair.second.get();
 		assert(material);

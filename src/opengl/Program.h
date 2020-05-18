@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 // vector and matrix
 #include "opengl/GL.h"
@@ -22,7 +23,7 @@ class Program final
 public:
 	static constexpr uint32_t NULL_PROGRAM = 0;
 	static constexpr int32_t INVALID_LOCATION = -1;  // attribute and uniform
-	 
+/*
 	// S_* for shader, A_* for attribute, U_* for uniform.
 	static const char* ATTRIBUTE_POSITION;
 	static const char* ATTRIBUTE_COLOR;
@@ -42,7 +43,8 @@ public:
 	static const char* UNIFORM_TIME;
 
 	static const char* UNIFORM_TEXTURE_FONT;
-
+*/
+	class Variable;
 
 private:
 //	uint32_t shaders[Shader::TYPE_COUNT];
@@ -89,7 +91,9 @@ public:
 	
 	void use() const;
 
-	void listVariables() const;
+	
+	
+	void printVariables() const;
 
 	int32_t getAttributeLocation(const char* name) const;
 	int32_t getUniformLocation(const char* name) const;
@@ -105,9 +109,14 @@ public:
 public:
 	static void use(const uint32_t& program);
 	
+	static std::unordered_map<std::string, Variable> getActiveUniforms(const uint32_t& program);
+	static std::unordered_map<std::string, Variable> getActiveAttributes(const uint32_t& program);
+	
 	static void setLight(uint32_t program, const char* name, const Light& light);
 	
 	static void setMaterial(uint32_t program, const char* name, const Material& material);
+	
+	static void setTexture(uint32_t location, uint32_t textureUnit);
 	
 	/**
 	 * @{group uniform
@@ -143,6 +152,8 @@ inline void Program::setUniform(int32_t location, const int32_t& value)  { glUni
 inline void Program::setUniform(int32_t location, const uint32_t& value) { glUniform1ui(location, value); }
 //void Program::setUniform(int32_t location, const vec4b& value)    { glUniform4b(location, value.x, value.y, value.z, value.w); }
 
+inline void Program::setTexture(uint32_t location, uint32_t textureUnit) { glUniform1i(location, textureUnit); }
+
 inline void Program::setUniform(int32_t location, const float& value) { glUniform1f(location, value); }
 inline void Program::setUniform(int32_t location, const vec2f& value) { glUniform2f(location, value.x, value.y); }
 inline void Program::setUniform(int32_t location, const vec3f& value) { glUniform3f(location, value.x, value.y, value.z); }
@@ -162,6 +173,14 @@ inline int32_t Program::getUniformLocation(const std::string& name) const
 {
 	return getUniformLocation(name.c_str());
 }
+
+class Program::Variable
+{
+public:
+	uint32_t location;
+	int32_t size;   // size of the variable
+	uint32_t type;  // type of the variable (float, vec3 or mat4, etc)
+};
 
 }  // namespace pea
 #endif  // PEA_OPENGL_PROGRAM_H_

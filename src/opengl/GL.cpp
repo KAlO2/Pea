@@ -224,6 +224,23 @@ GLenum GL::getPrimitive(Primitive primitive)
 	return static_cast<GLenum>(primitive);
 }
 
+uint32_t GL::sizeofChannel(GLint format)
+{
+	switch(format)
+	{
+	case GL_RED:  return 1;
+	case GL_RG:   return 2;
+	case GL_BGR:
+	case GL_RGB:  return 3;
+	case GL_BGRA:
+	case GL_RGBA: return 4;
+	
+	default:
+		assert(false);
+		return 0;
+	}
+}
+
 /*
 void GL::displayVersionInfo()
 {
@@ -283,6 +300,7 @@ const char* GL::glslTypeToString(GLenum type)
 	
 	case GL_SAMPLER_1D:  return "sampler1D";
 	case GL_SAMPLER_2D:  return "sampler2D";
+	case GL_SAMPLER_2D_RECT:  return "sample2DRect";
 	case GL_SAMPLER_3D:  return "sampler3D";
 	case GL_SAMPLER_CUBE:return "samplerCube";
 

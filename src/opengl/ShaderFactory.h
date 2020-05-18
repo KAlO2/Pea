@@ -29,19 +29,23 @@ public:
 		VERT_V_P,                      // position, view, projection
 		VERT_VP,                       // position, viewProjection
 		
-		VERT_TEXCOORD,                 // vec2 position, texcoord
+		VERT_TEXCOORD,                 // position, texcoord
 		VERT_M_V_P_COLOR,              // position, model, view, projection, color
 		VERT_M_V_P_TEXCOORD,           // position, model, view, projection, texcoord
 		VERT_M_VP_TEXCOORD,            // position, model, viewProjection, texcoord
+		VERT_VP_TEXCOORD,              // position, viewProjection, texcoord
 		VERT_M_VP_TEXCOORD_INSTANCE0,  // position, model, viewProjection, texcoord, vec4 instance
 		VERT_M_VP_TEXCOORD_INSTANCE1,  // position, model, viewProjection, texcoord, mat4 instance
 		VERT_M_VP_COLOR,               // position, model, viewProjection, color_rgb
 		VERT_M_VP_RGBA,                // position, model, viewProjection, color_rgba
 		VERT_BILLBOARD,                // position, size, color_rgb, flat shadding
 //		VERT_M_V_P_TEXCOORD_COLOR,     // position, model, view, projection, texcoord, color
+
+		VERT_M_VP_HEIGHT_TEXCOORD,     // position, model, view, projection, textureHeight0
 		
 		VERT_M_V_P_NORMAL,             // position, model, view, projection, normal
 		VERT_M_VP_NORMAL,              // position, model, viewProjection, normal
+		VERT_M_VP_NORMAL2,             // specially used for vertex/face normal, needs a better name?
 		VERT_M_VP_NORMAL_FLAT,         // ditto, with flat shadding
 		VERT_M_VP_TEXCOORD_NORMAL,     // position, model, viewProjection, texcoord, normal
 		VERT_M_VP_SPHERE_NORMAL,       // position, model, viewProjection => sphere normal
@@ -51,7 +55,9 @@ public:
 		VERT_TEXTURE_FONT,
 		VERT_SKYBOX,
 		VERT_MOTION_BLUR,
-		
+		VERT_DEFERRED_COLOR,           // bake position, normal, color
+		VERT_GBUFFER,
+
 		
 		TESS_CONTROL_SHADER_START = 100,
 		
@@ -67,7 +73,8 @@ public:
 		FRAG_LAMBERT_FLAT,  // ditto, with flat shadding
 		FRAG_TEXTURE_LUMINANCE,
 //		FRAG_TEXTURE_LUMINANCE_ALPHA,
-		FRAG_TEXTURE_RGB,
+		FRAG_TEXTURE_RGB,       // sampler2D
+		FRAG_TEXTURE_RECT_RGB,  // sampler2DRect
 		FRAG_TEXTURE_RGBA,
 		FRAG_TEXTURE_COLOR_ALPHA,  // texture_rgb, float alpha
 		FRAG_TEXTURE_ALPHA_COLOR,  // texture_a, vec3 color;
@@ -75,6 +82,7 @@ public:
 		FRAG_TEXTURE_DEPTH,
 		FRAG_TEXTURE_FONT,
 		FRAG_TEXTURE_CUBE,
+		
 		FRAG_COLOR,
 		FRAG_RGBA,
 		FRAG_NOISE3,
@@ -87,8 +95,13 @@ public:
 		FRAG_DEPTH_ORTHOGRAPHIC,
 		FRAG_DEPTH_PERSPECTIVE,
 		FRAG_NORMAL_MAPPING,
+		FRAG_BLUR_HORIZONTAL,
+		FRAG_BLUR_VERTICAL,
 		FRAG_MOTION_BLUR,
 		FRAG_MATCAP,                   // normal => semisphere texcoord
+		FRAG_DEFERRED_COLOR,
+		FRAG_GBUFFER,
+		FRAG_DEFERRED_SHADING,
 		
 		COMPUTE_SHADER_START = 500,
 		

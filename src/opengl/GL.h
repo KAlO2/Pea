@@ -163,6 +163,8 @@ public:
 	static GLenum dataType(Color::Format format);
 	static GLenum getPrimitive(Primitive primitive);
 	
+	static uint32_t sizeofChannel(GLint format);
+	
 	// $ glxinfo
 //	static void displayVersionInfo();
 	

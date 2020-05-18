@@ -97,15 +97,13 @@ void Guideline::uploadVertexData() const
 	vertices.emplace_back(0, 0, +EXTEND);
 	
 	// local axis, dynamically calculated
-//	for(uint8_t i = 0; i < 6; ++i)
-//		vertices.emplace_back(0, 0, 0);
-//	const float infinity = std::numeric_limits<float>::infinity();
-	vertices.emplace_back(-INFINITY, 0, 0);
-	vertices.emplace_back(+INFINITY, 0, 0);
-	vertices.emplace_back(0, -INFINITY, 0);
-	vertices.emplace_back(0, +INFINITY, 0);
-	vertices.emplace_back(0, 0, -INFINITY);
-	vertices.emplace_back(0, 0, +INFINITY);
+	constexpr float realm = 1E3;  // INFINITY;
+	vertices.emplace_back(-realm, 0, 0);
+	vertices.emplace_back(+realm, 0, 0);
+	vertices.emplace_back(0, -realm, 0);
+	vertices.emplace_back(0, +realm, 0);
+	vertices.emplace_back(0, 0, -realm);
+	vertices.emplace_back(0, 0, +realm);
 	
 	assert(vertices.size() == vertexCount);
 	

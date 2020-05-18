@@ -104,7 +104,7 @@ std::vector<vec2f> Grid::getTexcoordData(const float& width, const float& height
 	return texcoords;
 }
 
-std::vector<uint32_t> Grid::getIndexData(const uint32_t& stepsX, const uint32_t& stepsY, bool strip/* = true*/)
+std::vector<uint32_t> Grid::getIndexData(uint32_t stepsX, uint32_t stepsY, Primitive primitive)
 {
 	assert(stepsX > 0 && stepsY > 0);
 	
@@ -121,13 +121,74 @@ std::vector<uint32_t> Grid::getIndexData(const uint32_t& stepsX, const uint32_t&
 	using T = uint32_t;
 #endif
 
-	const uint32_t count = getIndexSize(stepsX, stepsY);
+	const uint32_t count = getIndexSize(stepsX, stepsY, primitive);
 	std::vector<T> indices;
 	indices.reserve(count);
-
 	const uint32_t incrementX = stepsX + 1;
-	if(strip)
+	switch(primitive)
 	{
+	case Primitive::POINTS:
+		{
+			size_t vertexCount = getVertexSize(stepsX, stepsY);
+			indices.resize(vertexCount);
+			for(size_t i = 0; i < vertexCount; ++i)
+				indices[i] = i;
+		}
+		break;
+	
+	case Primitive::LINES:
+		{
+			bool ring = false;
+			uint32_t j = 0;
+			while(true)
+			{
+				T offset = j * incrementX;
+				if(ring)  // loop ring
+				{
+					for(uint32_t i = 0; i <= stepsX; ++i)
+					{
+						indices.push_back(offset + i);
+						indices.push_back(offset + i + incrementX);
+					}
+					
+					++j;
+				}
+				else  // loop cut
+				{
+					for(uint32_t i = 0; i < stepsX; ++i)
+					{
+						indices.push_back(offset + i);
+						indices.push_back(offset + i + 1);
+					}
+					
+					if(j >= stepsY)
+						break;
+				}
+				
+				ring = !ring;
+			}
+		}
+		break;
+		
+	case Primitive::TRIANGLES:
+		for(uint32_t j = 0; j < stepsY; ++j)
+		for(uint32_t i = 0; i < stepsX; ++i)
+		{
+			uint32_t _0 = j * incrementX + i, _1 = _0 + 1;  // _2, _3
+			uint32_t _2 = _0 + incrementX,    _3 = _2 + 1;  // _0, _1
+			
+			indices.push_back(_2);
+			indices.push_back(_0);
+			indices.push_back(_3);
+			
+			indices.push_back(_3);
+			indices.push_back(_0);
+			indices.push_back(_1);
+		}
+		break;
+	
+	case Primitive::TRIANGLE_STRIP:
+	case Primitive::QUADRILATERAL_STRIP:
 		for(uint32_t j = 1; j <= stepsY; ++j)
 		{
 			T offset = j * incrementX;
@@ -145,59 +206,30 @@ std::vector<uint32_t> Grid::getIndexData(const uint32_t& stepsX, const uint32_t&
 				indices.push_back(offset + incrementX);  // same as next index
 			}
 		}
-	}
-	else
-	{
+		break;
+		
+	case Primitive::QUADRILATERALS:
 		for(uint32_t j = 0; j < stepsY; ++j)
-		for(uint32_t i = 0; i < stepsX; ++i)
 		{
-			uint32_t _0 = j * incrementX + i, _1 = _0 + 1;  // _2, _3
-			uint32_t _2 = _0 + incrementX,    _3 = _2 + 1;  // _0, _1
-			
-			indices.push_back(_2);
-			indices.push_back(_0);
-			indices.push_back(_3);
-			
-			indices.push_back(_3);
-			indices.push_back(_0);
-			indices.push_back(_1);
+			T offset = j * incrementX;
+			for(uint32_t i = 0; i < stepsX; ++i)
+			{
+				uint32_t _0 = offset + i,         _1 = _0 + 1;  // _2, _3
+				uint32_t _2 = _0 + incrementX,    _3 = _2 + 1;  // _0, _1
+				
+				indices.push_back(_2);
+				indices.push_back(_0);
+				indices.push_back(_1);
+				indices.push_back(_3);
+			}
 		}
+		break;
+	
+	default:
+		break;
 	}
 	
 	assert(indices.size() == count);
 	return indices;
 }
-/*
-std::string Grid::toString() const
-{
-	std::ostringstream stream;
-	stream.imbue(std::locale("C"));
-	stream << std::fixed;
-	stream.precision(6);
-	
-	constexpr char _ = ' ';
-	stream << "vertex array:" << '\n';
-	for(int32_t i = 0, count = size.row * size.column; i < count; ++i)
-	{
-		const vec3f& vertex = at(i);
-		stream << '(' << vertex.x << ',' << _ << vertex.y << ',' << _ << vertex.z << ')' << _;
-		
-		if(i != 0 && i % size.column == 0)
-			stream << '\n';
-	}
 
-	stream << "index array:" << '\n';
-	const size_t breakSize = size.column * 2 + 2;
-	for(size_t i = 0, size = indices.size(); i < size; ++i)
-	{
-		if(i % (breakSize - 2) == 0)  // before last two degenerated indices.
-			stream << _ << _;
-		stream << indices[i] << _;
-		
-		if(i % breakSize == 0)
-			stream << '\n';
-	}
-	
-	return stream.str();
-}
-*/

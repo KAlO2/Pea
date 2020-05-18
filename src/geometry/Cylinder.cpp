@@ -79,7 +79,8 @@ size_t Cylinder::getIndexSize(Primitive primitive)
 		return slice * 5 + 1; 
 
 	case Primitive::TRIANGLES:
-		return slice * (cap == CapFillType::NONE? 6: 12);
+		// (top tri + quad + bottom tri) per slice
+		return slice * (cap == CapFillType::TRIANGLE_FAN? 12: 6);
 	
 	case Primitive::TRIANGLE_STRIP:
 		return /*(cap == CapFillType::TRIANGLE_FAN)? (slice * 6 + 8):*/ ((slice + 1) << 1);
@@ -184,38 +185,40 @@ std::vector<uint32_t> Cylinder::getVertexIndex(Primitive primitive)
 		break;
 
 	case Primitive::TRIANGLES:
+//		assert(cap != CapFillType::POLYGON);
+		if(cap == CapFillType::TRIANGLE_FAN)
 		{
 			for(uint32_t i = 0; i < topIndex; i += 2)
 			{
-				uint32_t i1 = i + 1;
-				uint32_t i2 = (i + 2) % topIndex;
-				uint32_t i3 = i2 + 1;
-				
+				indices.push_back(topIndex);
 				indices.push_back(i);
-				indices.push_back(i1);
-				indices.push_back(i2);
-				
-				indices.push_back(i2);
-				indices.push_back(i1);
-				indices.push_back(i3);
+				indices.push_back((i + 2) % topIndex);
 			}
+		}
+		
+		for(uint32_t i = 0; i < topIndex; i += 2)
+		{
+			uint32_t i1 = i + 1;
+			uint32_t i2 = (i + 2) % topIndex;
+			uint32_t i3 = i2 + 1;
 			
-			assert(cap != CapFillType::NGON);
-			if(cap != CapFillType::TRIANGLE_FAN)
+			indices.push_back(i);
+			indices.push_back(i1);
+			indices.push_back(i2);
+			
+			indices.push_back(i2);
+			indices.push_back(i1);
+			indices.push_back(i3);
+		}
+		
+		if(cap == CapFillType::TRIANGLE_FAN)
+		{
+			for(uint32_t i = bottomIndex; i > 1;)
 			{
-				for(uint32_t i = 1; i < topIndex; i += 2)
-				{
-					indices.push_back(i);
-					indices.push_back(bottomIndex);
-					indices.push_back((i + 2) % topIndex);
-				}
-
-				for(uint32_t i = 0; i < topIndex; i += 2)
-				{
-					indices.push_back(topIndex);
-					indices.push_back(i);
-					indices.push_back((i + 2) % topIndex);
-				}
+				indices.push_back(bottomIndex);
+				indices.push_back(i % topIndex);
+				i -= 2;
+				indices.push_back(i);
 			}
 		}
 		break;
@@ -229,26 +232,29 @@ std::vector<uint32_t> Cylinder::getVertexIndex(Primitive primitive)
 		
 	case Primitive::TRIANGLE_FAN:
 		// top and bottom fans
+		assert(cap == CapFillType::TRIANGLE_FAN);
 		indices.push_back(topIndex);
 		for(uint32_t i = 0; i < topIndex; i += 2)
 			indices.push_back(i);
 		indices.push_back(0);  // forms top circle
+		
 //		indices.push_back(0xFFFFFFFF);  // primitive restart?
 		indices.push_back(bottomIndex);
-		for(uint32_t i = 1; i < topIndex; i += 2)
+		indices.push_back(1);
+		for(uint32_t i = bottomIndex - 2; i > 1; i -= 2)
 			indices.push_back(i);
 		indices.push_back(1);  // forms bottom circle
 		break;
 	
 	case Primitive::POLYGON:
 		// return two polygons, top and bottom face.
-		{
-			assert(cap == CapFillType::NGON);
-			for(uint32_t i = 0; i < slice; ++i)
-				indices.push_back(i << 1);
-			for(uint32_t i = slice - 1; i-- > 0; --i)
-				indices.push_back((i << 1) + 1);
-		}
+		assert(cap == CapFillType::POLYGON);
+		for(uint32_t i = 0; i < slice; ++i)
+			indices.push_back(i << 1);
+		
+		indices.push_back(1);
+		for(uint32_t i = slice - 1; i > 0; --i)
+			indices.push_back((i << 1) + 1);
 		break;
 	
 	default:
@@ -261,7 +267,11 @@ std::vector<uint32_t> Cylinder::getVertexIndex(Primitive primitive)
 
 std::vector<vec3f> Cylinder::getNormalData()
 {
-	size_t size = slice + (cap == CapFillType::TRIANGLE_FAN);
+	const bool hasCap = cap != CapFillType::NONE;
+	size_t size = slice;
+	if(hasCap)
+		size += 2;  // top and bottom face normal
+	
 	std::vector<vec3f> normals;
 	normals.reserve(size);
 	
@@ -273,10 +283,10 @@ std::vector<vec3f> Cylinder::getNormalData()
 		normals.emplace_back(x, y, 0.0);
 	}
 	
-	if(cap == CapFillType::TRIANGLE_FAN)
+	if(hasCap)
 	{
-		normals.emplace_back(0.0, 0.0, +1.0);
-		normals.emplace_back(0.0, 0.0, -1.0);
+		normals.emplace_back(0.0, 0.0, +1.0);  // top normal
+		normals.emplace_back(0.0, 0.0, -1.0);  // bottom normal
 	}
 	
 	assert(normals.size() == size);
@@ -289,33 +299,36 @@ std::vector<uint32_t> Cylinder::getNormalIndex(Primitive primitive)
 	std::vector<uint32_t> indices;
 	indices.reserve(size);
 	
+	const uint32_t UP = slice, DOWN = slice + 1;
 	switch(primitive)
 	{
 	case Primitive::TRIANGLES:
+		assert(cap != CapFillType::POLYGON);
+		if(cap == CapFillType::TRIANGLE_FAN)
 		{
-			for(uint32_t i = 0; i < slice; ++i)
-			{
-				uint32_t i1 = (i + 1) % slice;
-				
-				indices.push_back(i);
-				indices.push_back(i);
-				indices.push_back(i1);
-				
-				indices.push_back(i1);
-				indices.push_back(i);
-				indices.push_back(i1);
-			}
+			const int32_t count = 3 * slice;
+			for(int32_t i = 0; i < count; ++i)
+				indices.push_back(UP);
+		}
+		
+		for(uint32_t i = 0; i < slice; ++i)
+		{
+			uint32_t i1 = (i + 1) % slice;
 			
-			assert(cap != CapFillType::NGON);
-			if(cap == CapFillType::TRIANGLE_FAN)
-			{
-				const uint32_t UP = slice, DOWN = slice + 1;
-				const int32_t count = 3 * slice;
-				for(int32_t i = 0; i < count; ++i)
-					indices.push_back(UP);
-				for(int32_t i = 0; i < count; ++i)
-					indices.push_back(DOWN);
-			}
+			indices.push_back(i);
+			indices.push_back(i);
+			indices.push_back(i1);
+			
+			indices.push_back(i1);
+			indices.push_back(i);
+			indices.push_back(i1);
+		}
+		
+		if(cap == CapFillType::TRIANGLE_FAN)
+		{
+			const int32_t count = 3 * slice;
+			for(int32_t i = 0; i < count; ++i)
+				indices.push_back(DOWN);
 		}
 		break;
 		
@@ -330,17 +343,20 @@ std::vector<uint32_t> Cylinder::getNormalIndex(Primitive primitive)
 		break;
 		
 	case Primitive::TRIANGLE_FAN:
+		assert(cap == CapFillType::TRIANGLE_FAN);
+		// center and loop, extra two points.
+		for(uint32_t i = 0; i <= (slice + 1); ++i)
+			indices.emplace_back(UP);
+		for(uint32_t i = 0; i < (slice + 1); ++i)
+			indices.emplace_back(DOWN);
+		break;
+		
 	case Primitive::POLYGON:
-		assert((primitive == Primitive::TRIANGLE_FAN && cap == CapFillType::TRIANGLE_FAN) ||
-				(primitive == Primitive::POLYGON && cap == CapFillType::NGON));
-		{
-			const uint32_t UP = slice, DOWN = slice + 1;
-			uint32_t count = slice + (primitive == Primitive::TRIANGLE_FAN);
-			for(uint32_t i = 0; i < count; ++i)
-				indices.emplace_back(DOWN);
-			for(uint32_t i = 0; i < count; ++i)
-				indices.emplace_back(UP);
-		}
+		assert(cap == CapFillType::POLYGON);
+		for(uint32_t i = 0; i < slice; ++i)
+			indices.emplace_back(DOWN);
+		for(uint32_t i = 0; i < slice; ++i)
+			indices.emplace_back(UP);
 		break;
 	
 	default:

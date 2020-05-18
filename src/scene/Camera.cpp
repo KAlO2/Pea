@@ -29,7 +29,7 @@ Camera::Camera(const vec3f& position, const vec3f& target, const vec3f& up):
 		pose(POSE_NORMAL),
 		flying(false)
 {
-//	auto [this->pitch, this->yaw] = decomposeDirection(forward); won't work.
+//	auto [this->pitch, this->yaw] = decomposeOrientation(forward); won't work.
 //	std::tie(pitch, yaw) = Sphere::decomposeOrientation(this->forward);
 //	slog.i(TAG, "pitch=%f, yaw=%f", pitch, yaw);
 	
@@ -57,7 +57,7 @@ void Camera::setAspectRatio(float ratio)
 	projectionMatrix = perspective(fieldOfView, aspectRatio, near, far);
 }
 
-void Camera::setDepth(float near, float far)
+void Camera::setDepthRange(float near, float far)
 {
 	assert(0 < near && near < far);
 	this->near = near;
@@ -209,7 +209,7 @@ void Camera::orbit(const vec3f& pivot, float pitch, float yaw, bool constrainPit
 	float length = direction.length();
 	vec3f normal = direction / length;  // direction.normalize();
 #endif
-	
+	assert(length > 1E-6);
 	constexpr float LIMIT = 88.0_deg;
 	if(constrainPitch)  // Make sure that when pitch is out of bounds, screen doesn't get flipped.
 		pitch = clamp(pitch, -LIMIT, LIMIT);
@@ -234,6 +234,13 @@ void Camera::orbit(const vec3f& pivot, float pitch, float yaw, bool constrainPit
 //	printf("Camera pitch=%f, yaw=%f, forward=(%f, %f, %f)\n", rad2deg(pitch), rad2deg(yaw), forward.x, forward.y, forward.z);
 	position = pivot - length * forward;
 //	slog.i(TAG, "position=((%f, %f, %f)", position.x, position.y, position.z);
+}
+
+void Camera::orbit(float pitch, float yaw, bool constrainPitch/* = true*/)
+{
+	forward = Sphere::composeOrientation(pitch, yaw);
+	right = cross(forward, worldUp).normalize();
+	up = cross(right, forward);  // normalize();
 }
 
 void Camera::walk(float offset)

@@ -11,7 +11,7 @@
 namespace pea {
 
 template <typename T>
-class mat4
+class alignas(4 * sizeof(T)) mat4
 {
 public:
 	union
@@ -390,7 +390,7 @@ public:
 		return *this;
 	}
 
-	static mat4<T> rotateX(T angle)
+	static mat4<T> getRotationX(T angle)
 	{
 		const T c = std::cos(angle), s = std::sin(angle);
 		return mat4<T>(
@@ -398,7 +398,12 @@ public:
 			0, c,-s, 0,
 			0, s, c, 0,
 			0, 0, 0, 1);
-/*
+	}
+	
+	mat4<T>& rotateX(T angle)
+	{
+		const T c = std::cos(angle), s = std::sin(angle);
+		
 		T tmp= s*a[1] + c*a[2];
 		a[1] = c*a[1] - s*a[2];
 		a[2] = tmp;
@@ -416,10 +421,9 @@ public:
 		a[14]= tmp;
 
 		return *this;
-*/
 	}
 
-	static mat4<T> rotateY(T angle)
+	static mat4<T> getRotationY(T angle)
 	{
 		const T c = std::cos(angle), s = std::sin(angle);
 		return mat4<T>(
@@ -427,7 +431,12 @@ public:
 			0, 1, 0, 0,
 			s, 0, c, 0,
 			0, 0, 0, 1);
-/*
+	}
+	
+	mat4<T> rotateY(T angle)
+	{
+		const T c = std::cos(angle), s = std::sin(angle);
+		
 		T tmp= c*a[2] - s*a[0];
 		a[0] = s*a[2] + c*a[0];
 		a[2] = tmp;
@@ -445,10 +454,9 @@ public:
 		a[15]= tmp;
 
 		return *this;
-*/
 	}
 
-	static mat4<T> rotateZ(T angle)
+	static mat4<T> getRotationZ(T angle)
 	{
 /*
 		 * [_0, _4, _8 , _12]          [_0 , _1 , _2 , _3 ]
@@ -462,7 +470,12 @@ public:
 			s, c, 0, 0,
 			0, 0, 1, 0,
 			0, 0, 0, 1);
-/*
+	}
+	
+	mat4<T>& rotateZ(T angle)
+	{
+		const T c = std::cos(angle), s = std::sin(angle);
+		
 		T tmp= s*a[0] + c*a[1];
 		a[0] = c*a[0] - s*a[1];
 		a[1] = tmp;
@@ -479,11 +492,9 @@ public:
 		a[12]= c*a[12] - s*a[13];
 		a[13]= tmp;
 		return *this;
-*/
-		
 	}
 
-	static mat4<T> rotate(const vec3<T>& normal, const T& angle)
+	static mat4<T> getRotation(const vec3<T>& normal, const T& angle)
 	{
 		assert(fuzzyEqual(static_cast<T>(1), normal.length()));
 		const T &x = normal.x, &y = normal.y, &z = normal.z;

@@ -9,7 +9,7 @@
 namespace pea {
 
 template <typename T>
-class vec2
+class alignas(2 * sizeof(T)) vec2
 {
 public:
 

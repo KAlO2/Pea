@@ -151,7 +151,7 @@ std::vector<vec3f> Model::computeVertexNormal() const
 	return vertexNormals;
 }
 
-std::vector<uint32_t> Model::getEdgeIndex() const
+std::vector<uint32_t> Model::getEdgeIndices() const
 {
 	std::set<uint64_t> edgeSet;
 //	size_t edgeBudget = triangleIndices.size() * 3 / 2 + quadrilateralIndices.size() * 2 + polygonVertexSizeIndices.size() * 5 / 2;
@@ -256,6 +256,22 @@ std::vector<uint32_t> Model::getTriangulatedIndex() const
 	
 //	assert(faces.size() == size);  // to make sure that we get the right size
 	return faces;
+}
+
+void Model::addTriangleFaces(const uint32_t* index, uint32_t length)
+{
+	assert((length % 3) == 0);
+	const size_t triangleIndexSize = triangleIndices.size();
+	triangleIndices.resize(triangleIndexSize + length);
+	std::copy(index, index + length, triangleIndices.data() + triangleIndexSize);
+}
+
+void Model::addQuadrilateralFaces(const uint32_t* index, uint32_t length)
+{
+	assert((length & 3) == 0);
+	const size_t quadrilateralIndexSize = quadrilateralIndices.size();
+	quadrilateralIndices.resize(quadrilateralIndexSize + length);
+	std::copy(index, index + length, quadrilateralIndices.data() + quadrilateralIndexSize);
 }
 
 void Model::addFace(const uint32_t* index, uint32_t length)
@@ -554,6 +570,19 @@ void Model::removeGroup(const std::string& name)
 	groups.erase(name);
 }
 
+bool Model::findGroup(const std::string& name, const Group* &group) const
+{
+	auto it = groups.find(name);
+	if(it != groups.end())
+	{
+		group = &it->second;
+		return true;
+	}
+	
+	group = nullptr;
+	return false;
+}
+
 template <typename T>
 std::unordered_map<T, uint32_t> unique(const std::vector<T>& elements)
 {
@@ -584,18 +613,6 @@ void Model::addGroup(const std::string& name, Group&& group)
 	std::vector<uint32_t>& indices = group.indices;
 	std::sort(indices.begin(), indices.end());
 	groups.emplace(name, std::move(group));
-}
-
-bool Model::findGroup(const std::string& name, Group& group) const
-{
-	auto it = groups.find(name);
-	if(it != groups.end())
-	{
-		group = it->second;
-		return true;
-	}
-	
-	return false;
 }
 
 /*
@@ -689,7 +706,7 @@ Model Model::subdivide() const
 	const size_t faceSize = facePoints.size();
 	
 	// 2. Add a new point to each edge, called the edge-point.
-	std::vector<uint32_t> edges = getEdgeIndex();
+	std::vector<uint32_t> edges = getEdgeIndices();
 	const size_t edgeSize = edges.size() >> 1;
 	std::vector<vec3f> edgePoints(edgeSize);
 	std::unordered_map<uint64_t, uint32_t> edgeMap;

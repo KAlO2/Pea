@@ -1,9 +1,13 @@
 #include "opengl/Texture.h"
 
+#include <cinttypes>
+#include <cstring>
+
 #include "graphics/ImageFactory.h"
 #include "opengl/GL.h"
 #include "opengl/Shader.h"
 #include "pea/config.h"
+#include "util/compiler.h"
 #include "util/Log.h"
 
 
@@ -59,7 +63,8 @@ Texture::~Texture()
 
 Texture::Texture(Texture&& other):
 		target(other.target),
-		name(other.name)
+		name(other.name),
+		type(other.type)
 {
 	other.name = 0;
 }
@@ -68,12 +73,32 @@ Texture& Texture::operator =(Texture&& other)
 {
 	if(this != &other)  // ALWAYS check for self-assignment.
 	{
-		glDeleteTextures(1, &name);
 		target = other.target;
+		
+		glDeleteTextures(1, &name);
 		name = other.name;
 		other.name = 0;
+		
+		type = other.type;
 	}
 	return *this;
+}
+
+uint32_t Texture::getKey(Texture::Type type, uint32_t index)
+{
+//	static_cast(std::is_same<std::underlying_type<Texture::Type>, uint8_t>::value);
+	constexpr uint32_t MASK = 0x00FFFFFF;
+	assert((index & ~MASK) == 0);  // key is made of type (1 byte) and index(3 bytes).
+	if((index & ~MASK) != 0)
+		slog.w(TAG, "index %" PRIu32 "is out of range [0, 2^24), wrap around", index);
+	
+	uint32_t key = underlying_cast<Texture::Type>(type) << 24 | (index & MASK);
+	return key;
+}
+
+uint32_t Texture::getKey(uint32_t index) const
+{
+	return getKey(type, index);
 }
 
 bool Texture::load(const std::string& path, const Parameter& parameter)
@@ -92,7 +117,7 @@ bool Texture::load(const std::string& path, const Parameter& parameter)
 //bool load(const std::string paths[6], const Parameter& parameter);
 bool Texture::load(const Image& image, const Parameter& parameter)
 {
-	is_compressed = false;  // TODO: ?
+//	is_compressed = false;  // TODO: ?
 //	this->image = image;
 	if(!image.isValid())
 		return false;
@@ -103,8 +128,10 @@ bool Texture::load(const Image& image, const Parameter& parameter)
 	
 	GLsizei width  = image.getWidth();
 	GLsizei height = image.getHeight();
-	GLenum target = (width == 1 || height == 1) ? GL_TEXTURE_1D: GL_TEXTURE_2D;
-	assert(this->target == target);
+	if(width == 1 || height == 1)
+		assert(target == GL_TEXTURE_1D);
+	else
+		assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE);
 //	assert(isPowerOfTwo(width) && isPowerOfTwo(height));  // TODO: GL_TEXTURE_RECTANGLE,
 	
 	int32_t alignment = 1;
@@ -128,7 +155,7 @@ bool Texture::load(const Image& image, const Parameter& parameter)
 	assert(width > 0 && height > 0 && pixels != nullptr);
 	// should glTexParameteri come before or after glTexImage2D?
 	// https://community.khronos.org/t/gltexparameteri-before-glteximage2d/23056
-	if(target == GL_TEXTURE_2D)
+	if(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE)
 		glTexImage2D(target, level, format, width, height, border, format, type, pixels);
 	else if(target == GL_TEXTURE_1D)
 		glTexImage1D(target, level, format, std::max(width, height), border, format, type, pixels);
@@ -138,8 +165,11 @@ bool Texture::load(const Image& image, const Parameter& parameter)
 		assert(false);
 	// why two naming convention: glGen*, glGenerate*
 	if(parameter.levels > 1)
+	{
+		// Rectangle textures contain exactly one image; they cannot have mipmaps.
+		assert(target != GL_TEXTURE_RECTANGLE);
 		glGenerateTextureMipmap(name);  // glGenerateMipmap(target);
-
+	}
 	setParameter(target, parameter);
 	return true;
 }
@@ -282,23 +312,227 @@ bool Texture::loadCube(const Image* images[6], const Parameter& parameter)
 	return true;
 }
 
+static const uint8_t KTX_MAGIC[] =
+{
+	0xAB, 'k', 'T', 'X', ' ', '1', '1', 0xBB, '\r', '\n', 0x1A, '\n'
+};
+
+struct KTX_Header
+{
+	uint8_t  identifier[12];
+	uint32_t endianness;
+	uint32_t glType;
+	uint32_t glTypeSize;
+	uint32_t glFormat;
+	uint32_t glInternalFormat;
+	uint32_t glBaseInternalFormat;
+	uint32_t pixelWidth;
+	uint32_t pixelHeight;
+	uint32_t pixelDepth;
+	uint32_t numberOfArrayElements;
+	uint32_t numberOfFaces;
+	uint32_t numberOfMipmapLevels;
+	uint32_t bytesOfKeyValueData;
+};
+
+static void swap32(uint32_t& qword)
+{
+	uint8_t* bytes = reinterpret_cast<uint8_t*>(&qword);
+	std::swap(bytes[0], bytes[3]);
+	std::swap(bytes[1], bytes[2]);
+}
+
+static uint32_t align(uint32_t value, uint32_t padding = 4)
+{
+	uint32_t mask = padding - 1;
+	return (value + mask) & ~mask;
+}
+	
+bool Texture::loadKTX(const std::string& path)
+{
+	KTX_Header header;
+	
+	std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.c_str(), "rb"), &std::fclose);
+	if(!file)
+	{
+		slog.w(TAG, "can't open file %s for writing", path.c_str());
+		return false;
+	}
+	
+	FILE* fp = file.get();
+	if(std::fread(&header, sizeof(header), 1, fp) != 1)
+		return false;
+	
+	if(std::memcmp(header.identifier, KTX_MAGIC, sizeof(KTX_MAGIC)) != 0)
+		return false;
+	
+	constexpr uint32_t KTX_LITTLE_ENDIAN = 0x04030201;
+	constexpr uint32_t KTX_BIG_ENDIAN    = 0x01020304;
+	if(header.endianness == KTX_LITTLE_ENDIAN)
+	{
+	}
+	else if(header.endianness == KTX_BIG_ENDIAN)
+	{
+		swap32(header.endianness);
+		swap32(header.glType);
+		swap32(header.glTypeSize);
+		swap32(header.glFormat);
+		swap32(header.glInternalFormat);
+		swap32(header.glBaseInternalFormat);
+		swap32(header.pixelWidth);
+		swap32(header.pixelHeight);
+		swap32(header.pixelDepth);
+		swap32(header.numberOfArrayElements);
+		swap32(header.numberOfFaces);
+		swap32(header.numberOfMipmapLevels);
+		swap32(header.bytesOfKeyValueData);
+	}
+	else
+	{
+		slog.e(TAG, "unknown endianness %08X", header.endianness);
+		return false;
+	}
+	
+	GLenum target = GL_NONE;
+	if(header.pixelHeight == 0)
+	{
+		if(header.numberOfArrayElements == 0)
+			target = GL_TEXTURE_1D;
+		else
+			target = GL_TEXTURE_1D_ARRAY;
+	}
+	else if(header.pixelDepth == 0)
+	{
+		if(header.numberOfArrayElements == 0)
+		{
+			if(header.numberOfFaces == 0)
+				target = GL_TEXTURE_2D;
+			else
+				target = GL_TEXTURE_CUBE_MAP;
+		}
+		else
+		{
+			if(header.numberOfFaces == 0)
+				target = GL_TEXTURE_2D_ARRAY;
+			else
+				target = GL_TEXTURE_CUBE_MAP_ARRAY;
+		}
+	}
+	else
+		target = GL_TEXTURE_3D;
+	
+	if(target == GL_NONE ||
+			header.pixelWidth == 0 ||  // Texture has no width?
+			(header.pixelHeight == 0 && header.pixelDepth != 0))  // Texture has depth but no height?
+		return false;
+	
+	glBindTexture(target, name);
+
+	size_t dataStart = std::ftell(fp) + header.bytesOfKeyValueData;
+	std::fseek(fp, 0, SEEK_END);
+	size_t dataEnd = std::ftell(fp);
+	fseek(fp, dataStart, SEEK_SET);
+
+	const size_t length = dataEnd - dataStart;
+	std::vector<uint8_t> memory(length);
+	std::fread(memory.data(), 1, length, fp);
+	const uint8_t* data = memory.data();
+	
+	if(header.numberOfMipmapLevels == 0)
+		header.numberOfMipmapLevels = 1;
+
+	switch (target)
+	{
+	case GL_TEXTURE_1D:
+		glTexStorage1D(GL_TEXTURE_1D, header.numberOfMipmapLevels, header.glInternalFormat, header.pixelWidth);
+		glTexSubImage1D(GL_TEXTURE_1D, 0, 0, header.pixelWidth, header.glFormat, header.glInternalFormat, data);
+		break;
+	
+	case GL_TEXTURE_2D:
+		if(header.glType == GL_NONE)
+			glCompressedTexImage2D(GL_TEXTURE_2D, 0, header.glInternalFormat, header.pixelWidth, header.pixelHeight, 0, 420 * 380 / 2, data);
+		else
+		{
+			glTexStorage2D(GL_TEXTURE_2D, header.numberOfMipmapLevels, header.glInternalFormat, header.pixelWidth, header.pixelHeight);
+			
+			uint32_t channelCount = GL::sizeofChannel(header.glInternalFormat);
+			uint32_t height = header.pixelHeight;
+			uint32_t width = header.pixelWidth;
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			for(uint32_t i = 0; i < header.numberOfMipmapLevels; ++i)
+			{
+				glTexSubImage2D(GL_TEXTURE_2D, i, 0, 0, width, height, header.glFormat, header.glType, data);
+				data += height * header.glTypeSize * channelCount * width;
+				if(height > 1)
+					height >>= 1;
+				if(width > 1)
+					width >>= 1;
+			}
+			
+		}
+		break;
+
+	case GL_TEXTURE_3D:
+		glTexStorage3D(GL_TEXTURE_3D, header.numberOfMipmapLevels, header.glInternalFormat, header.pixelWidth, header.pixelHeight, header.pixelDepth);
+		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, header.pixelWidth, header.pixelHeight, header.pixelDepth, header.glFormat, header.glType, data);
+		break;
+	
+	case GL_TEXTURE_1D_ARRAY:
+		glTexStorage2D(GL_TEXTURE_1D_ARRAY, header.numberOfMipmapLevels, header.glInternalFormat, header.pixelWidth, header.numberOfArrayElements);
+		glTexSubImage2D(GL_TEXTURE_1D_ARRAY, 0, 0, 0, header.pixelWidth, header.numberOfArrayElements, header.glFormat, header.glType, data);
+		break;
+	
+	case GL_TEXTURE_2D_ARRAY:
+		glTexStorage3D(GL_TEXTURE_2D_ARRAY, header.numberOfMipmapLevels, header.glInternalFormat, header.pixelWidth, header.pixelHeight, header.numberOfArrayElements);
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, header.pixelWidth, header.pixelHeight, header.numberOfArrayElements, header.glFormat, header.glType, data);
+		break;
+
+	case GL_TEXTURE_CUBE_MAP:
+		glTexStorage2D(GL_TEXTURE_CUBE_MAP, header.numberOfMipmapLevels, header.glInternalFormat, header.pixelWidth, header.pixelHeight);
+		{
+			uint32_t channelCount = GL::sizeofChannel(header.glInternalFormat);
+			uint32_t faceSize = align(header.glTypeSize * channelCount * header.pixelWidth, 4) * header.pixelHeight;
+			for(uint32_t i = 0; i < header.numberOfFaces; ++i)
+				glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, header.pixelWidth, header.pixelHeight, header.glFormat, header.glType, data + faceSize * i);
+	
+		}
+		break;
+	
+	case GL_TEXTURE_CUBE_MAP_ARRAY:
+		glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, header.numberOfMipmapLevels, header.glInternalFormat, header.pixelWidth, header.pixelHeight, header.numberOfArrayElements);
+		glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, 0, 0, 0, header.pixelWidth, header.pixelHeight, header.numberOfFaces * header.numberOfArrayElements, header.glFormat, header.glType, data);
+	break;
+	
+	default:
+		assert(false);  // should never happen.
+		return false;
+	}
+	
+	if(header.numberOfMipmapLevels == 1)
+		glGenerateMipmap(target);
+
+	return true;
+}
+
 void Texture::bind() const
 {
 	glBindTexture(target, name);
 }
-
+/*
 void Texture::bind(uint32_t textureUnit) const
 {
 	bind(Shader::UNIFORM_TEX_TEXTURE0 + textureUnit, textureUnit);
 }
-
-void Texture::bind(uint32_t location, uint32_t textureUnit) const
+*/
+void Texture::bind(uint32_t textureUnit) const
 {
-	glUniform1i(location, textureUnit);
+//	glUniform1i(location, textureUnit);
 	glActiveTexture(GL_TEXTURE0 + textureUnit);
 	glBindTexture(target, name);
 }
 
+// glTexParameteri affects only the currently bound texture.
+// it does not affect the way the texture is uploaded (glTexImage2D)
 void Texture::setParameter(uint32_t target, const Parameter& parameter)
 {
 	assert(parameter.levels > 0);
@@ -314,6 +548,7 @@ void Texture::setParameter(uint32_t target, const Parameter& parameter)
 		glTexParameteri(target, GL_TEXTURE_WRAP_R, parameter.mapW);
 		[[fallthrough]];
 	case GL_TEXTURE_2D:
+	case GL_TEXTURE_RECTANGLE:
 		glTexParameteri(target, GL_TEXTURE_WRAP_T, parameter.mapV);
 		[[fallthrough]];
 	case GL_TEXTURE_1D:
