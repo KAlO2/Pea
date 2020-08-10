@@ -35,12 +35,13 @@ public:
 		ATTRIBUTE_VEC_TEXCOORD = 3,
 		ATTRIBUTE_VEC_TANGENT  = 4,
 		ATTRIBUTE_VEC_BITANGENT= 5,
-		ATTRIBUTE_VEC_INSTANCE = 6,  // vec4 = vec3 translation + float scale
-		ATTRIBUTE_MAT_INSTANCE = 6,  // mat4 translation, rotation, scale
-		ATTRIBUTE_VEC_SIZE     = 7,  // particle size
-		ATTRIBUTE_INT_INDEX    =10,  // at last
-//		ATTRIBUTE_VEC_TEXCOORD0= 8,
-//		ATTRIBUTE_VEC_TEXCOORD1,
+		ATTRIBUTE_VEC_SIZE     = 6,  // particle size
+		ATTRIBUTE_FLT_WEIGHT   = 7,  // float weight
+		
+		ATTRIBUTE_VEC_FACE_NORMAL = 8,
+		ATTRIBUTE_INT_INDEX    = 10,  // at last
+		ATTRIBUTE_VEC_INSTANCE = 12,  // vec4 = vec3 translation + float scale
+		ATTRIBUTE_MAT_INSTANCE = 12,  // mat4 translation, rotation, scale
 		
 	//	UNIFORM_BEGIN_LOCATION
 		// Note that a mat4 consumes 4 consecutive locations
@@ -57,13 +58,16 @@ public:
 		UNIFORM_VEC_TEXT_COLOR    = 13,
 		UNIFORM_VEC_VIEW_POSITION = 14,
 		UNIFORM_VEC_LIGHT_POSITION= 15,
-		UNIFORM_VEC_LIGHT_COLOR   = 16,
+		UNIFORM_VEC_LIGHT_DIRECTION = 16,
+		UNIFORM_VEC_LIGHT_COLOR   = 17,
 		UNIFORM_VEC_SCALE         = 17,
 		
 		UNIFORM_FLT_RATIO         = 17,
 		UNIFORM_FLT_ALPHA         = 17,
 		UNIFORM_FLT_LENGTH        = 17,
 		UNIFORM_FLT_SCALE         = 17,
+		UNIFORM_FLT_TIME          = 17,
+		UNIFORM_FLT_WEIGHT        = 17,
 		UNIFORM_FLT_STEP          = 17,
 		
 		UNIFORM_INT_SIZE          = 18,
@@ -135,54 +139,5 @@ public:
 
 };
 
-/*
-class VertexShader: public Shader
-{
-public:
-	VertexShader(): Shader(Type::VERTEX_SHADER) {}
-};
-
-class TessControlShader: public Shader
-{
-public:
-	TessControlShader(): Shader(Type::TESS_CONTROL_SHADER) {}
-};
-
-class TessEvaluationShader: public Shader
-{
-public:
-	TessEvaluationShader(): Shader(Type::TESS_EVALUATION_SHADER) {}
-};
-
-class FragmentShader: public Shader
-{
-public:
-	FragmentShader(): Shader(Type::FRAGMENT_SHADER) {}
-};
-
-class GeometryShader: public Shader
-{
-private:
-	Mesh::Primitive input;
-	Mesh::Primitive output;
-	int32_t out_vertices_size;
-public:
-	GeometryShader()
-	:Shader(Type::GEOMETRY_SHADER)
-	,input(Mesh::Primitive::TRIANGLES)
-	,output(Mesh::Primitive::TRIANGLE_STRIP)
-	,out_vertices_size(3)
-	{}
-
-	void setProgramParameter(uint32_t program_id);
-
-};
-
-class ComputeShader: public Shader
-{
-public:
-	ComputeShader(): Shader(Type::COMPUTE_SHADER) {}
-};
-*/
 }  // namespace pea
 #endif  // PEA_OPENGL_SHADER_H_

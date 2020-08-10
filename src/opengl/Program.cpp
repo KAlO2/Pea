@@ -13,10 +13,7 @@
 static const char* TAG = "Program";
 
 using namespace pea;
-/*
-const char* Program::ATTRIBUTE_TEXT_COLOR = "text_color";
-const char* Program::UNIFORM_TEXTURE_FONT = "texture_font";
-*/
+
 
 Program::Program():
 		program(NULL_PROGRAM)

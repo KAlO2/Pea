@@ -37,6 +37,7 @@ public:
 		VERT_M_VP_TEXCOORD_INSTANCE0,  // position, model, viewProjection, texcoord, vec4 instance
 		VERT_M_VP_TEXCOORD_INSTANCE1,  // position, model, viewProjection, texcoord, mat4 instance
 		VERT_M_VP_COLOR,               // position, model, viewProjection, color_rgb
+		VERT_M_VP_WEIGHT,              // position, model, viewProjection, weight, sample1D textureColorRamp
 		VERT_M_VP_RGBA,                // position, model, viewProjection, color_rgba
 		VERT_BILLBOARD,                // position, size, color_rgb, flat shadding
 //		VERT_M_V_P_TEXCOORD_COLOR,     // position, model, view, projection, texcoord, color
@@ -57,7 +58,9 @@ public:
 		VERT_MOTION_BLUR,
 		VERT_DEFERRED_COLOR,           // bake position, normal, color
 		VERT_GBUFFER,
-
+		VERT_BONE,       // model, view, projection, vec3 uniformColor
+		VERT_SKINNING2,  // each vertex at most 2 weights
+		VERT_SKINNING4,  // each vertex at most 4 weights
 		
 		TESS_CONTROL_SHADER_START = 100,
 		
@@ -95,13 +98,18 @@ public:
 		FRAG_DEPTH_ORTHOGRAPHIC,
 		FRAG_DEPTH_PERSPECTIVE,
 		FRAG_NORMAL_MAPPING,
-		FRAG_BLUR_HORIZONTAL,
-		FRAG_BLUR_VERTICAL,
+		
+		FRAG_TEXTURE_BLUR_HORIZONTAL,
+		FRAG_TEXTURE_BLUR_VERTICAL,
+		FRAG_TEXTURE_RECT_BLUR_HORIZONTAL,
+		FRAG_TEXTURE_RECT_BLUR_VERTICAL,
 		FRAG_MOTION_BLUR,
+		
 		FRAG_MATCAP,                   // normal => semisphere texcoord
 		FRAG_DEFERRED_COLOR,
 		FRAG_GBUFFER,
 		FRAG_DEFERRED_SHADING,
+		FRAG_BONE,
 		
 		COMPUTE_SHADER_START = 500,
 		
@@ -121,6 +129,8 @@ public:
 	
 	static uint32_t loadShader(const std::string& path);
 	static uint32_t loadShader(Index index);
+	static uint32_t loadShader(Index index, std::string macros[][2], uint32_t macroSize);
+	
 	static uint32_t loadShader(Shader::Type type, const char* source, size_t length);
 	static uint32_t loadShader(Shader::Type type, const std::string& source);
 

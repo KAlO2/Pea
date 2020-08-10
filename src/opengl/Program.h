@@ -10,6 +10,7 @@
 #include "opengl/GL.h"
 #include "math/mat2.h"
 #include "math/mat3.h"
+#include "math/mat3x4.h"
 #include "math/mat4.h"
 #include "graphics/Color.h"
 #include "scene/Material.h"
@@ -59,6 +60,11 @@ private:
 
 public:
 	Program();
+	
+	/**
+	 * @param[in] program a valid program created by glCreateProgram(). After constructed, it will
+	 *            take in charge, namely, you don't have to call glDeleteProgram() explicitly.
+	 */
 	explicit Program(uint32_t program);
 	~Program();
 	
@@ -85,13 +91,10 @@ public:
 	Program(const Program& other) = delete;
 	Program& operator =(const Program& other) = delete;
 	
-	static uint32_t createProgram(int32_t count, /* uint32_t shader */...);
-
 	const uint32_t& getName() const;
 	
 	void use() const;
 
-	
 	
 	void printVariables() const;
 
@@ -106,7 +109,10 @@ public:
 	void setMaterial(const char* name, const Material& material) const;
 	
 	void bindUniformBlock(const char* name, uint32_t index);
+	
 public:
+	static uint32_t createProgram(int32_t count, /* uint32_t shader */...);
+	
 	static void use(const uint32_t& program);
 	
 	static std::unordered_map<std::string, Variable> getActiveUniforms(const uint32_t& program);
@@ -136,6 +142,12 @@ public:
 
 	/** } */
 	
+	/**
+	 * For affine transform, the last row of column_major matrix is always (0, 0, 0, 1). It's fully
+	 * possible to use mat3x4. While in Perspective transform, the last row is (0, 0, 01, 0).
+	 */
+	static void setUniform(int32_t location, const mat3x4f& value);
+	
 //	static static void bindUniformBlock(uint32_t program, const char* name, uint32_t index);
 };
 
@@ -162,6 +174,7 @@ inline void Program::setUniform(int32_t location, const vec4f& value) { glUnifor
 // glUniformMatrix use column major matrix
 inline void Program::setUniform(int32_t location, const mat2f& value) { glUniformMatrix2fv(location, 1, !COLUMN_MAJOR, value.data()); }
 inline void Program::setUniform(int32_t location, const mat3f& value) { glUniformMatrix3fv(location, 1, !COLUMN_MAJOR, value.data()); }
+inline void Program::setUniform(int32_t location, const mat3x4f& value) { glUniformMatrix3x4fv(location, 1, !COLUMN_MAJOR, value.data()); }
 inline void Program::setUniform(int32_t location, const mat4f& value) { glUniformMatrix4fv(location, 1, !COLUMN_MAJOR, value.data()); }
 
 inline int32_t Program::getAttributeLocation(const std::string& name) const

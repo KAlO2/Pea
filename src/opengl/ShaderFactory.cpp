@@ -126,6 +126,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::VERT_M_VP_COLOR] =
 #include "./shader/model_viewProjection_color.vert"
 	;
+	map[ShaderFactory::VERT_M_VP_WEIGHT] =
+#include "./shader/model_viewProjection_weight.vert"
+	;
 	map[ShaderFactory::VERT_M_VP_RGBA] =
 #include "./shader/model_viewProjection_rgba.vert"
 	;
@@ -179,6 +182,16 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::VERT_GBUFFER] =
 #include "./shader/gbuffer.vert"
 	;
+	map[ShaderFactory::VERT_BONE] =
+#include "./shader/bone.vert"
+	;
+	map[ShaderFactory::VERT_SKINNING2] =
+#include "./shader/skinning2.vert"
+	;
+	map[ShaderFactory::VERT_SKINNING4] =
+#include "./shader/skinning4.vert"
+	;
+	
 	
 	
 	// geometry shaders
@@ -264,11 +277,17 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::FRAG_NORMAL_MAPPING] =
 #include "./shader/normal_mapping.frag"
 	;
-	map[ShaderFactory::FRAG_BLUR_HORIZONTAL] =
-#include "./shader/blur.horizontal.frag"
+	map[ShaderFactory::FRAG_TEXTURE_BLUR_HORIZONTAL] =
+#include "./shader/texture_blur.horizontal.frag"
 	;
-	map[ShaderFactory::FRAG_BLUR_VERTICAL] =
-#include "./shader/blur.vertical.frag"
+	map[ShaderFactory::FRAG_TEXTURE_BLUR_VERTICAL] =
+#include "./shader/texture_blur.vertical.frag"
+	;
+	map[ShaderFactory::FRAG_TEXTURE_RECT_BLUR_HORIZONTAL] =
+#include "./shader/textureRect_blur.horizontal.frag"
+	;
+	map[ShaderFactory::FRAG_TEXTURE_RECT_BLUR_VERTICAL] =
+#include "./shader/textureRect_blur.vertical.frag"
 	;
 	map[ShaderFactory::FRAG_MOTION_BLUR] =
 #include "./shader/motion_blur.frag"
@@ -285,8 +304,11 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::FRAG_DEFERRED_SHADING] =
 #include "./shader/deferred_shading.frag"
 	;
+	map[ShaderFactory::FRAG_BONE] =
+#include "./shader/bone.frag"
+	;
 	return map;
-};
+}
 
 static const std::unordered_map<ShaderFactory::Index, const char*> builtinShaderMap = createIndexNameMap();
 
@@ -298,6 +320,11 @@ ShaderFactory::~ShaderFactory()
 }
 
 uint32_t ShaderFactory::loadShader(Index index)
+{
+	return loadShader(index, nullptr, 0U);
+}
+
+uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_t macroSize)
 {
 	auto it = builtinShaderMap.find(index);
 	if(it == builtinShaderMap.end())
@@ -323,7 +350,28 @@ uint32_t ShaderFactory::loadShader(Index index)
 	const char* content = it->second;
 	
 //	slog.v(TAG, "shader type=%d, source=R\"\"(%s)\"\"", shaderType, source);
-	std::string source = VERSION + content;
+	const bool hasMacro = macros != nullptr && macroSize > 0;
+	size_t length = VERSION.length() + std::strlen(content);
+	if(hasMacro)
+	{
+		// "#define" ' ' key ' ' value '\n'
+		for(uint32_t i = 0; i < macroSize; ++i)
+			length += 10 + macros[i][0].length() + macros[i][1].length();
+	}
+	
+	std::string source;
+	source.reserve(length);
+	source.append(VERSION);
+	if(hasMacro)
+	{
+		for(uint32_t i = 0; i < macroSize; ++i)
+			source.append("#define").append(1, ' ')
+					.append(macros[i][0]).append(1, ' ')
+					.append(macros[i][1]).append(1, '\n');
+	}
+	
+	source.append(content);
+	assert(source.length() == length);
 	return loadShader(shaderType, source);
 }
 

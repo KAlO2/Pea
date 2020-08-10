@@ -5,8 +5,6 @@
 #include <vector>
 
 
-//#include "util/compiler.h"
-
 namespace pea {
 
 /**
@@ -41,15 +39,6 @@ enum class Primitive: std::uint32_t
 // uint8_t  0xFF
 // uint16_t 0xFFFF
 // uint32_t 0xFFFFFFFF
-/*
-enum class VertexFlag: std::uint32_t
-{
-	USE_PRIMITIVE_RESTART = 1,  // GL_PRIMITIVE_RESTART
-	WIREFRAME             = 1 << 1,  // GL_LINE_STRIP
-	PACKED_TEXCOORD       = 1 << 2,  // texcoords are packed in one texture
-	CIRCLE_UNWRAP         = 1 << 3,  // mark seam, generate two vertex for 0 and 2 * pi.
-};
-*/
 
 std::vector<uint32_t> lineStripToLines(const uint32_t* strip, size_t length);
 

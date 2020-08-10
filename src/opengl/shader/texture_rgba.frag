@@ -1,12 +1,14 @@
 R""(
-layout(location = 16, binding = 0) uniform sampler2D texture0;
+layout(location = 20, binding = 0) uniform sampler2D texture0;
 
 in vec2 _texcoord;
 
-out vec4 fragColor;
+out vec4 fragmentColor;
 
 void main()
 {
-	fragColor = texture(texture0, _texcoord);
+	fragmentColor = texture(texture0, _texcoord);
+//	vec3 normal = texture(texture0, _texcoord);
+//	fragmentColor = vec4(1.0, 0.0, 0.0, 1.0) + normal * 0.000001;//normal * 0.5 + 0.5;
 }
 )""

@@ -168,7 +168,8 @@ bool Texture::load(const Image& image, const Parameter& parameter)
 	{
 		// Rectangle textures contain exactly one image; they cannot have mipmaps.
 		assert(target != GL_TEXTURE_RECTANGLE);
-		glGenerateTextureMipmap(name);  // glGenerateMipmap(target);
+//		glGenerateTextureMipmap(name);  // OpenGL 4.5+
+		glGenerateMipmap(target);  // OpenGL 3.0+
 	}
 	setParameter(target, parameter);
 	return true;

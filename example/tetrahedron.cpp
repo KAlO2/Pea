@@ -16,10 +16,6 @@
 using namespace pea;
 
 
-static int32_t windowWidth = 640;
-static int32_t windowHeight = 640;
-static const char* windowTitle = "Tetrahedron";
-
 static const char* TAG = "Tetrahedron example";
 
 /* 
@@ -247,7 +243,7 @@ uint32_t createProgram()
 	
 	std::string vertexShaderSource = ShaderFactory::VERSION + macros + R""(
 #if USE_INSTANCING
-layout(location = 6) in vec4 instance;
+layout(location =12) in vec4 instance;
 #else
 layout(location = 0) uniform mat4 model;
 #endif
@@ -302,6 +298,9 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// open a window and create its OpenGL context
+	int32_t windowWidth = 640;
+	int32_t windowHeight = 640;
+	const char* windowTitle = "Tetrahedron";
 	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, nullptr/* monitor */, nullptr/* share */);
 	if(!window)
 	{

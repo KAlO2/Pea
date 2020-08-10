@@ -11,25 +11,33 @@ namespace pea {
 class Ray
 {
 private:
-	vec3f position;
+	vec3f origin;
 	vec3f direction;  ///< normalized vector
 
 public:
-	Ray(const vec3f& position, const vec3f& direction);
+	/**
+	 * construct a ray with two points.
+	 */
+	static Ray from(const vec3f& point0, const vec3f& point1);
+	
+	/**
+	 * construct a ray with origin and direction.
+	 */
+	Ray(const vec3f& origin, const vec3f& direction);
 
-	void setPosition(const vec3f& position);
-	const vec3f& getPosition() const;
+	void setOrigin(const vec3f& origin);
+	const vec3f& getOrigin() const;
 
 	void setDirection(const vec3f& direction);
 	const vec3f& getDirection() const;
 
 	/**
-	 * shorthand for @code setPosition(getPosition() + offset) @endcode
+	 * shorthand for @code setorigin(getorigin() + offset) @endcode
 	 */
 	Ray& operator +=(const vec3f& offset);
 	
 	/**
-	 * shorthand for @code setPosition(getPosition() - offset) @endcode
+	 * shorthand for @code setorigin(getorigin() - offset) @endcode
 	 */
 	Ray& operator -=(const vec3f& offset);
 
@@ -38,15 +46,20 @@ public:
 	 * @return point on the ray.
 	 */
 	vec3f at(float t) const;
+	
+	/**
+	 * distance between point and line
+	 */
+	float distance(const vec3f& point) const;
 };
 
-inline void         Ray::setPosition(const vec3f& position) { this->position = position; }
-inline const vec3f& Ray::getPosition() const                { return position;           }
+inline void         Ray::setOrigin(const vec3f& origin) { this->origin = origin; }
+inline const vec3f& Ray::getOrigin() const              { return origin;         }
 
 inline const vec3f& Ray::getDirection() const { return direction; }
 
-inline Ray& Ray::operator +=(const vec3f& offset) { position += offset; return *this; }
-inline Ray& Ray::operator -=(const vec3f& offset) { position -= offset; return *this; }
+inline Ray& Ray::operator +=(const vec3f& offset) { origin += offset; return *this; }
+inline Ray& Ray::operator -=(const vec3f& offset) { origin -= offset; return *this; }
 
 }  // namespace pea
 #endif  // PEA_GEOMETRY_RAY_H_
