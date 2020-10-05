@@ -427,10 +427,10 @@ public:
 	{
 		const T c = std::cos(angle), s = std::sin(angle);
 		return mat4<T>(
-			c, 0,-s, 0,
-			0, 1, 0, 0,
-			s, 0, c, 0,
-			0, 0, 0, 1);
+			 c, 0, s, 0,
+			 0, 1, 0, 0,
+			-s, 0, c, 0,
+			 0, 0, 0, 1);
 	}
 	
 	mat4<T> rotateY(T angle)
@@ -449,9 +449,9 @@ public:
 		a[8] = s*a[10] + c*a[8];
 		a[10]= tmp;
 
-		tmp = c*a[15] - s*a[12];
-		a[12]=c*a[12] + s*a[15];
-		a[15]= tmp;
+		tmp  = c*a[14] - s*a[12];
+		a[12]= s*a[14] + c*a[12];
+		a[14]= tmp;
 
 		return *this;
 	}

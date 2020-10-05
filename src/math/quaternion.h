@@ -28,12 +28,12 @@ private:
 	T x, y, z, w;
 
 public:
-	quaternion(): quaternion(T(0), T(0), T(0), T(1)) {}
-	quaternion(const T& x, const T& y, const T& z, const T& w): x(x), y(y), z(z), w(w) {}
-	quaternion(const T& scalar, const vec3<T>& vector): x(vector.x), y(vector.y), z(vector.z), w(scalar) {}
+	constexpr quaternion(): quaternion(T(0), T(0), T(0), T(1)) {}
+	constexpr quaternion(const T& x, const T& y, const T& z, const T& w): x(x), y(y), z(z), w(w) {}
+	constexpr quaternion(const T& scalar, const vec3<T>& vector): x(vector.x), y(vector.y), z(vector.z), w(scalar) {}
 	
 	// copy constructor and destructor, the compiler can handle it well.
-	quaternion(const quaternion<T>& other) = default;
+	constexpr quaternion(const quaternion<T>& other) = default;
 	~quaternion() = default;
 	
 	/**
@@ -43,7 +43,7 @@ public:
 	 */
 	quaternion(const vec3<T>& gimbal)
 	{
-		vec3<T> theta = gimbal/2;
+		vec3<T> theta = gimbal / 2;
 		vec3<T> sinV(std::sin(theta.x), std::sin(theta.y), std::sin(theta.z));
 		vec3<T> cosV(std::cos(theta.x), std::cos(theta.y), std::cos(theta.z));
 
@@ -103,13 +103,13 @@ public:
 	 * U^2 = 1, I^2 = J^2 = K^2 = -1,
 	 * IJ = -JI = K, JK = -KJ = I, KI = -IK = J.
 	 */
-	quaternion(const std::complex<T>& a, const std::complex<T>& b):
+	constexpr quaternion(const std::complex<T>& a, const std::complex<T>& b):
 			w(a.real()), x(a.imag()),
 			y(b.real()), z(b.imag())
 	{
 	}
 
-	quaternion<T>& operator =(const quaternion<T>& rhs)
+	constexpr quaternion<T>& operator =(const quaternion<T>& rhs)
 	{
 		if(this != &rhs)
 		{
@@ -121,12 +121,12 @@ public:
 		return *this;
 	}
 
-	quaternion<T>& operator +=(const T& s) { w += s; return *this; }
-	quaternion<T>& operator -=(const T& s) { w -= s; return *this; }
-	quaternion<T>& operator *=(const T& s) { w *= s; x *= s; y *= s; z *= s; return *this; }
-	quaternion<T>& operator /=(const T& s) { w /= s; x /= s; y /= s; z /= s; return *this; }
+	constexpr quaternion<T>& operator +=(const T& s) { w += s; return *this; }
+	constexpr quaternion<T>& operator -=(const T& s) { w -= s; return *this; }
+	constexpr quaternion<T>& operator *=(const T& s) { w *= s; x *= s; y *= s; z *= s; return *this; }
+	constexpr quaternion<T>& operator /=(const T& s) { w /= s; x /= s; y /= s; z /= s; return *this; }
 
-	friend quaternion<T> operator +(const quaternion<T>& lhs, const quaternion<T>& rhs)
+	friend constexpr quaternion<T> operator +(const quaternion<T>& lhs, const quaternion<T>& rhs)
 	{
 		quaternion<T> q;
 		q.x = lhs.x + rhs.x;
@@ -136,7 +136,7 @@ public:
 		return q;
 	}
 	
-	friend quaternion<T> operator *(const T& s, const quaternion<T>& q)
+	friend constexpr quaternion<T> operator *(const T& s, const quaternion<T>& q)
 	{
 		quaternion<T> ret;
 		ret.x = s * q.x;
@@ -146,7 +146,7 @@ public:
 		return ret;
 	}
 
-	friend quaternion<T> operator *(const quaternion<T>& lhs, const quaternion<T>& rhs)
+	friend constexpr quaternion<T> operator *(const quaternion<T>& lhs, const quaternion<T>& rhs)
 	{
 		quaternion<T> result(lhs);
 		result *= rhs;
@@ -158,7 +158,7 @@ public:
 	 * symbolically, "q *= p;" means "q = q * p;"
 	 * and "q /= p;" means "q = q * inverse_of(p);"
 	 */
-	quaternion<T>& operator +=(const quaternion<T>& q)
+	constexpr quaternion<T>& operator +=(const quaternion<T>& q)
 	{
 		w += q.w;
 		x += q.x;
@@ -167,7 +167,7 @@ public:
 		return *this;
 	}
 
-	quaternion<T>& operator -=(const quaternion<T>& q)
+	constexpr quaternion<T>& operator -=(const quaternion<T>& q)
 	{
 		w -= q.w;
 		x -= q.x;
@@ -180,7 +180,7 @@ public:
 	 * q1 = s1 + v1, q2 = s2 + v2, where s is scalar component, v is vector component
 	 * q1q2 = (s1, v1)*(s2, v2) = (s1*s2 - dot(v1, v2), s1*v2 + s2*v1 + cross(v1*v2))
 	 */
-	quaternion<T>& operator *=(const quaternion<T>& q)
+	constexpr quaternion<T>& operator *=(const quaternion<T>& q)
 	{
 /*
 		T _w = w*q.w - x*q.x - y*q.y - z*q.z;
@@ -205,7 +205,7 @@ public:
 		return *this;
 	}
 
-	quaternion<T>& operator /=(const quaternion<T>& q)
+	constexpr quaternion<T>& operator /=(const quaternion<T>& q)
 	{
 		// the reciprocal of q is q^(-1) = conj(q)/(norm(q)*norm(q));
 		T _w = x*q.z + y*q.w + z*q.x + w*q.y;
@@ -222,18 +222,18 @@ public:
 		return *this;
 	}
 
-	friend bool operator ==(const quaternion<T>& q1, const quaternion<T>& q2)
+	friend constexpr bool operator ==(const quaternion<T>& q1, const quaternion<T>& q2)
 	{
 		return fuzzyEqual(q1.w, q2.w) &&
 				fuzzyEqual(q1.x, q2.x) && fuzzyEqual(q1.y, q2.y) && fuzzyEqual(q1.z, q2.z);
 	}
 	
-	bool operator !=(const vec3<T>& rhs) const { return !(*this == rhs); }
+	bool constexpr operator !=(const vec3<T>& rhs) const { return !(*this == rhs); }
 	
 	/**
 	 * cast a quaternion to 3x3 matrix, note that rotation matrices here apply to column vectors.
 	 */
-	mat3<T> mat3_cast() const
+	constexpr mat3<T> mat3_cast() const
 	{
 		T xx = x*x, yy = y*y, zz = z*z;
 		T xy = x*y, yz = y*z, xz = x*z;
@@ -303,7 +303,7 @@ public:
 	 * The conjugate of q is the quaternion q* = w -xi - yj -zk.
 	 * Note that if p and q are quaternions, then (pq)∗ = q∗p∗, not p∗q∗.
 	 */
-	inline quaternion<T> conjugate() const
+	inline constexpr quaternion<T> conjugate() const
 	{
 		return quaternion<T>(-x, -y, -z, w);
 	}
@@ -382,7 +382,7 @@ public:
 		return one_minus_t * q0 + t * q1;
 	}
 
-	friend T dot(const quaternion<T>& lhs, const quaternion<T>& rhs)
+	friend constexpr T dot(const quaternion<T>& lhs, const quaternion<T>& rhs)
 	{
 		return lhs.w*rhs.w + lhs.x*rhs.x + lhs.y*rhs.y + lhs.z*rhs.z;
 	}

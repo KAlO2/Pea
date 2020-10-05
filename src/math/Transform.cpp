@@ -8,7 +8,8 @@ Transform::Transform():
 		translation(0, 0, 0),
 		rotation(0, 0, 0),
 		scaling(1, 1, 1),
-		axisLock(0)
+		axisLock(0),
+		rotationOrder(RotationOrder::ZYX)
 {
 }
 
@@ -63,14 +64,37 @@ There are six possible ways you can describe rotation using Euler angles — X-Y
 	float cy = std::cos(rotation.y), sy = std::sin(rotation.y);
 	float cz = std::cos(rotation.z), sz = std::sin(rotation.z);
 	float r00 = cy * cz, r01 = sx * sy * cz - cx * sz, r02 = cx * sy * cz + sx * sz;
-	float r10 = cy * sz, r11 = sx * sy * sz + cx * cz, r12 = cx * sz * sz - sx * cz;
+	float r10 = cy * sz, r11 = sx * sy * sz + cx * cz, r12 = cx * sy * sz - sx * cz;
 	float r20 =-sy,      r21 = sx * cy,                r22 = cx * cy;
 	
 	mat4f m;  // T * R * S
-	m[0][0] = r00 * scaling.x;  m[0][1] = r01 * scaling.y;  m[0][2] = r02 * scaling.z;  m[0][3] = translation.x;
-	m[1][0] = r10 * scaling.x;  m[1][1] = r11 * scaling.y;  m[1][2] = r12 * scaling.z;  m[1][3] = translation.y;
-	m[2][0] = r20 * scaling.x;  m[2][1] = r21 * scaling.y;  m[2][2] = r22 * scaling.z;  m[2][3] = translation.z;
-	m[3][0] =             0;  m[3][1] =             0;  m[3][2] =             0;  m[3][3] =             1;
+	m[0][0] = r00 * scaling.x;  m[1][0] = r01 * scaling.y;  m[2][0] = r02 * scaling.z;  m[3][0] = translation.x;
+	m[0][1] = r10 * scaling.x;  m[1][1] = r11 * scaling.y;  m[2][1] = r12 * scaling.z;  m[3][1] = translation.y;
+	m[0][2] = r20 * scaling.x;  m[1][2] = r21 * scaling.y;  m[2][2] = r22 * scaling.z;  m[3][2] = translation.z;
+	m[0][3] =               0;  m[1][3] =               0;  m[2][3] =               0;  m[3][3] =             1;
+	return m;
+}
+
+mat4f Transform::getInverseTransform() const
+{
+	float cx = std::cos(rotation.x), sx = std::sin(rotation.x);
+	float cy = std::cos(rotation.y), sy = std::sin(rotation.y);
+	float cz = std::cos(rotation.z), sz = std::sin(rotation.z);
+	float r00 = cy * cz, r01 = sx * sy * cz - cx * sz, r02 = cx * sy * cz + sx * sz;
+	float r10 = cy * sz, r11 = sx * sy * sz + cx * cz, r12 = cx * sy * sz - sx * cz;
+	float r20 =-sy,      r21 = sx * cy,                r22 = cx * cy;
+	float ix = 1 / scaling.x, iy = 1 / scaling.y, iz = 1 / scaling.z;
+	const float &tx = translation.x, &ty = translation.y, &tz = translation.z;
+	
+	// [ix        ]  [r00 r10 r20  ]  [1     -tx]
+	// [   iy     ]  [r01 r11 r21  ]  [  1   -ty]
+	// [      iz  ]  [r02 r12 r22  ]  [    1 -tz]
+	// [         1]  [            1]  [        1]
+	mat4f m;  // (T * R * S)^-1 = S^-1 * R^-1 * T^-1
+	m[0][0] = r00 * ix;  m[1][0] = r10 * ix;  m[2][0] = r20 * ix;  m[3][0] = -ix * (r00 * tx + r10 * ty + r20 * tz);
+	m[0][1] = r01 * iy;  m[1][1] = r11 * iy;  m[2][1] = r21 * iy;  m[3][1] = -iy * (r01 * tx + r11 * ty + r21 * tz);
+	m[0][2] = r02 * iz;  m[1][2] = r12 * iz;  m[2][2] = r22 * iz;  m[3][2] = -iz * (r02 * tx + r12 * ty + r22 * tz);
+	m[0][3] =        0;  m[1][3] =        0;  m[2][3] =        0;  m[3][3] =              1;
 	return m;
 }
 
@@ -95,7 +119,15 @@ const vec3f& Transform::getTransform(uint8_t axis) const
 	default:  throw std::invalid_argument("axis must be Transform::T/R/S");
 	}
 }
-
+/*
+Transform& Transform::inverse()
+{
+	translation = -translation;
+	rotation = -rotation;
+	scaling = vec3f(1.0f / scaling.x, 1.0f / scaling.y, 1.0f / scaling.z);
+	return *this;
+}
+*/
 void Transform::translate(uint8_t axis, float offset)
 {
 	axis &= ~static_cast<uint8_t>(axisLock >> TRANSLATION_SHIFT);

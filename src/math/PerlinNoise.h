@@ -26,6 +26,8 @@ template <typename T>
 class PerlinNoise
 {
 private:
+	static constexpr int32_t floor(const T& x);
+	
 	static T dot(uint8_t hash, const T& x);
 	static T dot(uint8_t hash, const T& x, const T& y);
 	
@@ -85,6 +87,14 @@ public:
 	 */
 //	T octaveNoise(vec3<T>& point, int32_t octave = 8, T lacunarity = 2.0, T gain = 0.5);
 };
+
+template <typename T>
+constexpr int32_t PerlinNoise<T>::floor(const T& x)
+{
+	int32_t i = static_cast<int32_t>(x);
+//	return x > 0? i: i - 1;
+	return i - (x <= 0);
+}
 
 template <typename T>
 inline const uint8_t& PerlinNoise<T>::at(int32_t i) const

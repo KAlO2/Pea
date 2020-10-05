@@ -1,11 +1,7 @@
 #ifndef PEA_MATH_MAT3X4_H_
 #define PEA_MATH_MAT3X4_H_
 
-#include <iostream>
-
 #include "math/mat3.h"
-#include "math/quaternion.h"
-
 
 namespace pea {
 
@@ -47,6 +43,7 @@ public:
 			origin(origin)
 	{
 //		assert(M.det() >= std::numeric_limits<T>::epsilon());  // "input basis is a singular matrix"
+		static_assert(sizeof(mat3x4<T>) == 3 * 4 * sizeof(T));
 	}
 
 	explicit mat3x4(const vec3<T>& vx, const vec3<T>& vy, const vec3<T>& vz, const vec3<T>& origin = vec3<T>(T(0))):
@@ -56,6 +53,9 @@ public:
 		assert(!isZero<T>(basis.det()));  // "three vector bases are coplanar"
 	}
 
+	T* data()             noexcept { return basis.data(); }
+	const T* data() const noexcept { return basis.data(); }
+	
 	vec3<T> getScale() const
 	{
 		// fast return
@@ -137,7 +137,7 @@ public:
 
 	friend bool fuzzyEqual(const mat3x4<T>& lhs, const mat3x4<T>& rhs) { return lhs == rhs; }
 
-	void loadIdentity()
+	void setIdentity()
 	{
 		basis.identity();
 		origin = vec3<T>(T(0));

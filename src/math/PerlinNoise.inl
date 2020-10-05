@@ -4,7 +4,7 @@
 #include <random>
 
 
-// putting #include on the first line makes gedit syntax highlight.
+// putting #include on the first line makes gedit syntax highlight in Gedit.
 #ifndef PEA_MATH_PERLIN_NOISE_H_
 #error "please #include \"math/PerlinNoise.h\""
 #endif
@@ -202,15 +202,16 @@ template <typename T>
 T PerlinNoise<T>::evaluate(const T& x, const T& y)
 {
 	// unit grid cell containing point
-	T x_ = std::floor(x), y_ = std::floor(y);
-	int32_t i = static_cast<int32_t>(x_);
-	int32_t j = static_cast<int32_t>(y_);
+	T x_i = std::floor(x), y_i = std::floor(y);
+	int32_t i = static_cast<int32_t>(x_i);
+	int32_t j = static_cast<int32_t>(y_i);
 	
 	// relative XY coordinates of point within that cell
-	T x0 = x - x_, y0 = y - y_;
+	T x0 = x - x_i, y0 = y - y_i;
 	T x1 = x0 - 1, y1 = y0 - 1;
 	T u = fade(x0), v = fade(y0);
-
+//	assert(0 <= x0 && x0 < 1 && 0 <= y0 && y0 < 1);
+	
 	// calculate a set of eight hashed gradient
 	// leave X, Y without brackets intentionally, you will see.
 	auto hash = [this](int32_t i, int32_t j) { return at(at(i) + j); };

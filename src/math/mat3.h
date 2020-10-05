@@ -288,6 +288,14 @@ public:
 	}
 
 	vec3<T> diagonal() const { return vec3<T>(a[0], a[4], a[8]); }
+	
+	mat3<T>& translate(const vec2<T>& v)
+	{
+		a[6] += v.x;
+		a[7] += v.y;
+		return *this;
+	}
+	
 #if 0
 	static mat3<T> rotate(T angle)
 	{
@@ -329,6 +337,29 @@ public:
 		a[0] *= s; a[3] *= s; a[6] *= s;
 		a[1] *= s; a[4] *= s; a[7] *= s;
 //		a[2] *= 1; a[5] *= 1; a[8] *= 1;
+		return *this;
+	}
+	
+	mat3<T>& skew(const vec2<T>& angle)
+	{
+		float x = std::tan(angle.x);
+		float y = std::tan(angle.y);
+#if 0
+		mat3<T> m(1, x, 0,
+				y, 1, 0,
+				0, 0, 1);
+		*this = m * *this;
+#else
+		float _0 = a[0] + x * a[1];
+		float _1 = y * a[0] + a[1];
+		a[0] = _0;
+		a[1] = _1;
+		
+		float _3 = a[3] + x * a[4];
+		float _4 = y * a[3] + a[4];
+		a[3] = _3;
+		a[4] = _4;
+#endif
 		return *this;
 	}
 	

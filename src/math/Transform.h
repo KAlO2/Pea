@@ -6,13 +6,19 @@
 
 namespace pea {
 
-class Transform
+enum class RotationOrder: uint8_t
+{
+	XYZ,
+	XZY,
+	YXZ,
+	YZX,
+	ZXY,
+	ZYX,  // default
+};
+
+class alignas(4) Transform
 {
 public:
-	vec3f translation;
-	vec3f rotation;
-	vec3f scaling;
-
 	static constexpr uint8_t GLOBAL = 0;
 	static constexpr uint8_t LOCAL = 1;
 	
@@ -32,7 +38,15 @@ public:
 	static constexpr uint16_t TRANSLATION_MASK = 0b111'000'000;
 	static constexpr uint16_t ROTATION_MASK    = 0b000'111'000;
 	static constexpr uint16_t SCALING_MASK     = 0b000'000'111;
+	
+
+public:
+	vec3f translation;
+	vec3f rotation;  // angle in radians
+	vec3f scaling;
+
 	uint16_t axisLock;
+	RotationOrder rotationOrder;
 	
 public:
 	Transform();
@@ -46,9 +60,12 @@ public:
 	void setTransform(const mat4f& transform);
 	
 	mat4f getTransform() const;
+	mat4f getInverseTransform() const;
 	
 	void setTransform(uint8_t axis, const vec3f& variable);
 	const vec3f& getTransform(uint8_t axis) const;
+	
+//	Transform& inverse();
 	
 	/**
 	 * @param[in] axis X, Y, Z or combinations.

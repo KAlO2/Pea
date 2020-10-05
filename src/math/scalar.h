@@ -106,7 +106,7 @@ public:
 };
 
 template <typename T>
-inline bool isZero(const T& value)
+inline constexpr bool isZero(const T& value)
 {
 //	static_assert(!std::is_floating_point<T>::value, "limited to scalar floating-point type only");
 	static_assert(std::is_integral<T>::value, "limited to integral type only");
@@ -122,13 +122,13 @@ inline bool isZero(const T& value)
 	one or more template parameters, so they still go in a .h file.
 */
 template <>
-inline bool isZero<float>(const float& value)
+inline constexpr bool isZero<float>(const float& value)
 {
 	return std::abs(value) <= std::sqrt(std::numeric_limits<float>::epsilon());
 }
 
 template <>
-inline bool isZero<double>(const double& value)
+inline constexpr bool isZero<double>(const double& value)
 {
 	// std::cbrt(x) is not equivalent to std::pow(x, 1.0/3) because std::pow cannot raise a
 	// negative base to a fractional exponent.
@@ -136,7 +136,7 @@ inline bool isZero<double>(const double& value)
 }
 
 template <>
-inline bool isZero<long double>(const long double& value)
+inline constexpr bool isZero<long double>(const long double& value)
 {
 	return std::abs(value) <= std::pow(std::numeric_limits<long double>::epsilon(), 1.0/4);
 }
@@ -156,32 +156,21 @@ inline bool isZero<long double>(const long double& value)
  * @return Whether the two floating values are within epsilon of each other
  */
 template <typename T>
-inline bool fuzzyEqual(const T& a, const T& b)
+inline constexpr bool fuzzyEqual(const T& a, const T& b)
 {
-	// http://floating-point-gui.de/errors/comparison/
-	static_assert(std::is_floating_point<T>::value, "limited to scalar floating-point type only");
-	if(a == b)  // shortcut, handles infinities
-		return true;
-//	else if(a == T(0) || b == T(0) || isZero<T>(a - b))
-	return isZero<T>(a - b);
-}
-
-template <>
-inline bool fuzzyEqual<int32_t>(const int& a, const int& b)
-{
-	return a == b;
-}
-
-template <>
-inline bool fuzzyEqual<uint32_t>(const uint32_t& a, const uint32_t& b)
-{
-	return a == b;
-}
-
-template <>
-inline bool fuzzyEqual<std::size_t>(const std::size_t& a, const std::size_t& b)
-{
-	return a == b;
+	if constexpr(std::is_floating_point<T>::value)
+	{
+		// http://floating-point-gui.de/errors/comparison/
+		if(a == b)  // shortcut, handles infinities
+			return true;
+//		else if(a == T(0) || b == T(0) || isZero<T>(a - b))
+		return isZero<T>(a - b);
+	}
+	else
+	{
+		static_assert(std::is_integral<T>::value, "limited to integer type only");
+		return a == b;
+	}
 }
 
 // C++20 got bool has_single_bit(T x); function in header <bit>
@@ -199,7 +188,7 @@ inline bool isPowerOfTwo(T n)
  * @return The angle in radians
  */
 template <typename T>
-inline T deg2rad(const T& degrees)
+inline constexpr T deg2rad(const T& degrees)
 {
 	static_assert(std::is_floating_point<T>::value, "limited to floating-point type only");
 	return degrees / (180 / static_cast<T>(M_PI));
@@ -212,7 +201,7 @@ inline T deg2rad(const T& degrees)
  * @return The angle in degrees
  */
 template <typename T>
-inline T rad2deg(const T& radians)
+inline constexpr T rad2deg(const T& radians)
 {
 	static_assert(std::is_floating_point<T>::value, "limited to floating-point type only");
 	return radians * (180 / static_cast<T>(M_PI));
@@ -243,7 +232,7 @@ constexpr long double operator "" _deg(unsigned long long int degree)
  *   [l2min, l2max] overlaps, otherwise false.
  */
 template <typename T>
-inline bool overlap(const T& l1min, const T& l1max,
+inline constexpr bool overlap(const T& l1min, const T& l1max,
 		const T& l2min, const T& l2max)
 {
 	assert(l1min <= l1max && l2min <= l2max);
@@ -261,7 +250,7 @@ inline bool overlap(const T& l1min, const T& l1max,
  * @return The clamped value
  */
 template <typename T>
-inline const T clamp(const T& value, const T& min, const T& max)
+inline constexpr const T clamp(const T& value, const T& min, const T& max)
 {
 	assert(min <= max && "invalid clamp range");
 #if 0
@@ -287,7 +276,7 @@ inline const T clamp(const T& value, const T& min, const T& max)
  * @return The interpolated value
  */
 template <typename T>
-inline T lerp(const T& start, const T& end, const T& amount)
+inline constexpr T lerp(const T& start, const T& end, const T& amount)
 {
 	static_assert(std::is_floating_point<T>::value);
 	return start + (end - start) * amount;
@@ -306,7 +295,7 @@ inline T lerp(const T& start, const T& end, const T& amount)
  * @return The interpolated value
  */
 template <typename T>
-inline T smoothStep(const T& start, const T& end, const T& amount)
+inline constexpr T smoothStep(const T& start, const T& end, const T& amount)
 {
 	float a = amount * amount * (3 - 2 * amount);
 	return lerp<T>(start, end, a);
