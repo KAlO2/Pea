@@ -189,6 +189,7 @@ std::vector<uint32_t> Grid::getIndexData(uint32_t stepsX, uint32_t stepsY, Primi
 	
 	case Primitive::TRIANGLE_STRIP:
 	case Primitive::QUADRILATERAL_STRIP:
+		// GL_TRIANGLE_strip and GL_QUAD_STRIP can share the same indexing.
 		for(uint32_t j = 1; j <= stepsY; ++j)
 		{
 			T offset = j * incrementX;

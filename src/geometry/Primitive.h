@@ -9,6 +9,9 @@ namespace pea {
 
 /**
  * https://www.khronos.org/opengl/wiki/Primitive
+ * POINTS can be drawn with
+ *     glDrawArrays(GL_POINTS, 0, Geometry::getIndexSize());
+ * which you don't have to supply indice data.
  */
 enum class Primitive: std::uint32_t
 {
