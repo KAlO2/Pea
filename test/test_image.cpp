@@ -186,7 +186,9 @@ void openImage(const std::string path)
 	// In case of space in command, filename should always enclose with ""
 	stream << '\"' << path << '\"';
 	std::string command = stream.str();
-	system(command.c_str());
+	int ret = system(command.c_str());
+	if(ret != 0)
+		slog.i(TAG, "system command error (%d)", ret);
 }
 
 TEST_CASE("Image_TGA", tag)
@@ -227,3 +229,17 @@ TEST_CASE("Image_TGA", tag)
 */
 }
 
+TEST_CASE("ColorF", tag)
+{
+	vec4f white(1.0, 1.0, 1.0, 1.0);
+	REQUIRE(ColorF::getColor(white) == 0xFFFFFFFF);
+	
+	vec4f black(0.0, 0.0, 0.0, 1.0);
+	REQUIRE(ColorF::getColor(black) == 0xFF000000);
+	
+	vec4f red(1.0, 0.0, 0.0, 1.0);
+	REQUIRE(ColorF::getColor(red) == 0xFF0000FF);
+	
+	vec4f gray(0.5, 0.5, 0.5, 1.0);
+	REQUIRE(ColorF::getColor(gray) == 0xFF7F7F7F);
+}

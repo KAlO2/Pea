@@ -3,6 +3,12 @@
 #include "geometry/Sphere.h"
 #include "scene/Camera.h"
 
+/*
+	[comment]
+	To test the matrix inversion code, we used glm / GNU Octave to output the values of a matrix and
+	its inverse. Of course this implies that glm actually does the right thing, but we can probably 
+	agree, that is actually does;).
+*/
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>

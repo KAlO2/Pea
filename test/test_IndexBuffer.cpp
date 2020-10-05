@@ -8,7 +8,7 @@ static const char* tag = "[opengl]";
 
 TEST_CASE("IndexBuffer", tag)
 {
-	IndexBuffer buffer0;
+	IndexBuffer buffer0(IndexBuffer::Type::UINT8);
 	REQUIRE(buffer0.data() == nullptr);
 	REQUIRE(buffer0.length() == 0);
 /*

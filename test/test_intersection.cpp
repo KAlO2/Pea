@@ -95,14 +95,14 @@ TEST_CASE("cylinder ray along Z", tag)
 	hit = Collision::castRay(ray, cylinder, position, hitInfo);
 	REQUIRE(hit == false);
 	
-	ray.setPosition(vec3f(0, 0.5, 0.5));
+	ray.setOrigin(vec3f(0, 0.5, 0.5));
 	hit = Collision::castRay(ray, cylinder, position, hitInfo);
 	REQUIRE(hit == true);
 	REQUIRE(hitInfo.coordinate == 1.5);
 	REQUIRE(hitInfo.normal == vec3f(0, 0, -1));
 	REQUIRE(hitInfo.inside);
 	
-	ray.setPosition(vec3f(0, 0.5, -0.5));
+	ray.setOrigin(vec3f(0, 0.5, -0.5));
 	hit = Collision::castRay(ray, cylinder, position, hitInfo);
 	REQUIRE(hit == true);
 	REQUIRE(hitInfo.coordinate == 0.5);
@@ -123,11 +123,11 @@ TEST_CASE("cylinder ray along Y", tag)
 	hit = Collision::castRay(ray, cylinder, position, hitInfo);
 	REQUIRE(hit == false);
 	
-	ray.setPosition(vec3f(-2, -2, 0.5));
+	ray.setOrigin(vec3f(-2, -2, 0.5));
 	hit = Collision::castRay(ray, cylinder, position, hitInfo);
 	REQUIRE(hit == false);
 	
-	ray.setPosition(vec3f(0, 0.5, 0.5));
+	ray.setOrigin(vec3f(0, 0.5, 0.5));
 	hit = Collision::castRay(ray, cylinder, position, hitInfo);
 	REQUIRE(hit == true);
 	REQUIRE(hitInfo.coordinate == 0.5);
@@ -145,11 +145,11 @@ TEST_CASE("BoundingBox", tag)
 	hit = Collision::castRay(ray, box, hitInfo);
 	REQUIRE(hit == false);
 	
-	ray.setPosition(vec3f(0.5, 3, 0.5));
+	ray.setOrigin(vec3f(0.5, 3, 0.5));
 	hit = Collision::castRay(ray, box, hitInfo);
 	REQUIRE(hit == false);
 	
-	ray.setPosition(vec3f(0.5, 0.5, 0.5));
+	ray.setOrigin(vec3f(0.5, 0.5, 0.5));
 	hit = Collision::castRay(ray, box, hitInfo);
 	REQUIRE(hit == true);
 	REQUIRE(hitInfo.coordinate == 0.5);
@@ -163,7 +163,7 @@ TEST_CASE("BoundingBox", tag)
 	REQUIRE(hitInfo.normal == vec3f(0, 0, -1));
 	REQUIRE(hitInfo.inside);
 	
-	ray.setPosition(vec3f(0.5, 0.5, -0.5));
+	ray.setOrigin(vec3f(0.5, 0.5, -0.5));
 	hit = Collision::castRay(ray, box, hitInfo);
 	REQUIRE(hit == true);
 	REQUIRE(hitInfo.coordinate == 0.5);

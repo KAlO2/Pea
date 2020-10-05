@@ -19,6 +19,7 @@ set(PEA_TEST_SOURCE
 	test_image.cpp
 	test_intersection.cpp
 	test_math.cpp
+	test_Transform.cpp
 	test_utility.cpp
 	test_IndexBuffer.cpp
 	main.cpp
@@ -63,7 +64,7 @@ link_libraries(pea
 
 createTestCase(ConvexHull)
 createTestCase(noise)
-
+createTestCase(Random)
 #[[
 createTestCase(math)
 createTestCase(util)

@@ -472,21 +472,23 @@ TEST_CASE("Cylinder without cap", tag)
 	constexpr float radius = 1, height = 2;
 	Cylinder cylinder(radius, height);
 	Cylinder::setSlice(4);
+	Cylinder::setStack(2);
 	Cylinder::setCapFillType(CapFillType::NONE);
 	
 	const vec3f positionsExpected[] =
 	{
-		vec3f(+1,  0, +1), vec3f(+1,  0, -1),
-		vec3f( 0,  1, +1), vec3f( 0,  1, -1),
-		vec3f(-1,  0, +1), vec3f(-1,  0, -1),
-		vec3f( 0, -1, +1), vec3f( 0, -1, -1),
+		vec3f(1, 0, -1), vec3f(0, 1, -1), vec3f(-1, 0, -1), vec3f(0, -1, -1),  // bottom circle
+		vec3f(1, 0,  0), vec3f(0, 1,  0), vec3f(-1, 0,  0), vec3f(0, -1,  0),  // middle circle
+		vec3f(1, 0, +1), vec3f(0, 1, +1), vec3f(-1, 0, +1), vec3f(0, -1, +1),  // top circle
 	};
 	std::vector<vec3f> positions = cylinder.getVertexData();
 	MATCH_ARRAY(positions, positionsExpected);
 	
 	const uint32_t triangleStripIndicesExpected[] =
 	{
-		0, 1, 2, 3, 4, 5, 6, 7, 0, 1,
+		4, 0, 5, 1, 6, 2, 7, 3, 4, 0,
+		0, 8,
+		8, 4, 9, 5, 10, 6, 11, 7, 8, 4,
 	};
 	std::vector<uint32_t> indices = Cylinder::getVertexIndex(Primitive::TRIANGLE_STRIP);
 	MATCH_ARRAY(indices, triangleStripIndicesExpected);
@@ -500,8 +502,6 @@ TEST_CASE("Cylinder without cap", tag)
 	};
 	std::vector<vec3f> normals = Cylinder::getNormalData();
 	MATCH_ARRAY(normals, normalsExpected);
-	
-	
 }
 
 TEST_CASE("Cylinder with triangle fan", tag)
@@ -509,45 +509,53 @@ TEST_CASE("Cylinder with triangle fan", tag)
 	constexpr float radius = 1, height = 2;
 	Cylinder cylinder(radius, height);
 	Cylinder::setSlice(4);
+	Cylinder::setStack(2);
 	Cylinder::setCapFillType(CapFillType::TRIANGLE_FAN);
 	
 	const vec3f positionsExpected[] =
 	{
-		vec3f(+1,  0, +1), vec3f(+1,  0, -1),
-		vec3f( 0,  1, +1), vec3f( 0,  1, -1),
-		vec3f(-1,  0, +1), vec3f(-1,  0, -1),
-		vec3f( 0, -1, +1), vec3f( 0, -1, -1),
-		vec3f( 0,  0, +1), vec3f( 0,  0, -1),
+		vec3f(0, 0, -1),
+		vec3f(1, 0, -1), vec3f(0, 1, -1), vec3f(-1, 0, -1), vec3f(0, -1, -1),  // bottom circle
+		vec3f(1, 0,  0), vec3f(0, 1,  0), vec3f(-1, 0,  0), vec3f(0, -1,  0),  // middle circle
+		vec3f(1, 0, +1), vec3f(0, 1, +1), vec3f(-1, 0, +1), vec3f(0, -1, +1),  // top circle
+		vec3f(0, 0, +1),
 	};
 	
 	const uint32_t trianglesIndicesExpected[] =
 	{
-		8, 0, 2, 8, 2, 4, 8, 4, 6, 8, 6, 0,  // top
-		0, 1, 2, 2, 1, 3,
-		2, 3, 4, 4, 3, 5,
-		4, 5, 6, 6, 5, 7,
-		6, 7, 0, 0, 7, 1,
-		9, 1, 7, 9, 7, 5, 9, 5, 3, 9, 3, 1,  // bottom
+		0, 1, 4, 0, 4, 3, 0, 3, 2, 0, 2, 1,  // bottom
+		5, 1, 6, 6, 1, 2, 6, 2, 7, 7, 2, 3, 7, 3, 8, 8, 3, 4, 8, 4, 5, 5, 4, 1,
+		9, 5, 10, 10, 5, 6, 10, 6, 11, 11, 6, 7, 11, 7, 12, 12, 7, 8, 12, 8, 9, 9, 8, 5,
+		13, 9, 10, 13, 10, 11, 13, 11, 12, 13, 12, 9,  // top
 	};
 	
 	const uint32_t triangleStripIndicesExpected[] =
 	{
-		0, 1, 2, 3, 4, 5, 6, 7, 0, 1
+		1, 0, 2, 0, 3, 0, 4, 0, 1, 0,
+		0, 5,
+		5, 1, 6, 2, 7, 3, 8, 4, 5, 1,
+		1, 9,
+		9, 5, 10, 6, 11, 7, 12, 8, 9, 5,
+		5, 13,
+		13, 9, 13, 10, 13, 11, 13, 12, 13, 9,
 	};
 	
 	const uint32_t triangleFanIndicesExpected[] =
 	{
-		8, 0, 2, 4, 6, 0,  // top fan
-		9, 1, 7, 5, 3, 1,  // bottom fan
+		0, 1, 4, 3, 2, 1,  // bottom fan
+		13, 9, 10, 11, 12, 9,  // top fan
 	};
 	
 	const uint32_t lineStripIndicesExpected[] =
 	{
-		8,  // start from top
-		0, 2, 4, 6, 0,
-		1, 3, 5, 7, 1,
-		9,
-		3, 2, 8, 4, 5, 9, 7, 6, 8
+		0,  // start from bottom
+		1, 2, 3, 4, 1,
+		5, 6, 7, 8, 5,
+		9, 10, 11, 12, 9,
+		13,  // to top
+		10, 6, 2, 0,
+		3, 7, 11, 13,
+		12, 8, 4, 0,
 	};
 	
 	std::vector<vec3f> positions = cylinder.getVertexData();
@@ -571,14 +579,14 @@ TEST_CASE("Cylinder with polygon", tag)
 	constexpr float radius = 1, height = 2;
 	Cylinder cylinder(radius, height);
 	Cylinder::setSlice(4);
+	Cylinder::setStack(2);
 	Cylinder::setCapFillType(CapFillType::POLYGON);
 	
 	const vec3f positionsExpected[] =
 	{
-		vec3f(+1,  0, +1), vec3f(+1,  0, -1),
-		vec3f( 0,  1, +1), vec3f( 0,  1, -1),
-		vec3f(-1,  0, +1), vec3f(-1,  0, -1),
-		vec3f( 0, -1, +1), vec3f( 0, -1, -1),
+		vec3f(1, 0, -1), vec3f(0, 1, -1), vec3f(-1, 0, -1), vec3f(0, -1, -1),  // bottom circle
+		vec3f(1, 0,  0), vec3f(0, 1,  0), vec3f(-1, 0,  0), vec3f(0, -1,  0),  // middle circle
+		vec3f(1, 0, +1), vec3f(0, 1, +1), vec3f(-1, 0, +1), vec3f(0, -1, +1),  // top circle
 	};
 	
 	std::vector<vec3f> positions = cylinder.getVertexData();
@@ -586,13 +594,15 @@ TEST_CASE("Cylinder with polygon", tag)
 	
 	const uint32_t triangleStripIndicesExpected[] =
 	{
-		0, 1, 2, 3, 4, 5, 6, 7, 0, 1
+		4, 0, 5, 1, 6, 2, 7, 3, 4, 0,
+		0, 8,  // degenerated
+		8, 4, 9, 5, 10, 6, 11, 7, 8, 4,
 	};
 	
 	const uint32_t polygonsIndicesExpected[] =
 	{
-		0, 2, 4, 6,
-		1, 7, 5, 3,  // 1, 3, 5, 7 CCW
+		0, 3, 2, 1,  // bottom, notice the orientation.
+		8, 9, 10, 11,  // top
 	};
 	
 	std::vector<uint32_t> indices = Cylinder::getVertexIndex(Primitive::TRIANGLE_STRIP);

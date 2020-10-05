@@ -306,6 +306,14 @@ ans =
 	REQUIRE(I == m * inv_m);
 	REQUIRE(I == inv_m * m);
 	REQUIRE(m * inv_m * mm == m * (inv_m * mm));
+	
+	float angle = 0.12345;
+	const mat4f m2 = m;
+	REQUIRE(mat4f::getRotationX(angle) * m2 == m.rotateX(angle));
+	m = m2;
+	REQUIRE(mat4f::getRotationY(angle) * m2 == m.rotateY(angle));
+	m = m2;
+	REQUIRE(mat4f::getRotationZ(angle) * m2 == m.rotateZ(angle));
 }
 
 TEST_CASE("translate rotate scale", tag)
@@ -470,23 +478,3 @@ TEST_CASE("integer power", tag)
 	REQUIRE(pea::pow<uint32_t>(2u, 3u) == 8u);
 }
 
-TEST_CASE("Transform", tag)
-{
-	Transform transform;
-	transform.translation = vec3f(1, 2, 3);
-	transform.rotation = vec3f(M_PI * 2 + M_PI / 2, 0, 0);
-	transform.scaling = vec3f(2, 3, 4);
-/*
-	[1,  ,  , 1]   [1,  ,  ,  ]   [2,  ,  ,  ]   
-	[ , 1,  , 2] * [ ,  ,-1, 1] * [ , 3,  ,  ] = 
-	[ ,  , 1, 3]   [ , 1,  , 1]   [ ,  , 4,  ]   
-	[ ,  ,  , 1]   [ ,  , 0, 1]   [ ,  ,  , 1]   
-*/
-	mat4f matrixExpect(
-			2, 0, 0, 1,
-			0, 0,-4, 2,
-			0, 3, 0, 3,
-			0, 0, 0, 1);
-	
-	REQUIRE(matrixExpect == transform.getTransform());
-}
