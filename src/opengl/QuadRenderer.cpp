@@ -86,8 +86,6 @@ static constexpr int32_t textureUnit = 0;
 void QuadRenderer::setProgram(uint32_t program)
 {
 	Object::setProgram(program);
-	glUseProgram(program);
-	glUniform1i(Shader::UNIFORM_TEX_TEXTURE0, textureUnit);
 }
 
 void QuadRenderer::updateTexcoord(const vec2f quad[4])
@@ -100,10 +98,10 @@ void QuadRenderer::updateTexcoord(const vec2f quad[4])
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void QuadRenderer::setTexture(const Texture& texture)
+void QuadRenderer::setTexture(const Texture* texture)
 {
 //	assert(unit >= 0);
-	this->texture = &texture;
+	this->texture = texture;
 }
 
 void QuadRenderer::render(const mat4f& viewProjection) const
@@ -116,8 +114,10 @@ void QuadRenderer::render(const mat4f& viewProjection) const
 	Program::setUniform(Shader::UNIFORM_MAT_VIEW_PROJECTION, viewProjection);
 */
 	if(texture)
+	{
+		glUniform1i(Shader::UNIFORM_TEX_TEXTURE0, textureUnit);
 		texture->bind(textureUnit);
-	
+	}
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	glBindVertexArray(0);

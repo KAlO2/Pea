@@ -1,8 +1,8 @@
 R""(
-layout(location = 20, binding = 0) uniform sampler2D texture0;
+layout(location = 10, binding = 0) uniform sampler2D texture0;
 
 in vec2 texcoord;
-in flat vec3 color;
+flat in vec3 color;
 
 out vec4 fragColor;
 

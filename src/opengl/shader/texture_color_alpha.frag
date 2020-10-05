@@ -1,6 +1,6 @@
 R""(
-layout(location = 20, binding = 0) uniform sampler2D texture0;
-layout(location = 13) uniform float alpha;
+layout(location =10, binding = 0) uniform sampler2D texture0;
+layout(location = 3) uniform float alpha;
 
 in vec2 _texcoord;
 

@@ -1,5 +1,5 @@
 R""(
-layout(location = 16, binding = 0) uniform sampler2D texture0;
+layout(location = 10, binding = 0) uniform sampler2D texture0;
 
 in vec3 _normal;
 

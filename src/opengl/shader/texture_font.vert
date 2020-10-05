@@ -1,5 +1,5 @@
 R""(
-layout(location = 8) uniform mat3 projection;
+layout(location = 2) uniform mat3 projection;
 
 layout(location = 0) in vec4 vertex;
 

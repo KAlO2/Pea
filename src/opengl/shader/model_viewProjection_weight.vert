@@ -1,8 +1,8 @@
 R""(
 layout(location = 0) uniform mat4 model;
-layout(location = 4) uniform mat4 viewProjection;
+layout(location = 1) uniform mat4 viewProjection;
 
-layout(location =20, binding = 0) uniform sampler1D texture0;  // color ramp
+layout(location = 10, binding = 0) uniform sampler1D texture0;  // color ramp
 
 layout(location = 0) in vec3 position;
 layout(location = 7) in float weight;

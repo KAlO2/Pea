@@ -33,7 +33,8 @@ public:
 		VERT_M_V_P_COLOR,              // position, model, view, projection, color
 		VERT_M_V_P_TEXCOORD,           // position, model, view, projection, texcoord
 		VERT_M_VP_TEXCOORD,            // position, model, viewProjection, texcoord
-		VERT_VP_TEXCOORD,              // position, viewProjection, texcoord
+		VERT_VP_TEXCOORD,              // position, viewProjection, vec2 texcoord
+		VERT_M_VP_TEXCOORD3,           // position, viewProjection, vec3 texcoord
 		VERT_M_VP_TEXCOORD_INSTANCE0,  // position, model, viewProjection, texcoord, vec4 instance
 		VERT_M_VP_TEXCOORD_INSTANCE1,  // position, model, viewProjection, texcoord, mat4 instance
 		VERT_M_VP_COLOR,               // position, model, viewProjection, color_rgb
@@ -72,6 +73,7 @@ public:
 		
 		FRAGMENT_SHADER_START = 400,
 		FRAG_UNIFORM_COLOR = 400,  // uniform (omnidirectional) scattering
+		FRAG_UNIFORM_INDEX,  // int
 		FRAG_LAMBERT,
 		FRAG_LAMBERT_FLAT,  // ditto, with flat shadding
 		FRAG_TEXTURE_LUMINANCE,
@@ -85,6 +87,8 @@ public:
 		FRAG_TEXTURE_DEPTH,
 		FRAG_TEXTURE_FONT,
 		FRAG_TEXTURE_CUBE,
+		FRAG_TEXTURE_BLEND,
+		FRAG_TEXTURE_3D,  // sampler3D
 		
 		FRAG_COLOR,
 		FRAG_RGBA,
@@ -104,6 +108,13 @@ public:
 		FRAG_TEXTURE_RECT_BLUR_HORIZONTAL,
 		FRAG_TEXTURE_RECT_BLUR_VERTICAL,
 		FRAG_MOTION_BLUR,
+		
+		/*
+		 * vec2 center;  // relative coordinate, bottom left is origin(0, 0), top right is (1, 1).
+		 * float factor;  // [-1, 1] zoom out/in. 0 being no effect.
+		 * int size;  // sample count, the farther, more samples would be taken.
+		 */
+		FRAG_RADICAL_BLUR,
 		
 		FRAG_MATCAP,                   // normal => semisphere texcoord
 		FRAG_DEFERRED_COLOR,

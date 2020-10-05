@@ -2,6 +2,7 @@
 
 #include <cstdarg>
 #include <functional>  // for std::hash
+#include <map>
 
 #include "opengl/Shader.h"
 #include "opengl/ShaderFactory.h"
@@ -23,7 +24,20 @@ Program::Program():
 Program::Program(uint32_t program):
 		program(program)
 {
-	assert(glIsProgram(program));
+	assert(program == NULL_PROGRAM || glIsProgram(program));
+}
+
+Program::Program(Program&& other):
+		program(other.program)
+{
+	other.program = NULL_PROGRAM;
+}
+
+Program& Program::operator =(Program&& other)
+{
+	glDeleteProgram(this->program);
+	this->program = other.program;
+	other.program = NULL_PROGRAM;
 }
 
 Program::~Program()
@@ -70,8 +84,12 @@ uint32_t Program::createProgram(int32_t count, /* uint32_t shader */...)
 	uint32_t program = glCreateProgram();
 	std::va_list args;
 	va_start(args, count);
-	for (int i = 0; i < count; ++i)
-		glAttachShader(program, va_arg(args, uint32_t));
+	for(int32_t i = 0; i < count; ++i)
+	{
+		uint32_t shader = va_arg(args, uint32_t);
+		assert(shader != 0);
+		glAttachShader(program, shader);
+	}
 	va_end(args);
 	glLinkProgram(program);
 	
@@ -111,20 +129,39 @@ void Program::showLinkerLog(uint32_t program)
 
 void Program::use() const
 {
+	assert(glIsProgram(program));
 	glUseProgram(program);
 }
 
-void Program::printVariables() const
+std::string Program::getActiveVariables() const
 {
-	std::unordered_map<std::string, Program::Variable> uniforms = getActiveUniforms(program);
-	printf("Active uniforms: %zu\n", uniforms.size());
-	for(const auto& [name, variable]: uniforms)
-		printf("layout(location =%2d) uniform %s %s;  // size=%d\n", variable.location, GL::glslTypeToString(variable.type), name.c_str(), variable.size);
+	constexpr char _ = ' ';
+	std::ostringstream oss;
 	
-	std::unordered_map<std::string, Program::Variable> attributes = getActiveAttributes(program);
-	printf("Active attributes: %zu\n", attributes.size());
-	for(const auto& [name, variable]: attributes)
-		printf("layout(location =%2d) in %s %s;  // size=%d\n", variable.location, GL::glslTypeToString(variable.type), name.c_str(), variable.size);
+	auto append = [&oss](bool isUniform, const std::vector<Variable>& variables)
+	{
+		oss << "//" << _ << variables.size() << _ << "active" << _ << (isUniform? "uniform":"attribute");
+		if(variables.size() > 1)
+			oss << "s";
+		oss << '\n';
+		
+		for(const Variable& variable: variables)
+		{
+			// layout(location = 0) uniform mat4 model;  // size=4
+			oss << "layout" << '(' << "location =" << std::setw(2) << variable.location << ')' << _
+				<< (isUniform? "uniform": "in") << _
+				<< GL::glslTypeToString(variable.type) << _
+				<< variable.name << ';' << _ << _
+				<< "//" << _ << "size=" << variable.size << '\n';
+		}
+	};
+	
+	std::vector<Variable> uniforms   = getActiveVariables(program, GL_ACTIVE_UNIFORMS);
+	std::vector<Variable> attributes = getActiveVariables(program, GL_ACTIVE_ATTRIBUTES);
+	oss << "program name=" << program << '\n';
+	append(true, uniforms);
+	append(false, attributes);
+	return oss.str();
 }
 
 int32_t Program::getAttributeLocation(const char* name) const
@@ -137,47 +174,44 @@ int32_t Program::getUniformLocation(const char* name) const
 	return glGetUniformLocation(program, name);
 }
 
-static std::unordered_map<std::string, Program::Variable> _getUniforms(const uint32_t& program, GLenum param)
+std::vector<Program::Variable> Program::getActiveVariables(uint32_t program, GLenum activeType)
 {
-	std::unordered_map<std::string, Program::Variable> variables;
+	assert(activeType == GL_ACTIVE_UNIFORMS || activeType == GL_ACTIVE_ATTRIBUTES);
+	std::map<uint32_t, Program::Variable> map;
 	
 	Program::Variable variable;
-	const GLsizei bufSize = 256; // maximum name length
-	GLchar name[bufSize]; // variable name in GLSL
-	GLsizei length; // name length
+	constexpr GLsizei bufferSize = 1024;  // TODO: maximum name length in GLSL?
+	GLchar name[bufferSize];  // variable name in GLSL
+	GLsizei length;  // name length, excluding the null terminator.
 	
 	int32_t count;
-	glGetProgramiv(program, param, &count);
+	glGetProgramiv(program, activeType, &count);
 	for(int32_t i = 0; i < count; ++i)
 	{
 		const GLuint index = static_cast<GLuint>(i);
-		if(param == GL_ACTIVE_UNIFORMS)
+		int32_t location;
+		if(activeType == GL_ACTIVE_UNIFORMS)
 		{
-			glGetActiveUniform(program, index, bufSize, &length, &variable.size, &variable.type, name);
-			variable.location = glGetUniformLocation(program, name);
+			glGetActiveUniform(program, index, bufferSize, &length, &variable.size, &variable.type, name);
+			location = glGetUniformLocation(program, name);
 		}
-		else if(param == GL_ACTIVE_ATTRIBUTES)
+		else if(activeType == GL_ACTIVE_ATTRIBUTES)
 		{
-			glGetActiveAttrib(program, index, bufSize, &length, &variable.size, &variable.type, name);
-			variable.location = glGetAttribLocation(program, name);
+			glGetActiveAttrib(program, index, bufferSize, &length, &variable.size, &variable.type, name);
+			location = glGetAttribLocation(program, name);
 		}
-		else
-			assert(false);
 		
-		variables.emplace(std::string(name), variable);
+		variable.location = location;
+		variable.name = std::string(name, length);
+		map.emplace(location, variable);
 	}
 	
+	// turn std::map to std::vector
+	std::vector<Program::Variable> variables;
+	variables.reserve(map.size());
+	for(auto it = map.begin(); it != map.end(); ++it)
+		variables.push_back(it->second);
 	return variables;
-}
-
-std::unordered_map<std::string, Program::Variable> Program::getActiveUniforms(const uint32_t& program)
-{
-	return _getUniforms(program, GL_ACTIVE_UNIFORMS);
-}
-
-std::unordered_map<std::string, Program::Variable> Program::getActiveAttributes(const uint32_t& program)
-{
-	return _getUniforms(program, GL_ACTIVE_ATTRIBUTES);
 }
 
 //static bool printed = false;

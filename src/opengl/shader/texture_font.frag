@@ -1,6 +1,6 @@
 R""(
-layout(location = 13) uniform vec4 textColor;
-layout(location = 20) uniform sampler2D texture0;
+layout(location = 3) uniform vec4 textColor;
+layout(location =10) uniform sampler2D texture0;
 
 in vec2 texcoord;
 

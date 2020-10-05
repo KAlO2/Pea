@@ -26,9 +26,9 @@ public:
 	void updateTexcoord(const vec2f quad[4]);
 	
 	/**
-	 * @param[in] texture
+	 * @param[in] texture The texture to use, pass nullptr to clear texture usage.
 	 */
-	void setTexture(const Texture& texture);
+	void setTexture(const Texture* texture);
 	
 	/**
 	 * @param[in] viewProjection unused parameter

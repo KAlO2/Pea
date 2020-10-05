@@ -1,23 +1,18 @@
 R""(
-layout(location = 16, binding = 0) uniform sampler2D texture0;
+const int COUNT = 7;
 
-in vec3 _position;
-in vec3 _position0;
+layout(location = 10, binding = 0) uniform sampler2D texture[COUNT];
+
+in vec2 texcoord;
 
 out vec4 fragColor;
 
 void main()
 {
-	const float sampleCount = 8;
-	vec3 color = vec3(0.0, 0.0, 0.0);
-	for(float i = 1; i <= sampleCount; ++i)
-	{
-		float w = i / sampleCount;
-		vec3 position = lerp(_position0, _position, w);
-		color += w * texture(texture0, position);
-	}
-	color /= sampleCount;
+	vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+	for(int i = 0; i < COUNT; ++i)
+		color += texture(texture[i], texcoord);
 	
-	fragColor = vec4(color, 1.0);
+	fragColor = vec4(color.rgb / COUNT, 1.0);
 }
 )""

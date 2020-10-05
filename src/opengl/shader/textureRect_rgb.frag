@@ -1,5 +1,5 @@
 R""(
-layout(location = 20) uniform sampler2DRect texture0;
+layout(location = 10) uniform sampler2DRect texture0;
 
 in vec2 _texcoord;
 

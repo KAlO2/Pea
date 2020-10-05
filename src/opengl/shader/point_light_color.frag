@@ -9,9 +9,9 @@ struct Material
 
 uniform Material material;
 
-layout(location = 14) uniform vec3 viewPosition;
-layout(location = 15) uniform vec3 lightPosition;
-layout(location = 16) uniform vec3 lightColor;
+layout(location = 4) uniform vec3 viewPosition;
+layout(location = 5) uniform vec3 lightPosition;
+layout(location = 7) uniform vec3 lightColor;
 
 in vec3 _position;
 in vec3 _normal;

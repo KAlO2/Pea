@@ -9,11 +9,11 @@ struct PointLight
 	vec3 specular;
 };
 
-layout(location = 13) uniform vec4 uniformColor;
+layout(location = 3) uniform vec4 uniformColor;
 uniform PointLight light0;
-layout(location = 14) uniform vec3 viewPosition;
-//layout(location = 15) uniform vec3 lightPosition;
-//layout(location = 16) uniform vec3 lightColor;
+layout(location = 4) uniform vec3 viewPosition;
+//layout(location = 5) uniform vec3 lightPosition;
+//layout(location = 10) uniform vec3 lightColor;
 
 in vec3 _position;
 flat in vec3 _normal;

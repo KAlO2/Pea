@@ -1,5 +1,5 @@
 R""(
-layout(location = 13) uniform vec4 uniformColor;
+layout(location = 3) uniform vec4 uniformColor;
 
 out vec4 fragColor;
 

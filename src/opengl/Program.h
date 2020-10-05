@@ -4,7 +4,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 
 // vector and matrix
 #include "opengl/GL.h"
@@ -87,16 +86,18 @@ public:
 	 */
 	Program(uint32_t vertexShaderIndex, uint32_t geometryShaderIndex, uint32_t fragmentShaderIndex);
 	
-	
 	Program(const Program& other) = delete;
 	Program& operator =(const Program& other) = delete;
+	
+	Program(Program&& other);
+	Program& operator =(Program&& other);
 	
 	const uint32_t& getName() const;
 	
 	void use() const;
 
 	
-	void printVariables() const;
+	std::string getActiveVariables() const;
 
 	int32_t getAttributeLocation(const char* name) const;
 	int32_t getUniformLocation(const char* name) const;
@@ -115,8 +116,11 @@ public:
 	
 	static void use(const uint32_t& program);
 	
-	static std::unordered_map<std::string, Variable> getActiveUniforms(const uint32_t& program);
-	static std::unordered_map<std::string, Variable> getActiveAttributes(const uint32_t& program);
+	/**
+	 * @param[in] program A valid program
+	 * @param[in] activeType GL_ACTIVE_UNIFORMS or GL_ACTIVE_ATTRIBUTES
+	 */
+	static std::vector<Variable> getActiveVariables(uint32_t program, GLenum activeType);
 	
 	static void setLight(uint32_t program, const char* name, const Light& light);
 	
@@ -190,9 +194,10 @@ inline int32_t Program::getUniformLocation(const std::string& name) const
 class Program::Variable
 {
 public:
-	uint32_t location;
+	int32_t location;
 	int32_t size;   // size of the variable
 	uint32_t type;  // type of the variable (float, vec3 or mat4, etc)
+	std::string name;
 };
 
 }  // namespace pea

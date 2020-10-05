@@ -1,10 +1,10 @@
 R""(
 in vec4 _color;
 
-out vec4 fragColor;
+out vec4 fragmentColor;
 
 void main()
 {
-	fragColor = _color;
+	fragmentColor = _color;
 }
 )""

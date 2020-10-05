@@ -114,6 +114,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::VERT_VP_TEXCOORD] =
 #include "./shader/viewProjection_texcoord.vert"
 	;
+	map[ShaderFactory::VERT_M_VP_TEXCOORD3] =
+#include "./shader/model_viewProjection_texcoord3.vert"
+	;
 	map[ShaderFactory::VERT_M_VP_TEXCOORD_INSTANCE0] =
 #include "./shader/model_viewProjection_texcoord_instance0.vert"
 	;
@@ -231,7 +234,12 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::FRAG_TEXTURE_CUBE] =
 #include "./shader/textureCube.frag"
 	;
-
+	map[ShaderFactory::FRAG_TEXTURE_BLEND] =
+#include "./shader/texture_blend.frag"
+	;
+	map[ShaderFactory::FRAG_TEXTURE_3D] =
+#include "./shader/texture3d.frag"
+	;
 	map[ShaderFactory::FRAG_NOISE3] =
 #include "./shader/noise3.frag"
 	;
@@ -240,6 +248,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	;
 	map[ShaderFactory::FRAG_UNIFORM_COLOR] =
 #include "./shader/uniformColor.frag"
+	;
+	map[ShaderFactory::FRAG_UNIFORM_INDEX] =
+#include "./shader/uniformIndex.frag"
 	;
 	map[ShaderFactory::FRAG_LAMBERT] =
 #include "./shader/lambert.frag"
@@ -291,6 +302,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	;
 	map[ShaderFactory::FRAG_MOTION_BLUR] =
 #include "./shader/motion_blur.frag"
+	;
+	map[ShaderFactory::FRAG_RADICAL_BLUR] =
+#include "./shader/radical_blur.frag"
 	;
 	map[ShaderFactory::FRAG_MATCAP] =
 #include "./shader/matcap.frag"

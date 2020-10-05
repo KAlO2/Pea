@@ -1,7 +1,7 @@
 R""(
-layout(location = 14) uniform vec3 viewPosition;
-layout(location = 16) uniform samplerCube texture0;
-layout(location = 13) uniform float ratio;
+layout(location = 4) uniform vec3 viewPosition;
+layout(location = 7) uniform float ratio;
+layout(location =10) uniform samplerCube texture0;
 
 in vec3 _position;
 in vec3 _normal;

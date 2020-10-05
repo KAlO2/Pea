@@ -26,6 +26,7 @@ public:
 	enum Location: int32_t
 	{
 		// Note that attribute and uniform are unrelated, so they can use the samle location
+		// in/out mat4 take 4 continual locations, uniform mat4 take 1 location.
 		INVALID_LOCATION = -1,  // glGetAttribLocation / glGetUniformLocation
 		
 		ATTRIBUTE_VEC_VERTEX   = 0,  // vec4 vertex = vec2 position + vec2 texcoord;
@@ -49,30 +50,40 @@ public:
 		UNIFORM_MAT_MODEL         = 0,
 		UNIFORM_MAT_MODEL_VIEW    = 0,
 		UNIFORM_MAT_MODEL_VIEW_PROJECTION = 0,
-		UNIFORM_MAT_VIEW          = 1 << 2,
-		UNIFORM_MAT_VIEW_PROJECTION = 1 << 2,
-		UNIFORM_MAT_PROJECTION    = 2 << 2,
-		UNIFORM_MAT_LIGHT_VIEW_PROJECTION = 2 << 2,
+		UNIFORM_MAT_VIEW          = 1,
+		UNIFORM_MAT_VIEW_PROJECTION = 1,
+		UNIFORM_MAT_PROJECTION    = 2,
+		UNIFORM_MAT_LIGHT_VIEW_PROJECTION = 2,
 		
-		UNIFORM_VEC_UNIFORM_COLOR = 13,  // vec4 uniformColor
-		UNIFORM_VEC_TEXT_COLOR    = 13,
-		UNIFORM_VEC_VIEW_POSITION = 14,
-		UNIFORM_VEC_LIGHT_POSITION= 15,
-		UNIFORM_VEC_LIGHT_DIRECTION = 16,
-		UNIFORM_VEC_LIGHT_COLOR   = 17,
-		UNIFORM_VEC_SCALE         = 17,
+		UNIFORM_VEC_UNIFORM_COLOR = 3,  // vec4 uniformColor
+		UNIFORM_VEC_TEXT_COLOR    = 3,
+		UNIFORM_VEC_VIEW_POSITION = 4,
+		UNIFORM_VEC_CENTER        = 4,  // vec2 center
+		UNIFORM_VEC_LIGHT_POSITION= 5,
+		UNIFORM_VEC_LIGHT_DIRECTION = 6,
+		UNIFORM_VEC_LIGHT_COLOR   = 7,
+		UNIFORM_VEC_SCALE         = 7,
+		UNIFORM_VEC_SIZE          = 7,  // vec2 size
+		UNIFORM_VEC_STEP          = 7,  // vec2 step
+		UNIFORM_VEC_DELTA         = 7,  // vec2 delta
 		
-		UNIFORM_FLT_RATIO         = 17,
-		UNIFORM_FLT_ALPHA         = 17,
-		UNIFORM_FLT_LENGTH        = 17,
-		UNIFORM_FLT_SCALE         = 17,
-		UNIFORM_FLT_TIME          = 17,
-		UNIFORM_FLT_WEIGHT        = 17,
-		UNIFORM_FLT_STEP          = 17,
+		// float alpha, ratio, factor, length, scale, step, time, weight
+		UNIFORM_VEC_PARAMETER     = 7,
+		UNIFORM_FLT_ALPHA         = 7,
+		UNIFORM_FLT_RATIO         = 7,
+		UNIFORM_FLT_FACTOR        = 7,
+		UNIFORM_FLT_LENGTH        = 7,
+		UNIFORM_FLT_SCALE         = 7,
+		UNIFORM_FLT_STEP          = 7,
+		UNIFORM_FLT_WEIGHT        = 7,
 		
-		UNIFORM_INT_SIZE          = 18,
+		UNIFORM_INT_PARAMETER     = 8,
+		UNIFORM_INT_SIZE          = 8,
+		UNIFORM_INT_INDEX         = 8,
 		
-		UNIFORM_TEX_TEXTURE0 = 20,
+		UNIFORM_FLT_TIME          = 9,  // float time;
+		
+		UNIFORM_TEX_TEXTURE0 = 10,
 		UNIFORM_TEX_TEXTURE1,
 		UNIFORM_TEX_TEXTURE2,
 		UNIFORM_TEX_TEXTURE3,

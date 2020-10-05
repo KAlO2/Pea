@@ -1,8 +1,8 @@
 R""(
 layout(location = 0) uniform mat4 model;
-layout(location = 4) uniform mat4 viewProjection;
-layout(location =14) uniform vec3 viewPosition;
-layout(location =15) uniform vec3 lightPosition;
+layout(location = 1) uniform mat4 viewProjection;
+layout(location = 4) uniform vec3 viewPosition;
+layout(location = 5) uniform vec3 lightPosition;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
