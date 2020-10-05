@@ -6,7 +6,6 @@
 #include <queue>
 
 #include "geometry/Tetrahedron.h"
-#include "opengl/Texture.h"
 #include "graphics/Image_PNG.h"
 #include "util/utility.h"
 #include "io/FileSystem.h"
@@ -248,8 +247,8 @@ layout(location =12) in vec4 instance;
 layout(location = 0) uniform mat4 model;
 #endif
 
-layout(location = 4) uniform mat4 view;
-layout(location = 8) uniform mat4 projection;
+layout(location = 1) uniform mat4 view;
+layout(location = 2) uniform mat4 projection;
 
 layout(location = 0) in vec3 position;
 layout(location = 3) in vec2 texcoord;

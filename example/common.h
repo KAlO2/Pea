@@ -45,7 +45,7 @@ std::string formatCurrentTime();
 
 void snapshot(const std::string& path, int32_t width, int32_t height);
 
-
+Texture createThermosTexture(uint32_t width);
 
 }  // namespace pea
 #endif  // PEA_EXAMPLE_COMMON_H_

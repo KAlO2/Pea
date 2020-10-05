@@ -8,6 +8,7 @@
 
 #include <cstdlib>  // std::atoi
 #include <cstring>  // std::strcmp
+
 #include <getopt.h>
 
 using namespace pea;
@@ -64,7 +65,7 @@ PointCloudViewer::PointCloudViewer():
 	glGenBuffers(sizeofArray(vbo), vbo);
 	
 	setProgram(program.getName());
-	program.printVariables();
+	slog.d(TAG, "program = %s", program.getActiveVariables().c_str());
 }
 
 PointCloudViewer::~PointCloudViewer()
