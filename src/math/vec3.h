@@ -28,6 +28,11 @@ public:
 		struct { T i, j, k; };  // index
 		struct { T start, step, stop; }; // arithmetic progression
 		struct { T pitch, roll, yaw; };
+		
+		// http://en.wikipedia.org/wiki/Spherical_coordinate_system
+		// rho: distance of from the origin, [0, +inf)
+		// theta: the angle project to XOY-plane, in a counter-clockwise direction. [-pi, pi]
+		// phi: the reference angle from z-axis. [-pi/2, +pi/2]
 		struct { T rho, theta, phi; };  // polar coordinate
 		struct { T constant, linear, quadratic; };  // attenuation
 	};
@@ -116,25 +121,32 @@ public:
 	}
 	
 	/**
-	 * give the vector v a spherical coordinate system(rho, theta, phi) view.
-	 * http://en.wikipedia.org/wiki/Spherical_coordinate_system
-	 * r ≥ 0, 0° ≤ θ ≤ 180° (π rad), 0° ≤ φ < 360° (2π rad)
-	 * However, the azimuth φ is often restricted to the interval (−180°, +180°],
-	 * or (−π, +π] in radians, instead of [0, 360°). This is the standard
-	 * convention for geographic longitude.
+	 * Give the position a spherical coordinate system(rho, theta, phi) view.
 	 *
-	 * @return vec3(rho, theta, phi) where rho >= 0, theta in [-pi/2, pi/2], phi in [-pi, pi].
+	 * @param[in] position Cartesian coordinate.
+	 * @return polar coordinate where rho >= 0, theta in [-pi, +pi], phi in [-pi/2, pi/2].
 	 */
-	vec3<T> polar() const
+	friend vec3<T> polar_cast(const vec3<T>& position)
 	{
-		T _rho = length(), _theta = 0, _phi = 0;
-		if(!isZero<T>(_rho))
+		vec3<T> polar(static_cast<T>(0));
+		polar.rho = position.length();
+		if(!isZero<T>(polar.rho))
 		{
-			_theta = std::acos(z / rho);
-//			_theta == 0 means vector parallel to y axis in OpenGL
-			_phi = (isZero<T>(theta))?  0 : std::atan2(y, x);
+			polar.phi = std::asin(position.z / polar.rho);
+			polar.theta = std::atan2(position.y, position.x);
 		}
-		return vec3<T>(_rho, _theta, _phi);
+		return polar;
+	}
+
+	friend vec3<T> cartesian_cast(const vec3<T>& polar)
+	{
+		assert(polar.rho >= 0);
+		vec3<T> position;
+		position.z = polar.rho * std::sin(polar.phi);
+		T r = polar.rho * std::cos(polar.phi);
+		position.x = r * std::cos(polar.theta);
+		position.y = r * std::sin(polar.theta);
+		return position;
 	}
 
 	/**

@@ -82,34 +82,46 @@ TEST_CASE("vec2", tag)
 
 TEST_CASE("vec3", tag)
 {
-	const vec3f::value_type ZERO = 0;
-	const vec3f::value_type ONE = 1;
-	const vec3f::value_type NINETY = M_PI/2;
+	using Vec3 = vec3f;
+	constexpr Vec3::value_type ZERO = 0;
+	constexpr Vec3::value_type ONE = 1;
 
-	vec3f right(ONE, ZERO, ZERO);
-	vec3f forward(ZERO, ONE, ZERO);
-	float unit_z[]={ZERO, ZERO, ONE};
-	vec3f up(unit_z);
+	Vec3 right(ONE, ZERO, ZERO);
+	Vec3 forward(ZERO, ONE, ZERO);
+	Vec3::value_type unit_z[] = {ZERO, ZERO, ONE};
+	Vec3 up(unit_z);
 
-	vec3f v = right + forward + up;
+	Vec3 v = right + forward + up;
 
 	REQUIRE(ONE == v.x);
 	REQUIRE(std::sqrt(3 * ONE) == v.length());
-	REQUIRE(NINETY == angle(right, forward));
+	REQUIRE(Approx(M_PI / 2) == angle(right, forward));
 
 	v = right;
-	REQUIRE(vec3f(ONE, ZERO, ZERO) == v);
-	REQUIRE(forward == v.rotateZ(NINETY));
+	REQUIRE(Vec3(ONE, ZERO, ZERO) == v);
+	REQUIRE(forward == v.rotateZ(M_PI / 2));
 	REQUIRE(up == cross(right, forward));
 	REQUIRE(ZERO == dot(right, forward));
 
 	v.normalize();
 	REQUIRE(ONE == v.length());
 
-	vec3f vx = v.project(right);
-	vec3f vy = v.project(forward);
-	vec3f vz = v.project(up);
+	Vec3 vx = v.project(right);
+	Vec3 vy = v.project(forward);
+	Vec3 vz = v.project(up);
 	REQUIRE(v == vx + vy + vz);
+	
+	// coordinate
+	REQUIRE(polar_cast(right) == right);
+	REQUIRE(cartesian_cast(right) == right);
+	
+	Vec3 forwardPolar(ONE, M_PI / 2, 0);
+	REQUIRE(polar_cast(forward) == forwardPolar);
+	REQUIRE(cartesian_cast(forwardPolar) == forward);
+	
+	Vec3 c(ONE, ONE, ONE), p(std::sqrt(3.0), M_PI / 4, std::atan(std::sqrt(2) / 2.0));
+	REQUIRE(polar_cast(c) == p);
+	REQUIRE(cartesian_cast(p) == c);
 }
 
 TEST_CASE("vec4", tag)
