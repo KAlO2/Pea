@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 #include "io/FileSystem.h"
-#include "io/Type.h"
+#include "io/TypeUtility.h"
 #include "io/Model_OBJ.private.h"
 #include "io/Model.h"
 #include "math/hash.h"
@@ -25,30 +25,6 @@ using namespace pea;
 static const char* TAG = "Model_OBJ";
 
 
-/*
-	The following types of data may be included in an .obj file. In this
-	list, the keyword (in parentheses) follows the data type.
-*/
-/*
-const Property Model_OBJ::property[KEY_COUNT] =
-{
-		PROPERTY_SET("mtllib",   Type::STRING),
-		PROPERTY_SET("usemtl",   Type::STRING),
-		PROPERTY_SET("o",        Type::STRING),
-		PROPERTY_SET("v",        Type::VEC3F),
-		PROPERTY_SET("vt",       Type::VEC2F),
-		PROPERTY_SET("vn",       Type::VEC3F),
-		PROPERTY_SET("f",        Type::VEC3I),
-//		PROPERTY_SET("g",        Type::
-//		PROPERTY_SET("o",        Type::
-//		PROPERTY_SET("s",        Type::
-//		PROPERTY_SET("p",        Type::
-//		PROPERTY_SET("l",        Type::
-//		PROPERTY_SET("maplib",   Type::
-//		PROPERTY_SET("maplib",   Type::
-};
-*/
-
 static const std::string EMPTY_PATH;
 
 Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
@@ -57,7 +33,7 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 {
 	std::ifstream stream(path, std::ios::binary);
 	if(!stream.is_open())
-		throw new std::invalid_argument("can open path for read. path=" + path);
+		throw std::invalid_argument("could not open path for read. path=" + path);
 	
 //	std::vector<std::shared_ptr<Model_OBJ>> objects;
 //	std::shared_ptr<Model_OBJ> object = std::make_shared<Model_OBJ>(path);
@@ -96,11 +72,11 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 			continue;
 
 		if(MATCH_CHAR('v'))  // vertex
-			vertices.push_back(Type::parseFloat3(p));
+			vertices.push_back(TypeUtility::parseFloat3(p));
 		else if(MATCH_TWO_CHAR('v', 't'))  // texture coordinate
-			texcoords.push_back(Type::parseFloat2(p));
+			texcoords.push_back(TypeUtility::parseFloat2(p));
 		else if(MATCH_TWO_CHAR('v', 'n'))  // normal
-			normals.push_back(Type::parseFloat3(p));  // TODO: wikipedia.org says normals might not be unit vectors?
+			normals.push_back(TypeUtility::parseFloat3(p));  // TODO: wikipedia.org says normals might not be unit vectors?
 		else if(MATCH_TWO_CHAR('v', 'p'))  // parameter space vertices
 		{
 		}
@@ -111,7 +87,7 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 			uint32_t faceVertexSize = 0;
 			while(!isNewLine(*p))
 			{
-				vec3u index = Type::parseUint3(p);
+				vec3u index = TypeUtility::parseUint3(p);
 				indices.push_back(index);
 				
 				++faceVertexSize;
@@ -172,7 +148,7 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 				group.clear();
 			}
 			
-			std::vector<std::string> groupNames = Type::split(p, " \t");
+			std::vector<std::string> groupNames = TypeUtility::split(p, " \t");
 			for(const std::string& groupName: groupNames)
 			{
 				auto it = groups.find(groupName);
@@ -608,16 +584,22 @@ bool Model_OBJ::save(const std::string& dir, const std::string& name) const
 	
 	std::string path = dir + FileSystem::SEPERATOR + name;
 	std::string path_obj = path + ".obj";
-	std::string materialFileName = name + ".mtl";
-	bool flag_obj = save_OBJ(path_obj, materialFileName);
-	if(!flag_obj)
+	bool hasMaterial = materials != nullptr && materials->getSize() > 0;
+	std::string materialFileName = hasMaterial? (name + ".mtl"): "";
+	bool flag = save_OBJ(path_obj, materialFileName);
+	if(!flag)
 		slog.e(TAG, "failed to save %s.", path_obj.c_str());
 
-	std::string path_mtl = path + ".mtl";
-	bool flag_mtl = save_MTL(path_mtl);
-	if(!flag_mtl)
-		slog.e(TAG,  "failed to save %s.", path_mtl.c_str());
-	return flag_obj && flag_mtl;
+	if(hasMaterial)
+	{
+		std::string path_mtl = path + ".mtl";
+		bool flag_mtl = save_MTL(path_mtl);
+		if(!flag_mtl)
+			slog.e(TAG,  "failed to save %s.", path_mtl.c_str());
+		flag &= flag_mtl;  // TODO: a &&= b  => a = a && b?
+	}
+	
+	return flag;
 }
 
 bool Model_OBJ::save_OBJ(const std::string& path, const std::string& materialFileName) const
@@ -639,8 +621,9 @@ bool Model_OBJ::save_OBJ(const std::string& path, const std::string& materialFil
 
 	constexpr char _ = ' ';
 	stream << comment << '\n';
-	stream << "mtllib" << _ << materialFileName << '\n'
-			<< '\n';
+	if(!materialFileName.empty())
+		stream << "mtllib" << _ << materialFileName << '\n';
+	stream << '\n';
 
 	// write object name
 	if(!name.empty())
@@ -901,21 +884,21 @@ bool Model_OBJ::parse(const std::string& path)
 		if(line[0] == '\0') continue;  // skip empty line
 
 		if(check(line, KEY_MATERIALS))  // mtllib filename1 filename2 . . .
-			filename_mtl = Type::split(line, Type::BLANK);
+			filename_mtl = TypeUtility::split(line, TypeUtility::BLANK);
 		else if(check(line, KEY_USE_MATERIAL))
 		{
 
 		}
 		else if(check(line, KEY_VERTEX))
-			mesh.positions.push_back(Type::parseFloat3(line));
+			mesh.positions.push_back(TypeUtility::parseFloat3(line));
 		else if(check(line, KEY_NORMAL))
-			mesh.normals.push_back(Type::parseFloat3(line));
+			mesh.normals.push_back(TypeUtility::parseFloat3(line));
 		else if(check(line, KEY_TEXTURE))
-			mesh.texture_coords.push_back(Type::parseFloat2(line));
+			mesh.texture_coords.push_back(TypeUtility::parseFloat2(line));
 		else if(check(line, KEY_FACE))
 		{
 			// f triplet1 triplet2 triplet3 ...
-			const std::vector<std::string> triplets = Type::split(line, Type::BLANK);
+			const std::vector<std::string> triplets = TypeUtility::split(line, TypeUtility::BLANK);
 			size_t count = triplets.size();
 			if(count < 3)
 			{

@@ -5,7 +5,7 @@
 
 #include "io/Model_OBJ.private.h"
 #include "io/FileSystem.h"
-#include "io/Type.h"
+#include "io/TypeUtility.h"
 #include "opengl/Texture.h"
 #include "util/compiler.h"
 #include "util/Log.h"
@@ -80,7 +80,7 @@ Model_MTL::Model_MTL(const std::string& path) noexcept(false):
 {
 	std::ifstream stream(path, std::ios::in | std::ios::binary);;
 	if(!stream.is_open())
-		throw new std::invalid_argument("can open path for reading. path=" + path);
+		throw std::invalid_argument("could not open path for reading. path=" + path);
 	
 	std::shared_ptr<Material> material;
 
@@ -135,36 +135,36 @@ Model_MTL::Model_MTL(const std::string& path) noexcept(false):
 		else if(material == nullptr)
 			slog.w(TAG, "expect newmtl <name> before material attributes");
 		else if(MATCH_TWO_CHAR('K', 'a'))
-			material->ambient = Type::parseFloat3(p);
+			material->ambient = TypeUtility::parseFloat3(p);
 		else if(MATCH_TWO_CHAR('K', 'd'))
-			material->diffuse = Type::parseFloat3(p);
+			material->diffuse = TypeUtility::parseFloat3(p);
 		else if(MATCH_TWO_CHAR('K', 's'))
-			material->specular = Type::parseFloat3(p);
+			material->specular = TypeUtility::parseFloat3(p);
 		else if(MATCH_TWO_CHAR('K', 't'))
-			material->transmittance = Type::parseFloat3(p);
+			material->transmittance = TypeUtility::parseFloat3(p);
 		else if(MATCH_TWO_CHAR('N', 'i'))
-			material->ior = Type::parseFloat(p);
+			material->ior = TypeUtility::parseFloat(p);
 		else if(MATCH_TWO_CHAR('K', 'e'))
-			material->emissive = Type::parseFloat3(p);
+			material->emissive = TypeUtility::parseFloat3(p);
 		else if(MATCH_TWO_CHAR('N', 's'))
-			material->shininess = Type::parseFloat(p);
+			material->shininess = TypeUtility::parseFloat(p);
 		else if(MATCH_STRING(KEY_ILLUMINATION))  // "illum"
 		{
-			uint32_t illum = Type::parseUint(p);
+			uint32_t illum = TypeUtility::parseUint(p);
 			material->illum = static_cast<IlluminationMode>(illum);
 		}
 		else if(MATCH_CHAR('d'))
 		{
 			if(material->dissolve > 0)
 				slog.w(TAG, "overwrite quantity 'Tr' from quantity 'd'");
-			material->dissolve = Type::parseFloat(p);
+			material->dissolve = TypeUtility::parseFloat(p);
 		}
 		else if(MATCH_TWO_CHAR('T', 'r'))  // transparency
 		{
 			// defines the transparency of the material to be alpha. The default is 0.0 (not 
 			// transparent at all). The quantities d and Tr are the opposites of each other, and 
 			// specifying transparency or nontransparency is simply a matter of user convenience.
-			float transparency = Type::parseFloat(p);
+			float transparency = TypeUtility::parseFloat(p);
 			if(material->dissolve > 0)
 				slog.w(TAG, "overwrite quantity 'd' from quantity 'Tr'");
 			material->dissolve = 1.0f - transparency;

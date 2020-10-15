@@ -33,7 +33,7 @@ Mesh::Mesh():
 		vao(0),
 		vbo{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		primitive(Primitive::TRIANGLES),
-		viewPositionLocation(Shader::INVALID_LOCATION)
+		viewProjectionLocation(Shader::INVALID_LOCATION)
 {
 //	std::fill(vbo, vbo + sizeofArray(vbo), 0);
 }
@@ -44,14 +44,15 @@ Mesh::Mesh(const Mesh& mesh):
 //		aabb(mesh.aabb),
 		vao(0),
 		vbo{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		primitive(mesh.primitive),
-		viewPositionLocation(mesh.viewPositionLocation)
+		primitive(mesh.primitive)
 {
 	this->vertices  = mesh.vertices;
+	this->positions = mesh.positions;
 	this->texcoords = mesh.texcoords;
 	this->normals   = mesh.normals;
 	this->indices   = mesh.indices;
 //	this->material  = mesh.material;
+	this->uniformBlock = mesh.uniformBlock;
 }
 
 Mesh::Mesh(Mesh&& mesh):
@@ -59,8 +60,7 @@ Mesh::Mesh(Mesh&& mesh):
 		material(mesh.material),
 //		aabb(mesh.aabb),
 		vao(mesh.vao),
-		primitive(mesh.primitive),
-		viewPositionLocation(mesh.viewPositionLocation)
+		primitive(mesh.primitive)
 {
 //	mesh.aabb.reset();
 	for(size_t i = 0; i < sizeofArray(vbo); ++i)
@@ -70,11 +70,13 @@ Mesh::Mesh(Mesh&& mesh):
 	}
 	
 	this->vertices  = std::move(mesh.vertices);
+	this->positions = std::move(mesh.positions);
 	this->colors    = std::move(mesh.colors);
 	this->texcoords = std::move(mesh.texcoords);
 	this->normals   = std::move(mesh.normals);
 	this->indices   = std::move(mesh.indices);
 //	this->material  = std::move(mesh.material);
+	this->uniformBlock = std::move(mesh.uniformBlock);
 }
 
 Mesh& Mesh::operator =(const Mesh& mesh)
@@ -93,14 +95,15 @@ Mesh& Mesh::operator =(const Mesh& mesh)
 		vao = 0u;
 
 		this->primitive = mesh.primitive;
-		this->viewPositionLocation = mesh.viewPositionLocation;
 		
 		this->vertices  = mesh.vertices;
+		this->positions = mesh.positions;
 		this->colors    = mesh.colors;
 		this->texcoords = mesh.texcoords;
 		this->normals   = mesh.normals;
 		this->indices   = mesh.indices;
 //		this->material  = mesh.material;
+		this->uniformBlock = mesh.uniformBlock;
 	}
 	return *this;
 }
@@ -121,14 +124,15 @@ Mesh& Mesh::operator =(Mesh&& mesh)
 	mesh.vao = 0u;
 	
 	this->primitive = mesh.primitive;
-	this->viewPositionLocation = mesh.viewPositionLocation;
 	
 	this->vertices  = std::move(mesh.vertices);
+	this->positions = std::move(mesh.positions);
 	this->texcoords = std::move(mesh.texcoords);
 	this->colors    = std::move(mesh.colors);
 	this->normals   = std::move(mesh.normals);
 	this->indices   = std::move(mesh.indices);
-	this->material  = std::move(mesh.material);
+//	this->material  = std::move(mesh.material);
+	this->uniformBlock = std::move(mesh.uniformBlock);
 	return *this;
 }
 
@@ -144,13 +148,18 @@ void Mesh::applyTransform()
 	mat3f rs;
 	for(uint8_t i = 0; i < 9; ++i)
 		rs[i / 3][i % 3] = transform[i / 3][i % 3];
-//	vec3f translation(transform[]);
 
-	for(vec3f& vertex: vertices)
+	const bool usePosition = !positions.empty();
+	vec3f* data = usePosition? positions.data(): reinterpret_cast<vec3f*>(vertices.data());
+	const size_t size = usePosition? positions.size(): vertices.size();
+	const size_t advance = usePosition? 3: 4;
+	for(size_t i = 0; i < size; ++i, data += advance)
 	{
-		vec4f position(vertex.x, vertex.y, vertex.z, 1);
+		vec4f position(data->x, data->y, data->z, 1.0F);
 		position = transform * position;
-		vertex = *reinterpret_cast<vec3f*>(&position);
+		data->x = position.x;
+		data->y = position.y;
+		data->z = position.z;
 	}
 	
 	rs.inverse().transpose();
@@ -163,15 +172,21 @@ void Mesh::applyTransform()
 
 void Mesh::computeTangentBasis()
 {
-	assert(!vertices.empty() && !texcoords.empty() && !normals.empty());
+	assert(!texcoords.empty() && !normals.empty());
 	assert(indices.empty());  // compute per vertex attributes
 	
-	const size_t vertexSize = vertices.size();
+	const bool usePosition = !positions.empty(); 
+	const size_t vertexSize = usePosition? positions.size(): vertices.size();
 	tangents.reserve(vertexSize);
 	bitangents.reserve(vertexSize);
 	for(size_t i = 0; i < vertexSize; i += 3)
 	{
-		const vec3f* v = vertices.data() + i;
+		const vec3f* v;
+		if(usePosition)
+			v = positions.data() + i;
+		else
+			v = reinterpret_cast<const vec3f*>(vertices.data() + i);
+		
 		const vec2f* t = texcoords.data() + i;
 		
 		vec3f v01 = v[1] - v[0];
@@ -195,16 +210,28 @@ void Mesh::computeTangentBasis()
 	}
 }
 
-bool Mesh::hasIndex() const
+size_t Mesh::getVertexSize() const
 {
-	return indices.empty();
+	size_t size = positions.size();  // mostly vec3 position
+	if(size > 0)
+		return size;
+	return vertices.size();
+}
+
+size_t Mesh::getIndexSize() const
+{
+	return indices.size();
 }
 
 BoundingBox Mesh::getBoundingBox() const
 {
 	BoundingBox box;
-	for(const vec3f& vertex: vertices)
-		box.add(vertex);
+	if(!positions.empty())
+		for(const vec3f& position: positions)
+			box.add(position);
+	else
+		for(const vec4f& vertex: vertices)
+			box.add(vec3f(vertex.x, vertex.y, vertex.z));
 
 	return box;
 }
@@ -224,7 +251,8 @@ void Mesh::reverseWinding()
 
 bool Mesh::verifyBone() const
 {
-	size_t vertexCount = vertices.size();
+	const size_t vertexCount = getVertexSize();
+/*	TODO:
 	std::vector<float> sum(vertexCount, 0.0);
 	for(const Bone& bone: bones)
 	{
@@ -232,28 +260,29 @@ bool Mesh::verifyBone() const
 		for(VertexWeight v: weights)
 			sum[v.index] += v.weight;
 	}
-
+*/
 	bool valid = true;
-	for(size_t i = 0; i < vertexCount; ++i)
+/*	for(size_t i = 0; i < vertexCount; ++i)
 	{
-		if(std::abs(sum[i] - 1.0) > 0.001)  // tolerance
+		if(std::abs(sum[i] - 1.0) > 1E-6)  // tolerance
 		{
 			slog.w(TAG, "vertex id(%zu)'s bone weight sum(%.6f) != 1", i, sum[i]);
 			valid = false;
 		}
 	}
+*/
 	return valid;
 }
 
 void Mesh::prepare(Primitive primitive/* = Primitive::TRIANGLES*/)
 {
-	slog.v(TAG, "primitive=%d, vao=%u, vertices.size=%zu", primitive, vao, vertices.size());
+	slog.v(TAG, "primitive=%d, vao=%u, vertices.size=%zu", primitive, vao, getVertexSize());
 	this->primitive = primitive;
 	
-	assert(vao == 0);  // prepare() has been called many times.
+	assert(vao == 0);  // if failed, prepare() has been called before.
 	glGenVertexArrays(1, &vao);
 	
-	assert(!vertices.empty());
+	assert(!vertices.empty() || !positions.empty());
 	glGenBuffers(sizeofArray(vbo), vbo);
 	
 	const uint32_t& vbo_position = vbo[Shader::ATTRIBUTE_VEC_POSITION];
@@ -280,7 +309,7 @@ void Mesh::upload() const
 
 	assert(vbo[Shader::ATTRIBUTE_VEC_POSITION] != 0);  // prepare() needs to be called before.
 	slog.d(TAG, "size: vertex=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
-			vertices.size(), colors.size(), texcoords.size(), normals.size(), indices.size());
+			getVertexSize(), colors.size(), texcoords.size(), normals.size(), indices.size());
 	
 	auto bindVertexBuffer = [&vbo = vbo](uint32_t attributeIndex, const std::vector<vec3f> data)
 	{
@@ -288,7 +317,9 @@ void Mesh::upload() const
 			GL::bindVertexBuffer(vbo[attributeIndex], attributeIndex, data);
 	};
 	
-	bindVertexBuffer(Shader::ATTRIBUTE_VEC_POSITION, vertices);
+	if(vertices.empty())
+		GL::bindVertexBuffer(vbo[Shader::ATTRIBUTE_VEC_VERTEX], Shader::ATTRIBUTE_VEC_VERTEX, vertices);
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_POSITION, positions);
 	
 	bindVertexBuffer(Shader::ATTRIBUTE_VEC_COLOR, colors);
 	bindVertexBuffer(Shader::ATTRIBUTE_VEC_NORMAL, normals);
@@ -330,7 +361,7 @@ void Mesh::upload(uint32_t vboFlag[Mesh::VBO_COUNT]) const
 
 	assert(vbo[Shader::ATTRIBUTE_VEC_POSITION] != 0);  // prepare() needs to be called before.
 	slog.d(TAG, "size: vertex=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
-			vertices.size(), colors.size(), texcoords.size(), normals.size(), indices.size());
+			getVertexSize(), colors.size(), texcoords.size(), normals.size(), indices.size());
 	
 	auto bindVertexBuffer = [&vbo = vbo, &vboFlag](uint32_t attributeIndex, const std::vector<vec3f> data)
 	{
@@ -338,7 +369,9 @@ void Mesh::upload(uint32_t vboFlag[Mesh::VBO_COUNT]) const
 			GL::bindVertexBuffer(vbo[attributeIndex], attributeIndex, data, vboFlag[attributeIndex]);
 	};
 	
-	bindVertexBuffer(Shader::ATTRIBUTE_VEC_POSITION, vertices);
+	if(vertices.empty())
+		GL::bindVertexBuffer(vbo[Shader::ATTRIBUTE_VEC_VERTEX], Shader::ATTRIBUTE_VEC_VERTEX, vertices);
+	bindVertexBuffer(Shader::ATTRIBUTE_VEC_POSITION, positions);
 	
 	bindVertexBuffer(Shader::ATTRIBUTE_VEC_COLOR, colors);
 	bindVertexBuffer(Shader::ATTRIBUTE_VEC_NORMAL, normals);
@@ -369,8 +402,14 @@ void Mesh::upload(uint32_t vboFlag[Mesh::VBO_COUNT]) const
 	// non-constant condition for static assertion
 //	static_assert(sizeofArray(vbo) == Shader::ATTRIBUTE_INT_INDEX + 1);
 	static_assert(sizeof(vbo) / sizeof(vbo[0]) == Shader::ATTRIBUTE_INT_INDEX + 1);
-		
+	
 	glBindVertexArray(0);
+}
+
+uint32_t Mesh::getVertexBufferObject(int32_t location) const
+{
+	assert(0 <= location && location < VBO_COUNT);
+	return vbo[location];
 }
 /*
 void Mesh::setMaterial(std::shared_ptr<Material> material)
@@ -422,8 +461,10 @@ void Mesh::setProgram(uint32_t program)
 		assert(glGetAttribLocation(program, "color") == Shader::ATTRIBUTE_VEC_COLOR);
 	
 	// if normal is specified but not used in program, assertion fails.
-	if(!normals.empty())
-		assert(glGetAttribLocation(program, "normal") == Shader::ATTRIBUTE_VEC_NORMAL);
+	int32_t normalLocation = glGetAttribLocation(program, "normal");
+//	if(!normals.empty())
+//		assert(normalLocation == Shader::ATTRIBUTE_VEC_NORMAL);
+	assert(normalLocation == Shader::ATTRIBUTE_VEC_NORMAL || normalLocation == Shader::INVALID_LOCATION);
 	
 	if(!instances1.empty())
 		assert(glGetAttribLocation(program, "instance") == Shader::ATTRIBUTE_MAT_INSTANCE);
@@ -432,8 +473,9 @@ void Mesh::setProgram(uint32_t program)
 	else
 		assert(glGetUniformLocation(program, "model") == Shader::UNIFORM_MAT_MODEL);
 	
-	viewPositionLocation = glGetUniformLocation(program, "viewPosition");
-	assert(viewPositionLocation == Shader::INVALID_LOCATION || viewPositionLocation == Shader::UNIFORM_VEC_VIEW_POSITION);
+	viewProjectionLocation = glGetUniformLocation(program, "viewProjection");
+	assert(viewProjectionLocation == Shader::UNIFORM_MAT_VIEW_PROJECTION ||
+			viewProjectionLocation != Shader::INVALID_LOCATION);
 	
 	if(oldProgram != 0)
 	{
@@ -441,11 +483,11 @@ void Mesh::setProgram(uint32_t program)
 		textures.clear();
 	}
 
-	std::unordered_map<std::string, Program::Variable> variables = Program::getActiveUniforms(program);
+	std::vector<Program::Variable> variables = Program::getActiveVariables(program, GL_ACTIVE_UNIFORMS);
 	uint32_t textureUnit = 0;
 	
 	Program::use(program);
-	for(const auto& [name, variable]: variables)
+	for(const Program::Variable& variable: variables)
 	{
 		// type+index -> location
 		if(variable.type < GL_SAMPLER_1D || variable.type > GL_SAMPLER_CUBE)
@@ -453,10 +495,11 @@ void Mesh::setProgram(uint32_t program)
 		
 		// convention, texture variable name must begin with "texture".
 		const size_t length = 7;  // std::strlen(TEXTURE_PREFIX)
-		const char* str = name.c_str();
+		const char* str = variable.name.c_str();
 		assert(std::strncmp(str, TEXTURE_PREFIX, length) == 0);
-		size_t end = name.size();
-		for(; std::isdigit(name[end - 1]); --end);
+		size_t end = variable.name.size();
+		while(std::isdigit(variable.name[end - 1]))
+			--end;
 		
 		Texture::Type type;
 		const char* start = str + length;
@@ -474,7 +517,7 @@ void Mesh::setProgram(uint32_t program)
 			type = Texture::Type::HEIGHT;
 		else
 		{
-			slog.w(TAG, "texture type %s is not defined", start);
+			slog.w(TAG, "name=%s, texture type %s is not defined.", str, start);
 			continue;
 		}
 
@@ -520,21 +563,46 @@ void Mesh::setTexture(const Texture& texture, uint32_t index)
 	uint32_t key = texture.getKey(index);
 	assert(textureMap.find(key) != textureMap.end());
 	uint32_t textureUnit = textureMap.at(key);
-	textures.emplace(textureUnit, &texture);
-//	texture.bind(textureUnit);
+	textures[textureUnit] = &texture;  // or textures.insert_or_assign(textureUnit, &texture); C++17
+}
+
+bool Mesh::hasUniform(int32_t location) const
+{
+	return uniformBlock.hasUniform(location);
+}
+
+void Mesh::setUniform(int32_t location, Type type, void* data)
+{
+	uniformMutex.lock();
+	
+	Uniform* uniform;
+	if(uniformBlock.hasUniform(location, uniform)) [[likely]]
+	{
+		assert(uniform->type == type);
+		uniformBlock.updateUniform(*uniform, data);
+	}
+	else
+		uniformBlock.appendUniform(location, type, data);
+	
+	uniformMutex.unlock();
 }
 
 void Mesh::render(const mat4f& viewProjection) const
 {
 //	Object::render(viewProjection);
 	uint32_t program = getProgram();
-	assert(program != 0);  // make sure that setProgram() is called
+	assert(program != 0);  // make sure that setProgram() has been called
 	Program::use(program);
 	
 	const int32_t instanceCount = instances0.size() > 0? instances0.size(): instances1.size();
 	if(instanceCount == 0)
 		Program::setUniform(Shader::UNIFORM_MAT_MODEL, getTransform());
-	Program::setUniform(Shader::UNIFORM_MAT_VIEW_PROJECTION, viewProjection);
+	if(viewProjectionLocation == Shader::UNIFORM_MAT_VIEW_PROJECTION)
+		Program::setUniform(Shader::UNIFORM_MAT_VIEW_PROJECTION, viewProjection);
+	
+	uniformMutex.lock();
+	uniformBlock.feedUniforms();
+	uniformMutex.unlock();
 	
 	// textures binding
 	for(const std::pair<const uint32_t, const Texture*>& pair: textures)
@@ -560,8 +628,6 @@ void Mesh::render(const mat4f& viewProjection) const
 		assert(light);
 		Program::setLight(program, lightName.c_str(), *light);
 	}
-	if(viewPositionLocation != Shader::INVALID_LOCATION)
-		Program::setUniform(Shader::UNIFORM_VEC_VIEW_POSITION, viewPosition);
 	
 //	Program::setUniform(Shader::UNIFORM_MAT_VIEW_PROJECTION, viewProjection);
 	GLenum mode = GL::getPrimitive(primitive);
@@ -569,20 +635,21 @@ void Mesh::render(const mat4f& viewProjection) const
 //	slog.i(TAG, "vertices.size()=%zu, normals.size()=%zu, indices.size()=%zu, mode=0x%X", vertices.size(), normals.size(), indices.size(), mode);
 	assert(vao != 0);  // make sure that prepare() is called
 	glBindVertexArray(vao);
+	const int32_t vertexCount = getVertexSize();
 	const int32_t indexCount = indices.size();
 	if(instanceCount > 0)  // instance rendering
 	{
 		if(indexCount > 0)
 			glDrawElementsInstanced(mode, indexCount, GL_UNSIGNED_INT, nullptr, instanceCount);
 		else
-			glDrawArraysInstanced(mode, 0, vertices.size(), instanceCount);
+			glDrawArraysInstanced(mode, 0, vertexCount, instanceCount);
 	}
 	else
 	{
 		if(indexCount > 0)
 			glDrawElements(mode, indexCount, GL_UNSIGNED_INT, nullptr);
 		else
-			glDrawArrays(mode, 0, vertices.size());
+			glDrawArrays(mode, 0, vertexCount);
 	}
 
 #ifndef NDEBUG
@@ -605,14 +672,14 @@ void Mesh::render(const mat4f& viewProjection) const
 			if(indexCount > 0)
 				slog.d(TAG, "glDrawElementsInstanced(%s), size=%zu, instance=%zu", mode, indexCount, instanceCount);
 			else
-				slog.d(TAG, "glDrawArraysInstanced(%s), size=%zu, instance=%zu", mode, vertices.size(), instanceCount);
+				slog.d(TAG, "glDrawArraysInstanced(%s), size=%zu, instance=%zu", mode, vertexCount, instanceCount);
 		}
 		else
 		{
 			if(indexCount > 0)
 				slog.d(TAG, "glDrawElements(%s), size=%zu", mode, indexCount);
 			else
-				slog.d(TAG, "glDrawArrays(%s), size=%zu", mode, vertices.size());
+				slog.d(TAG, "glDrawArrays(%s), size=%zu", mode, vertexCount);
 		}
 
 		printed = true;
@@ -621,29 +688,46 @@ void Mesh::render(const mat4f& viewProjection) const
 	glBindVertexArray(0);
 }
 
-Mesh::Builder::Builder(const std::vector<vec3f>& vertices):
-		vertices(vertices)
+Mesh::Builder::Builder(const std::vector<vec4f>& vertices):
+		vertices(vertices),
+		positions(0)
 {
 	assert(!vertices.empty());
 }
 
+Mesh::Builder::Builder(const std::vector<vec3f>& positions):
+		vertices(0),
+		positions(positions)
+{
+	assert(!positions.empty());
+}
+
+// Either vertices or positions is empty.
+size_t Mesh::Builder::getVertexSize() const
+{
+	size_t size = positions.size();  // mostly vec3 position
+	if(size > 0)
+		return size;
+	return vertices.size();
+}
+
 Mesh::Builder& Mesh::Builder::setTexcoord(const std::vector<vec2f>& texcoords)
 {
-	assert(vertices.size() == texcoords.size());
+	assert(getVertexSize() == texcoords.size());
 	this->texcoords = texcoords;
 	return *this;
 }
 
 Mesh::Builder& Mesh::Builder::setColor(const std::vector<vec3f>& colors)
 {
-	assert(vertices.size() == colors.size());
+	assert(getVertexSize() == colors.size());
 	this->colors = std::move(colors);
 	return *this;
 }
 
 Mesh::Builder& Mesh::Builder::setNormal(const std::vector<vec3f>& normals)
 {
-	assert(vertices.size() == normals.size());
+	assert(getVertexSize() == normals.size());
 	this->normals = normals;
 	return *this;
 }
@@ -669,29 +753,37 @@ Mesh::Builder& Mesh::Builder::setIndex(const std::vector<uint32_t>& indices)
 	return *this;
 }
 
-Mesh::Builder::Builder(std::vector<vec3f>&& vertices):
-		vertices(std::move(vertices))
+Mesh::Builder::Builder(std::vector<vec4f>&& vertices):
+		vertices(std::move(vertices)),
+		positions(0)
 {
 	assert(!this->vertices.empty());
 }
 
+Mesh::Builder::Builder(std::vector<vec3f>&& positions):
+		vertices(0),
+		positions(std::move(positions))
+{
+	assert(!this->positions.empty());
+}
+
 Mesh::Builder& Mesh::Builder::setTexcoord(std::vector<vec2f>&& texcoords)
 {
-	assert(vertices.size() == texcoords.size());
+	assert(getVertexSize() == texcoords.size());
 	this->texcoords = std::move(texcoords);
 	return *this;
 }
 
 Mesh::Builder& Mesh::Builder::setColor(std::vector<vec3f>&& colors)
 {
-	assert(vertices.size() == colors.size());
+	assert(getVertexSize() == colors.size());
 	this->colors = std::move(colors);
 	return *this;
 }
 
 Mesh::Builder& Mesh::Builder::setNormal(std::vector<vec3f>&& normals)
 {
-	assert(vertices.size() == normals.size());
+	assert(getVertexSize() == normals.size());
 	this->normals = std::move(normals);
 	return *this;
 }
@@ -719,7 +811,7 @@ Mesh::Builder& Mesh::Builder::setIndex(std::vector<uint32_t>&& indices)
 
 void Mesh::Builder::verifyIndex(const std::vector<uint32_t>& indices) const
 {
-	uint32_t vertexCount = vertices.size();
+	uint32_t vertexCount = getVertexSize();
 	for(const uint32_t& index: indices)
 	{
 		if(index < vertexCount)  // [[likely]]
@@ -844,7 +936,7 @@ Mesh::Builder& Mesh::Builder::shrinkToIndex()
 {
 	assert(indices.empty());
 
-	const uint32_t size = vertices.size();
+	const uint32_t size = positions.size();
 	std::vector<uint32_t> indexMap(size);  // keep insertion order
 	uint32_t shrinkedSize;
 
@@ -862,7 +954,7 @@ Mesh::Builder& Mesh::Builder::shrinkToIndex()
 		for(uint32_t i = 0, j = 0; i < size; ++i)
 		{
 			VertexTangent vertex;
-			vertex.position = vertices[i];
+			vertex.position = positions[i];
 			vertex.texcoord = texcoords.empty()? ZERO2: texcoords[i];
 			vertex.color    = colors.empty()   ? ZERO3: colors[i];
 			vertex.normal   = normals.empty()  ? ZERO3: normals[i];
@@ -893,7 +985,7 @@ Mesh::Builder& Mesh::Builder::shrinkToIndex()
 		for(uint32_t i = 0, j = 0; i < size; ++i)
 		{
 			Vertex vertex;
-			vertex.position = vertices[i];
+			vertex.position = positions[i];
 			vertex.texcoord = texcoords.empty()? ZERO2: texcoords[i];
 			vertex.color    = colors.empty()   ? ZERO3: colors[i];
 			vertex.normal   = normals.empty()  ? ZERO3: normals[i];
@@ -912,7 +1004,7 @@ Mesh::Builder& Mesh::Builder::shrinkToIndex()
 		shrinkedSize = indexMap.size();
 	}
 
-	createIndex(vertices  , indexMap);
+	createIndex(positions , indexMap);
 	createIndex(texcoords , indexMap);
 	createIndex(colors    , indexMap);
 	createIndex(normals   , indexMap);
@@ -934,7 +1026,7 @@ Mesh::Builder& Mesh::Builder::removeIndex()
 {
 	assert(!indices.empty());
 	
-	Group::dropIndex(vertices, indices);
+	Group::dropIndex(positions, indices);
 	Group::dropIndex(texcoords, indices);
 	Group::dropIndex(colors, indices);
 	
@@ -951,6 +1043,7 @@ std::unique_ptr<Mesh> Mesh::Builder::build()
 	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
 	
 	mesh->vertices = std::move(vertices);
+	mesh->positions= std::move(positions);
 	mesh->colors   = std::move(colors);
 	mesh->normals  = std::move(normals);
 	mesh->texcoords= std::move(texcoords);
