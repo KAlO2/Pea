@@ -183,7 +183,7 @@ static const uint8_t triangleIndex[6] =
 	0, 1, 2,  // upper left triangle
 	2, 1, 3,  // lower right triangle
 };
-#include <iostream>
+
 std::vector<uint8_t> Cube::getTexcoordIndex(Primitive primitive)
 {
 	std::vector<uint8_t> indices;
@@ -282,18 +282,19 @@ std::vector<vec3f> Cube::getNormalData()
 
 std::vector<uint8_t> Cube::getNormalIndex(Primitive primitive)
 {
-	const uint8_t n = (primitive == Primitive::QUADRILATERALS)? 4: 6;
 	std::vector<uint8_t> indices;
-	indices.reserve(faceCount * n);
 	
 	switch(primitive)
 	{
 	case Primitive::TRIANGLES:
 	case Primitive::QUADRILATERALS:
-		for(uint8_t f = 0; f < faceCount; ++f)
-			for(uint8_t i = 0; i < n; ++i)
-				indices.push_back(f);
-		
+		{
+			const uint8_t n = (primitive == Primitive::QUADRILATERALS)? 4: 6;
+			indices.reserve(faceCount * n);
+			for(uint8_t f = 0; f < faceCount; ++f)
+				for(uint8_t i = 0; i < n; ++i)
+					indices.push_back(f);
+		}
 		break;
 	
 	default:

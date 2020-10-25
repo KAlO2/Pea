@@ -26,7 +26,12 @@ void BoundingBox::reset()
 
 bool BoundingBox::isEmpty() const
 {
-	return min.x >= max.x || min.y >= max.y || min.z >= max.z;
+	return min.x > max.x || min.y > max.y || min.z > max.z;
+}
+
+vec3f BoundingBox::getSize() const
+{
+	return max - min;
 }
 
 void BoundingBox::repair()

@@ -1,7 +1,7 @@
 R""(
-layout(location =20, binding = 0) uniform sampler2D texture0;
-layout(location =17) uniform float step;
-layout(location =18) uniform int size;
+layout(location =16, binding = 0) uniform sampler2D texture0;
+layout(location =11) uniform float step;
+layout(location =13) uniform int size;
 
 in vec2 _texcoord;
 

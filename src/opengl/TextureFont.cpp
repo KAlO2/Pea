@@ -106,7 +106,7 @@ TextureFont::Impl::Impl(const std::string& fontPath) noexcept(false):
 	assert(fontProgram.getUniformLocation("projection") == Shader::UNIFORM_MAT_PROJECTION);
 	assert(fontProgram.getUniformLocation("texture0")   == Shader::UNIFORM_TEX_TEXTURE0);
 	assert(fontProgram.getUniformLocation("textColor")  == Shader::UNIFORM_VEC_TEXT_COLOR);
-	assert(fontProgram.getAttributeLocation("vertex")   == Shader::ATTRIBUTE_VEC_VERTEX);
+	assert(fontProgram.getInputLocation("vertex")   == Shader::ATTRIBUTE_VEC_VERTEX);
 	
 	program = fontProgram.release();
 }
@@ -276,7 +276,7 @@ void TextureFont::Impl::drawVertexArray(const std::vector<vec4f>& vertices, cons
 	glGenBuffers(1, &vbo);
 	GL::bindVertexBuffer(vbo, Shader::ATTRIBUTE_VEC_VERTEX, vertices);
 	
-	uint32_t color = paint.getColor();
+	uint32_t color = color_cast(paint.getColor());
 	vec4f textColor;
 	textColor.r = Color::red(color)   / 255.0F;
 	textColor.g = Color::green(color) / 255.0F;

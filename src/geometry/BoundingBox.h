@@ -1,9 +1,7 @@
 #ifndef PEA_GEOMETRY_BOUNDING_BOX_H_
 #define PEA_GEOMETRY_BOUNDING_BOX_H_
 
-#include "math/vec2.h"
 #include "math/vec3.h"
-#include "math/vec4.h"
 
 namespace pea {
 
@@ -41,6 +39,11 @@ public:
 	bool isEmpty() const;
 
 	/**
+	 * @return box's size of each dimensions.
+	 */
+	vec3f getSize() const;
+
+	/**
 	 * Repairs the box. Swap minimum and maximum value if necessary.
 	 */
 	void repair();
@@ -68,12 +71,12 @@ public:
 	vec3f center() const;
 	
 	/**
-	 * shared box of two bounding box.
+	 * Computes the intersection of two bounding boxes.
 	 */
 	friend BoundingBox operator &(const BoundingBox& lhs, const BoundingBox& rhs);
 	
 	/**
-	 * union box of two bounding box.
+	 * Computes the union of two bounding boxes.
 	 */
 	friend BoundingBox operator |(const BoundingBox& lhs, const BoundingBox& rhs);
 };

@@ -61,16 +61,14 @@ Texture Framebuffer::createTextureRectangle(int32_t internalFormat, int32_t form
 	return texture;
 }
 
-uint32_t Framebuffer::createRenderBuffer(bool stencil)
+Renderbuffer Framebuffer::createRenderBuffer(bool enableStencil)
 {
 	// create a renderbuffer object for depth and stencil attachment.
-	uint32_t renderBuffer;
-	glGenRenderbuffers(1, &renderBuffer);
-	constexpr GLenum target = GL_RENDERBUFFER;
-	glBindRenderbuffer(target, renderBuffer);
+	Renderbuffer renderBuffer;
+	renderBuffer.bind();
+
 	GLenum internalformat, attachment;
-	
-	if(stencil)
+	if(enableStencil)
 	{
 		internalformat = GL_DEPTH24_STENCIL8;
 		attachment = GL_DEPTH_STENCIL_ATTACHMENT;
@@ -81,8 +79,8 @@ uint32_t Framebuffer::createRenderBuffer(bool stencil)
 		attachment = GL_DEPTH_ATTACHMENT;
 	}
 
-	glRenderbufferStorage(target, internalformat, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, internalformat, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer.getName());
 	
 	return renderBuffer;
 }

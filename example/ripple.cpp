@@ -62,7 +62,7 @@ void main()
 )"";
 
 	std::string fragmentShaderSource = ShaderFactory::VERSION + R""(
-layout(location =10) uniform sampler2D texture0;
+layout(location =12) uniform sampler2D texture0;
 layout(location = 9) uniform float time;
 
 in vec2 _texcoord;

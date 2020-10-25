@@ -1,6 +1,6 @@
 R""(
 layout(location = 1) uniform mat4 viewProjection;
-layout(location = 7) uniform float length;
+layout(location =11) uniform float length;
 
 layout(points) in;
 layout(line_strip, max_vertices = 2) out;

@@ -1,6 +1,7 @@
 #ifndef PEA_MATH_VEC2_H_
 #define PEA_MATH_VEC2_H_
 
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 

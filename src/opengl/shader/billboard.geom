@@ -1,7 +1,7 @@
 R""(
 //layout(location = 0) uniform vec3 objectPosition;
 layout(location = 1) uniform mat4 viewProjection;
-layout(location = 4) uniform vec3 viewPosition;
+layout(location = 8) uniform vec3 viewPosition;
 
 layout(points) in;
 layout(triangle_strip, max_vertices = 4) out;

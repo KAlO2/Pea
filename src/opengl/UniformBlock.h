@@ -2,6 +2,7 @@
 #define PEA_OPENGL_UNIFORM_BLOCK_H_
 
 #include <cinttypes>
+#include <string>
 #include <vector>
 
 #include "io/Type.h"
@@ -32,7 +33,13 @@ public:
 	
 	void updateUniform(Uniform& uniform, void* data);
 	
+	void removeUniform(int32_t location);
+	
+	void removeUniforms();
+	
 	void feedUniforms() const;
+	
+	std::string toString() const;
 };
 
 }  // namespace pea

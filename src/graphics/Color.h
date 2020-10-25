@@ -17,6 +17,12 @@
 
 namespace pea {
 
+
+uint32_t color_cast(const vec4f& color);
+vec4f    color_cast(uint32_t color);
+
+vec3f hsv2rgb(const vec3f& hsv);
+
 /**
  * a 32 bit RGBA color.
  * the red, green, blue, and alpha components are between 0 and 255
@@ -209,6 +215,8 @@ public:
 			ColorF((c & 255) / 255.0F, ((c >> 8)& 255) / 255.0F, ((c >> 16)& 255) / 255.0F, ((c >> 24)& 255) / 255.0F)
 	{}
 
+	static uint32_t getColor(const vec4f& color);
+	
 	uint32_t getColor() const;
 	
 	/**

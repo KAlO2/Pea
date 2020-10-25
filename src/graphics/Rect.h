@@ -1,17 +1,44 @@
 #ifndef PEA_GRAPHICS_RECT_H_
 #define PEA_GRAPHICS_RECT_H_
 
+#include <string>
+
 namespace pea {
+
+// forward declarations for friend functions
+template <typename T>
+class Rect;
+
+template <typename T>
+bool operator ==(const Rect<T>& lhs, const Rect<T>& rhs);
+
+template <typename T>
+bool operator !=(const Rect<T>& lhs, const Rect<T>& rhs);
+
 
 template <typename T>
 class Rect
 {
 public:
-	T left, right, top, bottom;
+	T left, top, right, bottom;
 
 public:
+	/**
+	 * Create a new empty Rect. All coordinates are initialized to 0.
+	 */
 	Rect();
-	Rect(T left, T right, T top, T bottom);
+	
+	/**
+	 * Create a new rectangle with the specified coordinates. Note: no range checking is performed, 
+	 * so the caller must ensure that left <= right and top <= bottom.
+	 *
+	 * @param[in] left   The X coordinate of the left side of the rectangle
+	 * @param[in] top    The Y coordinate of the top of the rectangle
+	 * @param[in] right  The X coordinate of the right side of the rectangle
+	 * @param[in] bottom The Y coordinate of the bottom of the rectangle
+	 */
+	Rect(T left, T top, T right, T bottom);
+	
 	Rect(const Rect& other) = default;
 	
 	Rect& operator = (const Rect& other);
@@ -100,11 +127,17 @@ public:
 	
 	void inset(T x);
 	
-	
-	
 	void scale(float factor);
+	
+	std::string toString() const;
+	
+	friend bool operator == <>(const Rect<T>& lhs, const Rect<T>& rhs);
+	friend bool operator != <>(const Rect<T>& lhs, const Rect<T>& rhs);
 };
-
+/*
+using RectI = Rect<int32_t>;
+using RectF = Rect<float>;
+*/
 }  // namespace pea
 
 #include "graphics/Rect.inl"

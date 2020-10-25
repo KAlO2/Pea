@@ -1,7 +1,7 @@
 R""(
-layout(location =10) uniform sampler2D texture0;
-layout(location =11) uniform sampler2D texture1;
-layout(location = 7) uniform float weight;
+layout(location = 16) uniform sampler2D texture0;
+layout(location = 17) uniform sampler2D texture1;
+layout(location = 11) uniform float weight;
 
 in vec2 _texcoord;
 

@@ -81,7 +81,7 @@ void main()
 
 	// Cellular Noise  https://thebookofshaders.com/12/
 	std::string fragmentShaderSource = ShaderFactory::VERSION + R""(
-layout(location = 7) uniform vec2 size;
+layout(location = 8) uniform vec2 size;
 layout(location = 9) uniform float time;
 
 in vec2 _texcoord;

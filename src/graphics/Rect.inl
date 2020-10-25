@@ -1,5 +1,5 @@
 #include <cstdint>
-//#include <type_traits>
+#include <sstream>
 #include <utility>
 
 #ifndef PEA_GRAPHICS_RECT_H_
@@ -15,10 +15,10 @@ Rect<T>::Rect():
 }
 
 template <typename T>
-Rect<T>::Rect(T left, T right, T top, T bottom):
+Rect<T>::Rect(T left, T top, T right, T bottom):
 		left(left),
-		right(right),
 		top(top),
+		right(right),
 		bottom(bottom)
 {
 }
@@ -29,8 +29,8 @@ Rect<T>& Rect<T>::operator = (const Rect<T>& other)
 	if(this != &other)
 	{
 		this->left   = other.left;
-		this->right  = other.right;
 		this->top    = other.top;
+		this->right  = other.right;
 		this->bottom = other.bottom;
 	}
 	return *this;
@@ -162,6 +162,27 @@ void Rect<T>::scale(float factor)
 		top    = round(top);
 		bottom = round(bottom);
 	}
+}
+
+template <typename T>
+std::string Rect<T>::toString() const
+{
+	std::ostringstream oss;
+	oss << '{' << left << ", " << top << " - " << right << ", " << bottom << '}';
+	return oss.str();
+}
+
+template <typename T>
+bool operator ==(const Rect<T>& lhs, const Rect<T>& rhs)
+{
+	return lhs.left == rhs.left && lhs.right == rhs.right &&
+			lhs.top == rhs.top && lhs.bottom == rhs.bottom;
+}
+
+template <typename T>
+bool operator !=(const Rect<T>& lhs, const Rect<T>& rhs)
+{
+	return !(lhs == rhs);
 }
 
 }  // namespace pea

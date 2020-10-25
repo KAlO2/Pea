@@ -38,6 +38,7 @@ Program& Program::operator =(Program&& other)
 	glDeleteProgram(this->program);
 	this->program = other.program;
 	other.program = NULL_PROGRAM;
+	return *this;
 }
 
 Program::~Program()
@@ -164,7 +165,7 @@ std::string Program::getActiveVariables() const
 	return oss.str();
 }
 
-int32_t Program::getAttributeLocation(const char* name) const
+int32_t Program::getInputLocation(const char* name) const
 {
 	return glGetAttribLocation(program, name);
 }
@@ -172,6 +173,11 @@ int32_t Program::getAttributeLocation(const char* name) const
 int32_t Program::getUniformLocation(const char* name) const
 {
 	return glGetUniformLocation(program, name);
+}
+
+int32_t Program::getOutputLocation(const char* name) const
+{
+	return glGetFragDataLocation(program, name);
 }
 
 std::vector<Program::Variable> Program::getActiveVariables(uint32_t program, GLenum activeType)

@@ -219,11 +219,6 @@ GLenum GL::dataType(Color::Format format)
 	}
 }
 
-GLenum GL::getPrimitive(Primitive primitive)
-{
-	return static_cast<GLenum>(primitive);
-}
-
 uint32_t GL::sizeofChannel(GLint format)
 {
 	switch(format)

@@ -187,6 +187,20 @@ public:
 	
 	const vec3f& getUp() const;
 	
+	/**
+	 * This is the horizontal field of view. The vertical field of view is related to the horizontal
+	 * by the aspect ratio of the view. A square view will have the same horizontal and vertical 
+	 * FoV. A landscape view will have a smaller vertical FoV while a portrait view will have a 
+	 * larger vertical FoV.
+	 *
+	 * @see <a href="http://tksharpless.net/vedutismo/Pannini/panini.pdf">Panini Projection</a>
+	 * Modern manuals of perspective drawing suggest that to avoid rectilinear perspective 
+	 * distortion, fields of view shouldbe limited to no more than 60 to 70 degrees. Renaissance 
+	 * artists ob-served smaller limits – 30 to 40 degrees[Kub86]. Today the “mar-ket limit” on the 
+	 * rectilinear field of view appears to be near 90 degrees. Drawings and photographs that wide 
+	 * are published regularly. The widest broadcast television lenses cover 94◦, and some 
+	 * rectilinear still camera lenses can take pictures over 100 degrees wide.
+	 */
 	void  setFieldOfView(float radians);
 	float getFieldOfView() const;
 	
@@ -218,7 +232,14 @@ public:
 	 */
 	vec3f getPosition(const vec3f& coordinate) const;
 	
+	/**
+	 * @param[in] direction camera's orientation, no need to be normalized.
+	 */
 	void         setForward(const vec3f& direction);
+	
+	/**
+	 * @return forward vector, normalized.
+	 */
 	const vec3f& getForward() const;
 	
 	/**
@@ -261,8 +282,8 @@ public:
 inline void Camera::setFlying(bool flying) { this->flying = flying; }
 inline bool Camera::isFlying() const       { return flying;         }
 
-inline const vec3f& Camera::getForward() const { return forward; }
-inline const vec3f& Camera::getUp()    const { return up;          }
+inline const vec3f& Camera::getForward() const { return forward;  }
+inline const vec3f& Camera::getUp()      const { return up;       }
 
 inline float Camera::getFieldOfView() const { return fieldOfView; }
 inline float Camera::getAspectRatio() const { return aspectRatio; }
@@ -270,7 +291,7 @@ inline float Camera::getNear()        const { return near;        }
 inline float Camera::getFar()         const { return far;         }
 
 inline const mat4f& Camera::getProjectionMatrix() const { return projectionMatrix; }
-	
+
 inline const vec3f& Camera::getAxis(const mat4f& transform, Axis axis)
 {
 	uint8_t index = static_cast<uint8_t>(axis);

@@ -164,7 +164,7 @@ void Guideline::prepare()
 	Program colorProgram(ShaderFactory::VERT_VP, ShaderFactory::FRAG_UNIFORM_COLOR);
 /*
 	assert(colorProgram.getUniformLocation("viewProjection") == Shader::UNIFORM_MAT_VIEW_PROJECTION);
-	assert(colorProgram.getAttributeLocation("position") == Shader::ATTRIBUTE_VEC_POSITION);
+	assert(colorProgram.getInputLocation("position") == Shader::ATTRIBUTE_VEC_POSITION);
 	assert(colorProgram.getUniformLocation("uniformColor") == Shader::UNIFORM_VEC_UNIFORM_COLOR);
 	colorProgram.listVariables();
 */

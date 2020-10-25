@@ -75,9 +75,9 @@ void QuadRenderer::upload() const
 	constexpr int32_t stride = 0;
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STREAM_DRAW);
 	glEnableVertexAttribArray(Shader::ATTRIBUTE_VEC_POSITION);
-	glVertexAttribPointer(Shader::ATTRIBUTE_VEC_POSITION, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+	glVertexAttribPointer(Shader::ATTRIBUTE_VEC_POSITION, 3, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(Shader::ATTRIBUTE_VEC_TEXCOORD);
-	glVertexAttribPointer(Shader::ATTRIBUTE_VEC_TEXCOORD, 2, GL_FLOAT, GL_FALSE, stride, (void*)(12 * sizeof(float)));
+	glVertexAttribPointer(Shader::ATTRIBUTE_VEC_TEXCOORD, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(12 * sizeof(float)));
 #endif
 	glBindVertexArray(0);
 }

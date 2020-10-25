@@ -55,35 +55,45 @@ public:
 		UNIFORM_MAT_PROJECTION    = 2,
 		UNIFORM_MAT_LIGHT_VIEW_PROJECTION = 2,
 		
+		UNIFORM_VEC_COLOR         = 3,  // vec3 color
 		UNIFORM_VEC_UNIFORM_COLOR = 3,  // vec4 uniformColor
-		UNIFORM_VEC_TEXT_COLOR    = 3,
-		UNIFORM_VEC_VIEW_POSITION = 4,
-		UNIFORM_VEC_CENTER        = 4,  // vec2 center
+		UNIFORM_VEC_AMBIENT_COLOR = 3,  // vec3 ambientColor
+		UNIFORM_VEC_TEXT_COLOR    = 4,
+		UNIFORM_VEC_OBJECT_COLOR  = 4,
 		UNIFORM_VEC_LIGHT_POSITION= 5,
 		UNIFORM_VEC_LIGHT_DIRECTION = 6,
 		UNIFORM_VEC_LIGHT_COLOR   = 7,
-		UNIFORM_VEC_SCALE         = 7,
-		UNIFORM_VEC_SIZE          = 7,  // vec2 size
-		UNIFORM_VEC_STEP          = 7,  // vec2 step
-		UNIFORM_VEC_DELTA         = 7,  // vec2 delta
+		UNIFORM_VEC_VIEW_POSITION = 8,
+		UNIFORM_VEC_LAST_POSITION = 9,
+		UNIFORM_VEC_SPECULAR_COLOR= 10,  // vec3 color + float shininess
 		
-		// float alpha, ratio, factor, length, scale, step, time, weight
-		UNIFORM_VEC_PARAMETER     = 7,
-		UNIFORM_FLT_ALPHA         = 7,
-		UNIFORM_FLT_RATIO         = 7,
-		UNIFORM_FLT_FACTOR        = 7,
-		UNIFORM_FLT_LENGTH        = 7,
-		UNIFORM_FLT_SCALE         = 7,
-		UNIFORM_FLT_STEP          = 7,
-		UNIFORM_FLT_WEIGHT        = 7,
+		// float alpha, ratio, factor, length, scale, step, time, weight;
+		UNIFORM_VEC_PARAMETER     = 10,
+		UNIFORM_VEC_CENTER        = 11,  // vec2 center
+		UNIFORM_VEC_SCALE         = 11,
+		UNIFORM_VEC_SIZE          = 11,  // vec2 size
+		UNIFORM_VEC_STEP          = 11,  // vec2 step
+		UNIFORM_VEC_DELTA         = 11,  // vec2 delta
+		UNIFORM_VEC_ATTENNUATION  = 11,
+		UNIFORM_FLT_ALPHA         = 11,
+		UNIFORM_FLT_RATIO         = 11,
+		UNIFORM_FLT_FACTOR        = 11,
+		UNIFORM_FLT_LENGTH        = 11,
+		UNIFORM_FLT_RADIUS        = 11,
+		UNIFORM_FLT_SCALE         = 11,
+		UNIFORM_FLT_STEP          = 11,
+		UNIFORM_FLT_WEIGHT        = 11,
 		
-		UNIFORM_INT_PARAMETER     = 8,
-		UNIFORM_INT_SIZE          = 8,
-		UNIFORM_INT_INDEX         = 8,
+		// int size, index;
+		UNIFORM_INT_PARAMETER     = 12,
+		UNIFORM_INT_SIZE          = 13,
+		UNIFORM_INT_INDEX         = 13,  // int index;
 		
-		UNIFORM_FLT_TIME          = 9,  // float time;
+		UNIFORM_UINT_INDEX        = 14,  // uint index;
 		
-		UNIFORM_TEX_TEXTURE0 = 10,
+		UNIFORM_FLT_TIME          = 15,  // float time;
+		
+		UNIFORM_TEX_TEXTURE0      = 16,
 		UNIFORM_TEX_TEXTURE1,
 		UNIFORM_TEX_TEXTURE2,
 		UNIFORM_TEX_TEXTURE3,

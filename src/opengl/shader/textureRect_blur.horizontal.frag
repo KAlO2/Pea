@@ -1,6 +1,6 @@
 R""(
-layout(location = 20, binding = 0) uniform sampler2DRect texture0;
-layout(location = 18) uniform int size;
+layout(location =16, binding = 0) uniform sampler2DRect texture0;
+layout(location = 8) uniform int size;
 
 in vec2 _texcoord;
 

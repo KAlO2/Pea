@@ -161,7 +161,7 @@ public:
 	
 	static GLenum pixelFormat(Color::Format format);
 	static GLenum dataType(Color::Format format);
-	static GLenum getPrimitive(Primitive primitive);
+	static constexpr GLenum getPrimitive(Primitive primitive);
 	
 	static uint32_t sizeofChannel(GLint format);
 	
@@ -197,6 +197,11 @@ public:
 #endif
 
 };
+
+constexpr GLenum GL::getPrimitive(Primitive primitive)
+{
+	return static_cast<GLenum>(primitive);
+}
 
 // man glBindAttribLocation for matrix attribute variable.
 // mat2f can be changed to vec4f, which takes only one slot.

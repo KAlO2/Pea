@@ -7,8 +7,8 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in vec2 texcoord;
 
 out vec3 _position;
-out vec2 _texcoord;
 out vec3 _normal;
+out vec2 _texcoord;
 
 void main()
 {

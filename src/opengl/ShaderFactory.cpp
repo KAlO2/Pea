@@ -12,63 +12,6 @@
 static const char* TAG = "ShaderFactory";
 
 using namespace pea;
-/*
-const std::unordered_map<uint32_t, std::string> ShaderFactory::NAMES
-{
-	// attributes
-	{ Shader::ATTRIBUTE_VEC_POSITION, "position",           },
-	{ Shader::ATTRIBUTE_VEC_COLOR,    "color",              },
-	{ Shader::ATTRIBUTE_VEC_NORMAL,   "normal",             },
-	
-	// uniforms
-	{ Shader::UNIFORM_MAT_MODEL, "model",                                },
-	{ Shader::UNIFORM_MAT_VIEW , "view",                                 },
-	{ Shader::UNIFORM_MAT_PROJECTION, "projection",                      },
-	{ Shader::UNIFORM_MAT_MODEL_VIEW, "modelView",                       },
-	{ Shader::UNIFORM_MAT_PROJECTION, "viewProjection",                  },
-	{ Shader::UNIFORM_MAT_MODEL_VIEW_PROJECTION, "modelViewProjection",  },
-	
-	{ Shader::UNIFORM_VEC_UNIFORM_COLOR, "uniformColor",                 },
-	
-	{ "texture0",            Shader::UNIFORM_TEX_TEXTURE0              },
-	{ "texture1",            Shader::UNIFORM_TEX_TEXTURE1              },
-};
-*/
-const std::unordered_map<std::string, uint32_t> ShaderFactory::LOCATIONS
-{
-	// attributes
-	{ "position",            Shader::ATTRIBUTE_VEC_POSITION },
-	{ "color",               Shader::ATTRIBUTE_VEC_COLOR    },
-	{ "normal",              Shader::ATTRIBUTE_VEC_NORMAL   },
-	
-	
-	// uniforms
-	{ "model",               Shader::UNIFORM_MAT_MODEL                 },
-	{ "view",                Shader::UNIFORM_MAT_VIEW                  },
-	{ "projection",          Shader::UNIFORM_MAT_PROJECTION            },
-	{ "modelView",           Shader::UNIFORM_MAT_MODEL_VIEW            },
-	{ "viewProjection",      Shader::UNIFORM_MAT_PROJECTION            },
-	{ "modelViewProjection", Shader::UNIFORM_MAT_MODEL_VIEW_PROJECTION },
-	
-	{ "uniformColor",        Shader::UNIFORM_VEC_UNIFORM_COLOR         },
-	{ "textColor",           Shader::UNIFORM_VEC_UNIFORM_COLOR         },
-	
-	{ "texture0",            Shader::UNIFORM_TEX_TEXTURE0              },
-	{ "texture1",            Shader::UNIFORM_TEX_TEXTURE1              },
-/*
-	{ "", UNIFORM_MAT_NORMAL,
-		
-	{ "", UNIFORM_TEX_EMISSIVE,
-	{ "", UNIFORM_TEX_DIFFUSE,
-		
-	{ "", UNIFORM_MTL_SHININESS,
-	{ "", UNIFORM_MTL_ALPHA,
-		
-	{ "", UNIFORM_MIX_AMBIENT,
-	{ "", UNIFORM_MIX_DIFFUSE,
-	{ "", UNIFORM_MIX_SPECULAR,
-*/
-};
 
 // builtin shdader has a common header
 // GL_ARB_shading_language_420pack  https://www.khronos.org/opengl/wiki/Sampler_(GLSL)
@@ -91,6 +34,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	;
 	map[ShaderFactory::VERT_M_VP] =
 #include "./shader/model_viewProjection.vert"
+	;
+	map[ShaderFactory::VERT_M_VP2] =
+#include "./shader/model_viewProjection2.vert"
 	;
 	map[ShaderFactory::VERT_M_V_P] =
 #include "./shader/model_view_projection.vert"
@@ -157,8 +103,8 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::VERT_M_VP_NORMAL_FLAT] =
 #include "./shader/model_viewProjection_normal.flat.vert"
 	;
-	map[ShaderFactory::VERT_M_VP_TEXCOORD_NORMAL] =
-#include "./shader/model_viewProjection_texcoord_normal.vert"
+	map[ShaderFactory::VERT_M_VP_NORMAL_TEXCOORD] =
+#include "./shader/model_viewProjection_normal_texcoord.vert"
 	;
 	map[ShaderFactory::VERT_M_VP_SPHERE_NORMAL] =
 #include "./shader/model_viewProjection_sphere_normal.vert"
@@ -321,6 +267,10 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::FRAG_BONE] =
 #include "./shader/bone.frag"
 	;
+	map[ShaderFactory::FRAG_POSITION_UNIFORM_COLOR_NORMAL_TEXCOORD] =
+#include "./shader/position_uniformColor_normal_texcoord.frag"
+	;
+	
 	return map;
 }
 

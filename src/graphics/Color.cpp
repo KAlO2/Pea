@@ -4,6 +4,47 @@
 
 #include "math/scalar.h" // for clamp
 
+namespace pea {
+
+uint32_t color_cast(const vec4f& color)
+{
+	constexpr float s = 255.999;
+	uint8_t r = static_cast<uint8_t>(color.r * s);
+	uint8_t g = static_cast<uint8_t>(color.g * s);
+	uint8_t b = static_cast<uint8_t>(color.b * s);
+	uint8_t a = static_cast<uint8_t>(color.a * s);
+	return Color::from_RGBA8888(r, g, b, a);
+}
+
+vec4f color_cast(uint32_t color)
+{
+	vec4f c;
+	c.r = (color         & 0xFF) / 255.0F;
+	c.g = ((color >>  8) & 0xFF) / 255.0F;
+	c.b = ((color >> 16) & 0xFF) / 255.0F;
+	c.a = ((color >> 24) & 0xFF) / 255.0F;
+	return c;
+}
+
+vec3f hsv2rgb(const vec3f& hsv)
+{
+	const float &h = hsv.x, &s = hsv.y, &v = hsv.z;
+	vec3f color;
+	color.r = std::abs(h * 6.0f - 3.0f) - 1.0f;
+	color.g = 2.0f - std::abs(h * 6.0f - 2.0f);
+	color.b = 2.0f - std::abs(h * 6.0f - 4.0f);
+
+	for(uint8_t i = 0;i < 3; ++i)
+	{
+		float c = pea::clamp(color[i], 0.0f, 1.0f);
+		color[i] = ((c - 1.0f) * s + 1.0f) * v;
+	}
+	
+	return color;
+}
+
+}  // namespace pea
+
 using namespace pea;
 /*
 const Color Color::RED     = Color(255,   0,   0);
@@ -133,14 +174,14 @@ bool Color::parse(const char* hex, uint32_t& rgba)
 	return true;
 }
 
+uint32_t ColorF::getColor(const vec4f& color)
+{
+	return color_cast(color);
+}
+
 uint32_t ColorF::getColor() const
 {
-	constexpr float s = 255.999;
-	uint8_t r = static_cast<uint8_t>(color.r * s);
-	uint8_t g = static_cast<uint8_t>(color.g * s);
-	uint8_t b = static_cast<uint8_t>(color.b * s);
-	uint8_t a = static_cast<uint8_t>(color.a * s);
-	return Color::from_RGBA8888(r, g, b, a);
+	return getColor(color);
 }
 
 void ColorF::clamp()

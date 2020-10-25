@@ -25,6 +25,7 @@ public:
 		VERT_POSITION = 0,             // position
 		VERT_MVP,                      // position, modelViewProjection
 		VERT_M_VP,                     // position, model, viewProjection
+		VERT_M_VP2,                    // position, model, viewProjection => vec3 texcoord
 		VERT_M_V_P,                    // position, model, view, projection
 		VERT_V_P,                      // position, view, projection
 		VERT_VP,                       // position, viewProjection
@@ -49,7 +50,7 @@ public:
 		VERT_M_VP_NORMAL,              // position, model, viewProjection, normal
 		VERT_M_VP_NORMAL2,             // specially used for vertex/face normal, needs a better name?
 		VERT_M_VP_NORMAL_FLAT,         // ditto, with flat shadding
-		VERT_M_VP_TEXCOORD_NORMAL,     // position, model, viewProjection, texcoord, normal
+		VERT_M_VP_NORMAL_TEXCOORD,     // position, model, viewProjection, normal, texcoord
 		VERT_M_VP_SPHERE_NORMAL,       // position, model, viewProjection => sphere normal
 		VERT_M_VP_SPHERE_TEXCOORD,     // position, model, viewprojection => sphere texcoord
 
@@ -74,8 +75,9 @@ public:
 		FRAGMENT_SHADER_START = 400,
 		FRAG_UNIFORM_COLOR = 400,  // uniform (omnidirectional) scattering
 		FRAG_UNIFORM_INDEX,  // int
-		FRAG_LAMBERT,
+		FRAG_LAMBERT,        // vec3 ambientColor, lightPosition, lightColor, attenuation
 		FRAG_LAMBERT_FLAT,  // ditto, with flat shadding
+//		FRAG_PHONG,
 		FRAG_TEXTURE_LUMINANCE,
 //		FRAG_TEXTURE_LUMINANCE_ALPHA,
 		FRAG_TEXTURE_RGB,       // sampler2D
@@ -122,14 +124,14 @@ public:
 		FRAG_DEFERRED_SHADING,
 		FRAG_BONE,
 		
+		// geometry buffer, used in deferred shading
+		FRAG_POSITION_UNIFORM_COLOR_NORMAL_TEXCOORD,
+		
 		COMPUTE_SHADER_START = 500,
 		
 	};
 	
 private:
-//	static const std::unordered_map<uint32_t, std::string> NAMES;
-	static const std::unordered_map<std::string, uint32_t> LOCATIONS;
-	
 	std::unordered_map<std::string, uint32_t, std::hash<std::string>> shaderMap;
 
 	ShaderFactory();

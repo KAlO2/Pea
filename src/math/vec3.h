@@ -1,6 +1,7 @@
 #ifndef PEA_MATH_VEC3_H_
 #define PEA_MATH_VEC3_H_
 
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 
@@ -34,6 +35,7 @@ public:
 		// theta: the angle project to XOY-plane, in a counter-clockwise direction. [-pi, pi]
 		// phi: the reference angle from z-axis. [-pi/2, +pi/2]
 		struct { T rho, theta, phi; };  // polar coordinate
+		struct { T width, height, depth; };  // cube
 		struct { T constant, linear, quadratic; };  // attenuation
 	};
 
@@ -141,6 +143,7 @@ public:
 	friend vec3<T> cartesian_cast(const vec3<T>& polar)
 	{
 		assert(polar.rho >= 0);
+		assert(-M_PI / 2 <= polar.phi && polar.phi <= +M_PI / 2);
 		vec3<T> position;
 		position.z = polar.rho * std::sin(polar.phi);
 		T r = polar.rho * std::cos(polar.phi);

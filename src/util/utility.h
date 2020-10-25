@@ -24,7 +24,7 @@ constexpr std::size_t sizeofArray(const T (&array)[N]) noexcept
 	return N;
 }
 
-constexpr uint32_t makeFourCC(uint8_t ch1, uint8_t ch2, uint8_t ch3, uint8_t ch4) noexcept
+constexpr std::uint32_t makeFourCC(std::uint8_t ch1, std::uint8_t ch2, std::uint8_t ch3, std::uint8_t ch4) noexcept
 {
 	return ch1 | (ch2 << 8) | (ch3 << 16) | (ch4 << 24);
 }

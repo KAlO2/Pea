@@ -95,15 +95,16 @@ public:
 	const uint32_t& getName() const;
 	
 	void use() const;
-
 	
 	std::string getActiveVariables() const;
 
-	int32_t getAttributeLocation(const char* name) const;
+	int32_t getInputLocation(const char* name) const;
 	int32_t getUniformLocation(const char* name) const;
+	int32_t getOutputLocation(const char* name) const;
 
-	int32_t getAttributeLocation(const std::string& name) const;
+	int32_t getInputLocation(const std::string& name) const;
 	int32_t getUniformLocation(const std::string& name) const;
+	int32_t getOutputLocation(const std::string& name) const;
 
 	void setLight(const char* name, const Light& light) const;
 	
@@ -181,14 +182,19 @@ inline void Program::setUniform(int32_t location, const mat3f& value) { glUnifor
 inline void Program::setUniform(int32_t location, const mat3x4f& value) { glUniformMatrix3x4fv(location, 1, !COLUMN_MAJOR, value.data()); }
 inline void Program::setUniform(int32_t location, const mat4f& value) { glUniformMatrix4fv(location, 1, !COLUMN_MAJOR, value.data()); }
 
-inline int32_t Program::getAttributeLocation(const std::string& name) const
+inline int32_t Program::getInputLocation(const std::string& name) const
 {
-	return getAttributeLocation(name.c_str());
+	return getInputLocation(name.c_str());
 }
 
 inline int32_t Program::getUniformLocation(const std::string& name) const
 {
 	return getUniformLocation(name.c_str());
+}
+
+inline int32_t Program::getOutputLocation(const std::string& name) const
+{
+	return getOutputLocation(name.c_str());
 }
 
 class Program::Variable

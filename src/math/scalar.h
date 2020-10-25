@@ -1,7 +1,6 @@
 #ifndef PEA_MATH_SCALAR_H_
 #define PEA_MATH_SCALAR_H_
 
-#include <cmath>
 #include <limits>
 #include <type_traits>
 #include <cassert>
@@ -100,9 +99,9 @@ class scalar
 public:
 // @see http://en.cppreference.com/w/cpp/preprocessor/replace for __cplusplus macro.
 
-	static constexpr T tolerance = 1.0E-5;
-	static constexpr T pi = static_cast<T>(M_PI);
-	static constexpr T e = static_cast<T>(M_E);
+	static constexpr T TOLERANCE = 1.0E-5;
+	static constexpr T PI = static_cast<T>(3.141592653589793238462643383279502884197L);
+	static constexpr T E  = static_cast<T>(2.718281828459045235360287471352662497757L);
 };
 
 template <typename T>
@@ -124,7 +123,7 @@ inline constexpr bool isZero(const T& value)
 template <>
 inline constexpr bool isZero<float>(const float& value)
 {
-	return std::abs(value) <= std::sqrt(std::numeric_limits<float>::epsilon());
+	return std::abs(value) <= 0.000345267;  // std::sqrt(std::numeric_limits<float>::epsilon());
 }
 
 template <>
@@ -132,13 +131,13 @@ inline constexpr bool isZero<double>(const double& value)
 {
 	// std::cbrt(x) is not equivalent to std::pow(x, 1.0/3) because std::pow cannot raise a
 	// negative base to a fractional exponent.
-	return std::abs(value) <= std::cbrt(std::numeric_limits<double>::epsilon());
+	return std::abs(value) <= 6.05545E-06;  // std::cbrt(std::numeric_limits<double>::epsilon());
 }
 
 template <>
 inline constexpr bool isZero<long double>(const long double& value)
 {
-	return std::abs(value) <= std::pow(std::numeric_limits<long double>::epsilon(), 1.0/4);
+	return std::abs(value) <= 4.76837e-07;  // std::pow(std::numeric_limits<long double>::epsilon(), 1.0/3);
 }
 
 /**
@@ -191,7 +190,7 @@ template <typename T>
 inline constexpr T deg2rad(const T& degrees)
 {
 	static_assert(std::is_floating_point<T>::value, "limited to floating-point type only");
-	return degrees / (180 / static_cast<T>(M_PI));
+	return degrees / (180 / scalar<T>::PI);
 }
 
 /**
@@ -204,7 +203,7 @@ template <typename T>
 inline constexpr T rad2deg(const T& radians)
 {
 	static_assert(std::is_floating_point<T>::value, "limited to floating-point type only");
-	return radians * (180 / static_cast<T>(M_PI));
+	return radians * (180 / scalar<T>::PI);
 }
 
 /*
@@ -213,12 +212,12 @@ inline constexpr T rad2deg(const T& radians)
  */
 constexpr long double operator "" _deg(long double degree)
 {
-	return degree * static_cast<long double>(M_PI) / 180;
+	return degree * scalar<long double>::PI / 180;
 }
 
 constexpr long double operator "" _deg(unsigned long long int degree)
 {
-	return degree * static_cast<long double>(M_PI) / 180;
+	return degree * scalar<long double>::PI / 180;
 }
 
 /**
@@ -299,22 +298,6 @@ inline constexpr T smoothStep(const T& start, const T& end, const T& amount)
 {
 	float a = amount * amount * (3 - 2 * amount);
 	return lerp<T>(start, end, a);
-}
-
-/**
- * Normal distribution, also known as Gaussian distribution.
- *	            1             (x - μ)^2
- *	f(x) = ------------ exp(- ---------)
- *	       sqrt(2*pi)*σ         2*σ^2
- *
- * P(μ-σ<X≤μ+σ) = 68.3%, P(μ-2σ<X≤μ+2σ) = 95.4%, P(μ-3σ<X≤μ+3σ) = 99.7%.
- */
-template <typename T>
-inline T gaussian(const T& x, const T& miu = T(0), const T& sigma = T(1))
-{
-	T t = (x - miu) / sigma;
-	constexpr T f = 2.50662827463100050242;  // std::sqrt(2 * M_PI)
-	return std::exp<T>(t * t / static_cast<T>(-2)) / f / sigma;
 }
 
 }  // namespace pea

@@ -3,11 +3,12 @@
 
 #include <cstdint>
 
+#include "opengl/Renderbuffer.h"
 #include "opengl/Texture.h"
 
 namespace pea {
 
-class Framebuffer
+class Framebuffer final
 {
 public:
 /*
@@ -41,7 +42,7 @@ public:
 	Texture createTexture2D(int32_t internalFormat, int32_t format, int32_t type, uint32_t attachment);
 	Texture createTextureRectangle(int32_t internalFormat, int32_t format, int32_t type, uint32_t attachment);
 	
-	uint32_t createRenderBuffer(bool stencil);
+	Renderbuffer createRenderBuffer(bool enableStencil);
 	
 	void prepare();
 	

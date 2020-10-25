@@ -1,5 +1,5 @@
 R""(
-layout(location = 10) uniform samplerCube texture0;
+layout(location = 16) uniform samplerCube texture0;
 
 in vec3 _texcoord;
 
