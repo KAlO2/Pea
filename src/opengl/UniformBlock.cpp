@@ -79,7 +79,7 @@ void UniformBlock::removeUniform(int32_t location)
 		return;
 */
 	const size_t count = uniforms.size();
-	int32_t index = 0;
+	size_t index = 0;
 	for(; index < count; ++index)
 		if(uniforms[index].location == location)
 			break;

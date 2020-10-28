@@ -18,6 +18,36 @@ using namespace pea;
 static const char* tag = "[image]";
 static const char* TAG = "image";
 
+TEST_CASE("Color", tag)
+{
+	using Format = Color::Format;
+	REQUIRE(Color::sizeofChannel(Format::C1_U8) == 1U);
+	REQUIRE(Color::sizeofChannel(Format::C2_U8) == 2U);
+	REQUIRE(Color::sizeofChannel(Format::C3_U8) == 3U);
+	REQUIRE(Color::sizeofChannel(Format::C4_U8) == 4U);
+	
+	REQUIRE(Color::sizeofChannel(Format::RGBA5551_U16) == 4U);
+	REQUIRE(Color::sizeofChannel(Format::RGBA4444_U16) == 4U);
+	REQUIRE(Color::sizeofChannel(Format::RGB565_U16) == 3U);
+	REQUIRE(Color::sizeofChannel(Format::RGBA1010102_U32) == 4U);
+	
+	REQUIRE(Color::sizeofChannel(Format::BGR888_U24) == 3U);
+	REQUIRE(Color::sizeofChannel(Format::BGRA8888_U32) == 4U);
+	
+	REQUIRE(!Color::isFloatType(Format::UNKNOWN));
+	REQUIRE(!Color::isIntegerType(Format::UNKNOWN));
+	REQUIRE(Color::isFloatType(Format::C1_F16));
+	REQUIRE(!Color::isIntegerType(Format::C1_F32));
+	REQUIRE(!Color::isFloatType(Format::C4_U8));
+	REQUIRE(!Color::isFloatType(Format::BGR888_U24));
+	REQUIRE(!Color::isFloatType(Format::BGRA8888_U32));
+	REQUIRE(!Color::isFloatType(Format::C4_U32));
+	
+	REQUIRE(Color::size(Format::C1_U8) == 1);
+	REQUIRE(Color::size(Format::C4_U8) == 4);
+	REQUIRE(Color::size(Format::C4_F32) == 4 * sizeof(float));
+}
+
 TEST_CASE("Image even", tag)
 {
 	constexpr uint32_t width = 2, height = 2;
@@ -39,7 +69,7 @@ TEST_CASE("Image even", tag)
 		0x00112233, 0x44556677,
 	};
 	
-	Image_PNG image(width, height, Color::RGBA_8888);
+	Image_PNG image(width, height, Color::C4_U8);
 	
 	for(uint32_t y = 0; y < height; ++y)
 		for(uint32_t x = 0; x < width; ++x)
@@ -85,7 +115,7 @@ TEST_CASE("Image odd", tag)
 		0, 1, 2,
 	};
 	
-	Image_PNG image(width, height, Color::G_8);
+	Image_PNG image(width, height, Color::C1_U8);
 	
 	for(uint32_t y = 0; y < height; ++y)
 		for(uint32_t x = 0; x < width; ++x)
@@ -109,7 +139,7 @@ TEST_CASE("Image odd", tag)
 
 TEST_CASE("Image_BMP", tag)
 {
-	Image_BMP image(1280, 720, Color::RGBA_8888);
+	Image_BMP image(1280, 720, Color::C4_U8);
 	image.fillCheckerboard(240);
 
 	std::string filename = "checkerboard.rgba.bmp";
@@ -120,7 +150,7 @@ TEST_CASE("Image_BMP", tag)
 
 TEST_CASE("Image_PNG", tag)
 {
-	Image_PNG image(1024, 1024, Color::RGBA_8888);
+	Image_PNG image(1024, 1024, Color::C4_U8);
 	image.fillCheckerboard(128);
 	
 	std::string filename = "checkerboard.rgba.png";

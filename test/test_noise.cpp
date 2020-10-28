@@ -48,7 +48,7 @@ int main()
 	PerlinNoise<float> noise;
 	
 	uint32_t width = 512, height = 512;
-	Image_PNG image(width, height, Color::Format::RGB_888);
+	Image_PNG image(width, height, Color::Format::C3_U8);
 	constexpr float frequency = 16.0F;
 	
 	auto random = [](uint32_t i, uint32_t j)

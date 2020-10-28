@@ -337,11 +337,11 @@ static void compress_DDS_alpha_block(const uint8_t *const uncompressed, uint8_t 
 
 bool Image_DXT::save(const std::string& path) const
 {
-	int32_t channel = Color::channel(colorFormat);
+	uint32_t channel = Color::sizeofChannel(colorFormat);
 	/*	error check	*/
 	if((path.empty()) ||
 		(width < 1) || (height < 1) ||
-		(channel < 1) || (channel > 4) ||
+		(channel < 1U) || (channel > 4U) ||
 		(data == nullptr))
 	{
 		return false;
@@ -350,10 +350,11 @@ bool Image_DXT::save(const std::string& path) const
 	/*	Convert the image	*/
 	uint8_t *DDS_data;
 	int DDS_size;
-	if((channel & 1) == 1)  // no alpha, just use DXT1
-		DDS_data = convertImageToDXT1(data, width, height, channel, &DDS_size);
-	else  // has alpha, so use DXT5
+	const bool hasAlpha = (channel & 1U) != 1U;
+	if(hasAlpha)  // has alpha, so use DXT5
 		DDS_data = convertImageToDXT5(data, width, height, channel, &DDS_size);
+	else  // no alpha, just use DXT1
+		DDS_data = convertImageToDXT1(data, width, height, channel, &DDS_size);
 
 	/*	save it	*/
 	DDS_header header;
@@ -366,7 +367,7 @@ bool Image_DXT::save(const std::string& path) const
 	header.dwPitchOrLinearSize = DDS_size;
 	header.sPixelFormat.dwSize = 32;
 	header.sPixelFormat.dwFlags = DDPF_FOURCC;
-	header.sPixelFormat.dwFourCC = (channel & 1) == 1 ? makeFourCC('D', 'X', 'T', '1') : makeFourCC('D', 'X', 'T', '5');
+	header.sPixelFormat.dwFourCC = hasAlpha? makeFourCC('D', 'X', 'T', '5'): makeFourCC('D', 'X', 'T', '1');
 	header.sCaps.dwCaps1 = DDSCAPS_TEXTURE;
 
 	/*	write it out	*/

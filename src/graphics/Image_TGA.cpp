@@ -18,7 +18,7 @@ static const uint8_t MAGIC[18] = "TRUEVISION-XFILE.";
 
 
 Image_TGA::Image_TGA():
-		Image_TGA(0, 0, Color::Format::RGBA_8888, nullptr)
+		Image_TGA(0, 0, Color::Format::C4_U8, nullptr)
 {
 }
 
@@ -76,7 +76,7 @@ bool Image_TGA::probe(const uint8_t* data, size_t length)
 std::shared_ptr<Image_TGA> Image_TGA::decodeByteArray(const uint8_t* data, size_t length)
 {
 	uint32_t width = 0, height = 0;
-	Color::Format colorFormat = Color::RGBA_8888;
+	Color::Format colorFormat = Color::C4_U8;
 	uint8_t* imageData = nullptr;
 	
 	if(length < sizeof(Header))
@@ -98,7 +98,7 @@ std::shared_ptr<Image_TGA> Image_TGA::decodeByteArray(const uint8_t* data, size_
 std::shared_ptr<Image_TGA> Image_TGA::decodeFile(const std::string& path)
 {
 	uint32_t width = 0, height = 0;
-	Color::Format colorFormat = Color::RGBA_8888;
+	Color::Format colorFormat = Color::C4_U8;
 	uint8_t* data = nullptr;
 	
 	uint8_t bytes;
@@ -179,11 +179,11 @@ std::shared_ptr<Image_TGA> Image_TGA::decodeFile(const std::string& path)
 	bytes = header.depth / 8;
 	switch(bytes)
 	{
-	case 1: colorFormat = Color::Format::G_8;        break;
-	case 2: colorFormat = Color::Format::GA_88;      break;
-	case 3: colorFormat = Color::Format::RGB_888;    break;
-	case 4: colorFormat = Color::Format::RGBA_8888;  break;
-	default: assert(false); goto bail;               break;
+	case 1: colorFormat = Color::Format::C1_U8; break;
+	case 2: colorFormat = Color::Format::C2_U8; break;
+	case 3: colorFormat = Color::Format::C3_U8; break;
+	case 4: colorFormat = Color::Format::C4_U8; break;
+	default: assert(false); goto bail;          break;
 	}
 
 	width = header.width;
@@ -202,11 +202,11 @@ std::shared_ptr<Image_TGA> Image_TGA::decodeFile(const std::string& path)
 		break;
 	case TGA_RGB:
 	case TGA_RGB_RLE:
-		colorFormat = (bytes == 3) ? Color::Format::RGB_888 : Color::Format::RGBA_8888;
+		colorFormat = (bytes == 3) ? Color::Format::C3_U8 : Color::Format::C4_U8;
 		break;
 	case TGA_GRAYSCALE:
 	case TGA_GRAYSCALE_RLE:
-		colorFormat = Color::Format::G_8;
+		colorFormat = Color::Format::C1_U8;
 		break;
 	}
 
@@ -217,12 +217,12 @@ std::shared_ptr<Image_TGA> Image_TGA::decodeFile(const std::string& path)
 		slog.d(TAG, "TGA_INDEXED is unimplemented yet.");
 	else if(header.imageType == TGA_RGB)
 	{
-		colorFormat = Color::Format::RGB_888;
+		colorFormat = Color::Format::C3_U8;
 		fread(data, length, 1, file);
 	}
 	else if(header.imageType == TGA_GRAYSCALE)
 	{
-		colorFormat = Color::Format::G_8;
+		colorFormat = Color::Format::C1_U8;
 		fread(data, length, 1, file);
 	}
 	else if(TGA_INDEXED_RLE <= header.imageType && header.imageType <= TGA_GRAYSCALE_RLE)  // RLE compressed pixels
@@ -300,29 +300,29 @@ bool Image_TGA::save(const std::string& path) const
 	Descriptor descriptor = this->descriptor;  // DESC_LEFT_TO_RIGHT | DESC_TOP_TO_BOTTOM;
 	switch(colorFormat)
 	{
-	case Color::Format::G_8:
+	case Color::Format::C1_U8:
 		type = TGA_GRAYSCALE;
 		depth = 8;
 		break;
-	case Color::Format::GA_88:
+	case Color::Format::C2_U8:
 		type = TGA_GRAYSCALE;
 		depth = 8;
 		descriptor |= DESC_ALPHA_BIT3;
 		break;
-	case Color::Format::RGB_565:
+	case Color::Format::RGB565_U16:
 		type = TGA_RGB;
 		depth = 16;
 		break;
-	case Color::Format::RGBA_5551:
+	case Color::Format::RGBA5551_U16:
 		type = TGA_RGB;
 		depth = 16;
 		descriptor |= DESC_ALPHA_BIT0;
 		break;
-	case Color::Format::RGB_888:
+	case Color::Format::C3_U8:
 		type = TGA_RGB;
 		depth = 24;
 		break;
-	case Color::Format::RGBA_8888:
+	case Color::Format::C4_U8:
 		type = TGA_RGB;
 		depth = 32;
 		descriptor |= DESC_ALPHA_BIT3;

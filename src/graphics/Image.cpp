@@ -1,7 +1,7 @@
 #include "graphics/Image.h"
 
 #include <vector>
-#include <cstring>  // for memcpy
+#include <cstring>  // for std::memcpy
 
 #include "pea/config.h"
 #if OpenMP_CXX_FOUND
@@ -96,7 +96,7 @@ void Image::convert_RGB888_to_RGBA8888(const uint8_t* src, uint8_t* dst, size_t 
 Image::Image():
 		width(0),
 		height(0),
-		colorFormat(Color::RGBA_8888),
+		colorFormat(Color::C4_U8),
 		data(nullptr)
 {
 }
@@ -122,12 +122,6 @@ Image::Image(uint32_t width, uint32_t height, Color::Format format, uint8_t* dat
 
 Image::~Image()
 {
-//	if(m_palette)
-//	{
-//		SAFE_DELETE(m_index);
-//		delete m_palette;
-//	}
-//	else
 	SAFE_DELETE_ARRAY(data);
 }
 
@@ -146,23 +140,23 @@ void Image::setPixel(uint32_t x, uint32_t y, uint32_t color)
 
 	switch(colorFormat)
 	{
-	case Color::G_8:
+	case Color::C1_U8:
 		*p = Color::to_G8(color);
 		break;
 		
-	case Color::GA_88:
+	case Color::C2_U8:
 		*reinterpret_cast<uint16_t*>(p) = Color::to_GA88(color);
 		break;
 		
-	case Color::RGBA_5551:
+	case Color::RGBA5551_U16:
 		*reinterpret_cast<uint16_t*>(p) = Color::to_RGBA5551(color);
 		break;
 		
-	case Color::RGB_565:
+	case Color::RGB565_U16:
 		*reinterpret_cast<uint16_t*>(p) = Color::to_RGB565(color);
 		break;
 		
-	case Color::RGB_888:
+	case Color::C3_U8:
 #if 0
 		p[0] = color & 0xFF;
 		p[1] = (color & 0xFF00) >> 8;
@@ -173,11 +167,12 @@ void Image::setPixel(uint32_t x, uint32_t y, uint32_t color)
 #endif
 		break;
 	
-	case Color::RGBA_8888:
+	case Color::C4_U8:
 		*reinterpret_cast<uint32_t*>(p) = color;
 		break;
 	
 	default:
+		slog.d(TAG, "colorFormat=%d", (int)colorFormat);
 		assert(false);  // you should not be here.
 		break;
 	}
@@ -198,22 +193,22 @@ uint32_t Image::getPixel(uint32_t x, uint32_t y) const
 
 	switch(colorFormat)
 	{
-	case Color::G_8:
+	case Color::C1_U8:
 		return Color::from_G8(*p);
 	
-	case Color::GA_88:
+	case Color::C2_U8:
 		return Color::from_GA88(*reinterpret_cast<const uint16_t*>(p));
 	
-	case Color::RGBA_5551:
+	case Color::RGBA5551_U16:
 		return Color::from_RGBA5551(*reinterpret_cast<const uint16_t*>(p));
 	
-	case Color::RGB_565:
+	case Color::RGB565_U16:
 		return Color::from_RGB565(*reinterpret_cast<const uint16_t*>(p));
 	
-	case Color::RGB_888:
+	case Color::C3_U8:
 		return p[0] | (p[1] << 8) | (p[2] << 16) | 0xFF000000;
 	
-	case Color::RGBA_8888:
+	case Color::C4_U8:
 		return *reinterpret_cast<const uint32_t*>(p);
 		
 	default:

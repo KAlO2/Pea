@@ -28,7 +28,7 @@ static void onWindowResize(GLFWwindow* window, int width, int height)
 	cellSize.height = CELL_WIDTH / width * height;
 }
 
-static void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+static void onKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	std::ignore = scancode;
 	std::ignore = action;
@@ -81,8 +81,8 @@ void main()
 
 	// Cellular Noise  https://thebookofshaders.com/12/
 	std::string fragmentShaderSource = ShaderFactory::VERSION + R""(
-layout(location = 8) uniform vec2 size;
-layout(location = 9) uniform float time;
+layout(location = 11) uniform vec2 size;
+layout(location = 15) uniform float time;
 
 in vec2 _texcoord;
 
@@ -178,7 +178,7 @@ strike H to show/hide tiles under water.
 	
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, ::onWindowResize);
-	glfwSetKeyCallback(window, onKeyEvent);
+	glfwSetKeyCallback(window, onKey);
 
 	loadGL();
 	GL::enableDebugMessage();

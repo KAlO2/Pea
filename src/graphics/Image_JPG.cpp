@@ -18,7 +18,7 @@ Image_JPG::Image_JPG():
 }
 
 Image_JPG::Image_JPG(int32_t width, int32_t height, uint8_t* data):
-		Image(width, height, Color::RGB_888, data),
+		Image(width, height, Color::C3_U8, data),
 		quality(92)
 {
 	// JPEG only support RGB

@@ -82,7 +82,7 @@ std::shared_ptr<Image_BMP> Image_BMP::decodeByteArray(const uint8_t* data, size_
 	Color::Format colorFormat = Color::Format::UNKNOWN;
 	
 	if(infoHeader.size == sizeof(BITMAP_INFO_HEADER))
-		colorFormat = Color::RGB_888;
+		colorFormat = Color::C3_U8;
 	else if(infoHeader.size == sizeof(BITMAP_V4_HEADER) ||
 			infoHeader.size == sizeof(BITMAP_V5_HEADER))
 	{
@@ -144,7 +144,7 @@ std::shared_ptr<Image_BMP> Image_BMP::decodeFile(const std::string& path)
 	BITMAP_COLOR_MASK  colorMask;
 	
 	uint32_t width = 0, height = 0;
-	Color::Format colorFormat = Color::RGBA_8888;
+	Color::Format colorFormat = Color::C4_U8;
 	uint8_t* data = nullptr;
 	
 	if(fileSize <= sizeof(BITMAP_FILE_HEADER) + sizeof(BITMAP_INFO_HEADER))
@@ -175,7 +175,7 @@ std::shared_ptr<Image_BMP> Image_BMP::decodeFile(const std::string& path)
 	}
 
 	if(infoHeader.size == sizeof(BITMAP_INFO_HEADER))
-		colorFormat = Color::RGB_888;
+		colorFormat = Color::C3_U8;
 	else if(infoHeader.size == sizeof(BITMAP_V4_HEADER) ||
 			infoHeader.size == sizeof(BITMAP_V5_HEADER))
 		file.read(reinterpret_cast<char*>(&colorMask), sizeof(BITMAP_COLOR_MASK));
@@ -243,25 +243,25 @@ std::shared_ptr<Image_BMP> Image_BMP::decodeFile(const std::string& path)
 			if(colorMask.redMask == 0x000000FF &&
 					colorMask.greenMask == 0x0000FF00 &&
 					colorMask.blueMask == 0x00FF0000)
-				colorFormat = colorMask.alphaMask? Color::RGBA_8888 : Color::RGB_888;
+				colorFormat = colorMask.alphaMask? Color::C4_U8 : Color::C3_U8;
 			else if(colorMask.redMask == 0x00FF0000 &&
 					colorMask.greenMask == 0x0000FF00 &&
 					colorMask.blueMask == 0x000000FF)
-				colorFormat = colorMask.alphaMask? Color::BGRA_8888 : Color::BGR_888;
+				colorFormat = colorMask.alphaMask? Color::BGRA8888_U32 : Color::BGR888_U24;
 			else
 				slog.d(TAG, "unknown bit mask 0x%0X 0x%0X 0x%0X 0x%0X", colorMask.redMask,
 						colorMask.greenMask, colorMask.blueMask, colorMask.alphaMask);
 		}
 		else
-			colorFormat = Color::RGBA_8888;
+			colorFormat = Color::C4_U8;
 		break;
 	case 24:
-		colorFormat = Color::RGB_888;
+		colorFormat = Color::C3_U8;
 		break;
 	case 16:
 		break;
 	case 8:
-		colorFormat = Color::G_8;
+		colorFormat = Color::C1_U8;
 		break;
 	case 4:
 	case 1:

@@ -29,28 +29,82 @@ vec3f hsv2rgb(const vec3f& hsv);
  */
 class Color
 {
+private:
+	static constexpr uint32_t S  = 2;  // channel shift
+	static constexpr uint32_t C1 = 0;
+	static constexpr uint32_t C2 = 1;
+	static constexpr uint32_t C3 = 2;
+	static constexpr uint32_t C4 = 3;
+	
+	static constexpr uint32_t U8  = 1;
+	static constexpr uint32_t I8  = 2;
+	static constexpr uint32_t U16 = 3;
+	static constexpr uint32_t I16 = 4;
+	static constexpr uint32_t U32 = 5;
+	static constexpr uint32_t I32 = 6;
+	static constexpr uint32_t U64 = 7;
+	static constexpr uint32_t I64 = 8;
+	
+	static constexpr uint32_t F16 = 9;
+	static constexpr uint32_t F32 = 10;
+	static constexpr uint32_t F64 = 11;
+	static constexpr uint32_t F80 = 12;
+	
+	static constexpr uint32_t RGBA5551    = 13;
+	static constexpr uint32_t RGBA4444    = 14;
+	static constexpr uint32_t RGB565      = 15;
+	static constexpr uint32_t BGR888      = 16;
+	static constexpr uint32_t RGBA1010102 = 17;
+	static constexpr uint32_t BGRA8888    = 18;
 public:
 	enum Format: uint32_t
 	{
 		UNKNOWN = 0,
 
-		// 8 bits
-		G_8,  // gray
-
-		// 16 bits
-		GA_88,
-		RGBA_5551,
-		RGBA_4444,
-		RGB_565,
-
-		// 24 bits
-		RGB_888,
-		BGR_888,
-
-		// 32 bits
-		RGBA_8888,
-		BGRA_8888,
-		RGBA_1010102,
+		// single channel, gray or alpha
+		C1_U8  = C1 | U8  << S,  // uint8_t
+		C1_I16 = C1 | I16 << S,  // int16_t
+		C1_U16 = C1 | U16 << S,  // uint16_t
+		C1_F16 = C1 | F16 << S,  // half
+		C1_I32 = C1 | I32 << S,  // int32_t
+		C1_U32 = C1 | U32 << S,  // uint32_t
+		C1_F32 = C1 | F32 << S,  // float
+		
+		// 2 channels, can be (gray, alpha) combination
+		C2_U8  = C2 | U8  << S,
+		C2_I16 = C2 | I16 << S,
+		C2_U16 = C2 | U16 << S,
+		C2_F16 = C2 | F16 << S,
+		C2_I32 = C2 | I32 << S,
+		C2_U32 = C2 | U32 << S,
+		C2_F32 = C2 | F32 << S,
+		
+		// 3 channels, can be (red, green, blue) combination
+		C3_U8  = C3 | U8  << S,
+		C3_I16 = C3 | I16 << S,
+		C3_U16 = C3 | U16 << S,
+		C3_F16 = C3 | F16 << S,
+		C3_I32 = C3 | I32 << S,
+		C3_U32 = C3 | U32 << S,
+		C3_F32 = C3 | F32 << S,
+		
+		// RGBA 4 channels, usually (red, green, blue, alpha)
+		C4_U8  = C4 | U8  << S,
+		C4_I16 = C4 | I16 << S,
+		C4_U16 = C4 | U16 << S,
+		C4_F16 = C4 | F16 << S,
+		C4_I32 = C4 | I32 << S,
+		C4_U32 = C4 | U32 << S,
+		C4_F32 = C4 | F32 << S,
+		
+		// packed format
+		RGBA5551_U16    = C4 | RGBA5551    << S,
+		RGBA4444_U16    = C4 | RGBA4444    << S,
+		RGB565_U16      = C3 | RGB565      << S,
+		RGBA1010102_U32 = C4 | RGBA1010102 << S,
+		
+		BGR888_U24      = C3 | BGR888      << S,
+		BGRA8888_U32    = C4 | BGRA8888    << S,
 	};
 /*
 	union
@@ -102,7 +156,10 @@ public:
 	 * @param[in] format color format
 	 * @return channel count
 	 */
-	static constexpr uint32_t channel(Format format);
+	static constexpr uint32_t sizeofChannel(Format format);
+	static constexpr uint32_t getType(Format format);
+	static constexpr bool isFloatType(Format format);
+	static constexpr bool isIntegerType(Format format);
 #if 0
 	int32_t luminance() const
 	{
@@ -125,46 +182,62 @@ constexpr uint32_t Color::size(Format format)
 {
 	switch(format)
 	{
-	case G_8:
+	case C1_U8:
 		return 1;
-	case GA_88:
-	case RGBA_5551:
-	case RGB_565:
+	
+	case C2_U8:
+	case C1_F16:
+	case RGBA5551_U16:
+	case RGBA4444_U16:
+	case RGB565_U16:
 		return 2;
-	case RGB_888:
-	case BGR_888:
+	
+	case C3_U8:
 		return 3;
-	case RGBA_8888:
-	case BGRA_8888:
+	
+	case C4_U8:
+	case C2_U16:
+	case C2_I16:
+	case C1_U32:
+	case C1_I32:
+	case C1_F32:
+	case RGBA1010102_U32:
 		return 4;
+	
+	case C3_U16:
+		return 3 * 2;
+	
+	case C4_F32:
+		return 4 * 4;
+	
 	default:
 		assert(false);
 		return 0;
 	}
 }
 
-constexpr uint32_t Color::channel(Format format)
+constexpr uint32_t Color::sizeofChannel(Format format)
 {
-	switch(format)
-	{
-	case G_8:
-		return 1;
-	case GA_88:
-		return 2;
-	case RGB_565:
-	case RGB_888:
-//	case BGR_565:
-		return 3;
-	case RGBA_5551:
-	case RGBA_8888:
-	case BGRA_8888:
-		return 4;
-	default:
-		assert(false);
-		return 0;
-	}
+	constexpr uint32_t MASK = (1 << S) - 1;
+	static_assert(C1 == 0, "single channel's value is 0, needs to plus 1 when returned");
+	return (format & MASK) + 1;
 }
 
+constexpr uint32_t Color::getType(Format format)
+{
+	return format >> S;
+}
+
+constexpr bool Color::isFloatType(Format format)
+{
+	uint32_t type = getType(format);
+	return F16 <= type && type <= F80;
+}
+
+constexpr bool Color::isIntegerType(Format format)
+{
+	return format != UNKNOWN && !isFloatType(format);
+}
 
 /**
  * Class representing a color with four floats.

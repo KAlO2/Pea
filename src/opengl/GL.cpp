@@ -165,30 +165,21 @@ uint32_t GL::bindVertexBuffer<mat4f>(const uint32_t& vbo, GLuint index, const ma
 
 GLenum GL::pixelFormat(Color::Format format)
 {
-	switch(format)
-	{
-	case Color::G_8:
-		// In OpenGL 3 the GL_LUMINANCE and GL_ALPHA texture internal formats are deprecated, are 
-		// not available in core profile. They have been replaced by the GL_RED texture format.
-//		return GL_LUMINANCE;
-		return GL_RED;
-	case Color::GA_88:
-		return GL_RG;
-//		return GL_LUMINANCE_ALPHA;
-	case Color::RGB_565:
-	case Color::RGB_888:
-		return GL_RGB;
-	case Color::BGR_888:
-		return GL_BGR;
-	case Color::RGBA_5551:
-	case Color::RGBA_8888:
-		return GL_RGBA;
-	case Color::BGRA_8888:
-		return GL_BGRA;
-	default:
-		assert(false);
-		return 0;
-	}
+	assert(format != Color::Format::UNKNOWN);
+	// In OpenGL 3 the GL_LUMINANCE and GL_ALPHA texture internal formats are deprecated, are 
+	// not available in core profile. They have been replaced by the GL_RED texture format.
+//	return GL_LUMINANCE;
+//	return GL_LUMINANCE_ALPHA;
+	uint32_t c = Color::sizeofChannel(format) - 1;  // make it zero indexed
+	GLenum pixelFormats_f[4] = {GL_RED, GL_RG, GL_RGB, GL_RGBA};
+	return pixelFormats_f[c];
+/*
+	GLenum pixelFormats_i[4] = {GL_RED_INTEGER, GL_RG_INTEGER, GL_RGB_INTEGER, GL_RGBA_INTEGER};
+	if(Color::isFloatType(format))
+		return pixelFormats_f[c];
+	else
+		return pixelFormats_i[c];
+*/
 }
 
 GLenum GL::dataType(Color::Format format)
@@ -199,18 +190,40 @@ GLenum GL::dataType(Color::Format format)
 	// we use _REV (reverse)to revise the data. 
 	switch(format)
 	{
-	case Color::G_8:
-	case Color::GA_88:
-	case Color::RGB_888:
-	case Color::BGR_888:
-	case Color::RGBA_8888:
-	case Color::BGRA_8888:
+	case Color::C1_U8:
+	case Color::C2_U8:
+	case Color::C3_U8:
+	case Color::C4_U8:
 		return GL_UNSIGNED_BYTE;
 		
-	case Color::RGB_565:
+	case Color::C1_U16:
+	case Color::C2_U16:
+	case Color::C3_U16:
+	case Color::C4_U16:
+		return GL_UNSIGNED_SHORT;
+	
+	case Color::C1_I16:
+	case Color::C2_I16:
+	case Color::C3_I16:
+	case Color::C4_I16:
+		return GL_SHORT;
+	
+	case Color::C1_U32:
+		return GL_UNSIGNED_INT;
+	
+	case Color::C1_I32:
+		return GL_INT;
+	
+	case Color::C1_F16:
+		return GL_HALF_FLOAT;
+	
+	case Color::C1_F32:
+		return GL_FLOAT;
+		
+	case Color::RGB565_U16:
 		return GL_UNSIGNED_SHORT_5_6_5_REV;
 		
-	case Color::RGBA_5551:
+	case Color::RGBA5551_U16:
 		return GL_UNSIGNED_SHORT_5_5_5_1;
 		
 	default:
@@ -223,10 +236,22 @@ uint32_t GL::sizeofChannel(GLint format)
 {
 	switch(format)
 	{
-	case GL_RED:  return 1;
-	case GL_RG:   return 2;
+	case GL_RED_INTEGER:
+	case GL_RED:
+		return 1;
+	
+	case GL_RG_INTEGER:
+	case GL_RG:
+		return 2;
+	
+	case GL_BGR_INTEGER:
+	case GL_RGB_INTEGER:
 	case GL_BGR:
-	case GL_RGB:  return 3;
+	case GL_RGB:
+		return 3;
+	
+	case GL_BGRA_INTEGER:
+	case GL_RGBA_INTEGER:
 	case GL_BGRA:
 	case GL_RGBA: return 4;
 	
@@ -333,79 +358,6 @@ uint32_t GL::glCast(Buffer::Type type)
 	case Buffer::Type::UNIFORM: return GL_UNIFORM_BUFFER;
 	default: assert(false);     return 0;
 	}
-}
-
-uint32_t GL::glCast(Data::Type type)
-{
-/*
-#define GL_BYTE                 0x1400
-#define GL_UNSIGNED_BYTE        0x1401
-#define GL_SHORT                0x1402
-#define GL_UNSIGNED_SHORT       0x1403
-#define GL_INT                  0x1404
-#define GL_UNSIGNED_INT         0x1405
-#define GL_FLOAT                0x1406
-#define GL_2_BYTES              0x1407
-#define GL_3_BYTES              0x1408
-#define GL_4_BYTES              0x1409
-#define GL_DOUBLE               0x140A
-#define GL_HALF_FLOAT           0x140B
-*/
-	switch(type)
-	{
-	case Data::TYPE_BYTE:   return GL_BYTE;
-	case Data::TYPE_UBYTE:  return GL_UNSIGNED_BYTE;
-	case Data::TYPE_SHORT:  return GL_SHORT;
-	case Data::TYPE_USHORT: return GL_UNSIGNED_SHORT;
-	case Data::TYPE_INT:    return GL_INT;
-	case Data::TYPE_UINT:   return GL_UNSIGNED_INT;
-	case Data::TYPE_HALF:   return GL_HALF_FLOAT;
-	case Data::TYPE_FLOAT:  return GL_FLOAT;
-	case Data::TYPE_DOUBLE: return GL_DOUBLE;
-	default: assert(false); return GL_BYTE;
-	}
-}
-
-uint32_t GL::glCast(Mesh::Primitive primitive)
-{
-/*
-#define GL_POINTS               0x0000
-#define GL_LINES                0x0001
-#define GL_LINE_LOOP            0x0002
-#define GL_LINE_STRIP           0x0003
-#define GL_TRIANGLES            0x0004
-#define GL_TRIANGLE_STRIP       0x0005
-#define GL_TRIANGLE_FAN         0x0006
-#define GL_QUADS                0x0007
-#define GL_QUAD_STRIP           0x0008
-#define GL_POLYGON              0x0009
-*/
-	return static_cast<uint32_t>(primitive);
-}
-
-void GL::drawCross(const vec2f &center, float radius)
-{
-	const vec2f point[] =
-	{
-		vec2f(center.x - radius, center.y),  // left
-		vec2f(center.x + radius, center.y),  // right
-		vec2f(center.x, center.y - radius),  // bottom
-		vec2f(center.x, center.y + radius),  // top
-	};
-
-#if USE_GL_VERTEX_ARRAY
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, 0, point);
-	glDrawArrays(GL_LINES, 0, 4);
-#else
-	// type(point) is vec2f*, while type(&points) is vec2f (*)[4].
-	glBegin(GL_LINES);
-	glVertex2fv(reinterpret_cast<const float*>(point));
-	glVertex2fv(reinterpret_cast<const float*>(point + 1));
-	glVertex2fv(reinterpret_cast<const float*>(point + 2));
-	glVertex2fv(reinterpret_cast<const float*>(point + 3));
-	glEnd();
-#endif
 }
 
 #endif

@@ -60,7 +60,7 @@ bool Image_PNG::probe(const uint8_t* data, size_t length)
 std::shared_ptr<Image_PNG> Image_PNG::decodeByteArray(const uint8_t* data, size_t length)
 {
 	uint32_t width = 0, height =0;
-	Color::Format colorFormat = Color::RGBA_8888;
+	Color::Format colorFormat = Color::C4_U8;
 	uint8_t* imageData = nullptr;
 	
 	assert(probe(data, length));
@@ -131,16 +131,16 @@ std::shared_ptr<Image_PNG> Image_PNG::decodeByteArray(const uint8_t* data, size_
 		switch(color_type)
 		{
 		case PNG_COLOR_TYPE_GRAY:
-			colorFormat = Color::Format::G_8;
+			colorFormat = Color::Format::C1_U8;
 			break;
 		case PNG_COLOR_TYPE_GRAY_ALPHA:
-			colorFormat = Color::Format::GA_88;
+			colorFormat = Color::Format::C2_U8;
 			break;
 		case PNG_COLOR_TYPE_RGB:
-			colorFormat = Color::Format::RGB_888;
+			colorFormat = Color::Format::C3_U8;
 			break;
 		case PNG_COLOR_TYPE_RGB_ALPHA:
-			colorFormat = Color::Format::RGBA_8888;
+			colorFormat = Color::Format::C4_U8;
 			break;
 		default:
 			colorFormat = Color::Format::UNKNOWN;
@@ -183,7 +183,7 @@ std::shared_ptr<Image_PNG> Image_PNG::decodeByteArray(const uint8_t* data, size_
 std::shared_ptr<Image_PNG> Image_PNG::decodeFile(const std::string& path)
 {
 	uint32_t width = 0, height = 0, rowStride = 0;
-	Color::Format colorFormat = Color::RGBA_8888;
+	Color::Format colorFormat = Color::C4_U8;
 	uint8_t* data = nullptr;
 #if 0
 	png_image image;  // The control structure used by libpng
@@ -275,21 +275,22 @@ std::shared_ptr<Image_PNG> Image_PNG::decodeFile(const std::string& path)
 	case PNG_COLOR_TYPE_GRAY:
 		if(bit_depth < 8)  // Expand grayscale images to the full 8 bits from 1, 2, or 4 BPP
 			png_set_expand_gray_1_2_4_to_8(png_ptr);
-		colorFormat = Color::G_8;
+		colorFormat = Color::C1_U8;
 		break;
 	case PNG_COLOR_TYPE_PALETTE:  // Expand paletted colors into true RGB triplets
 		png_set_palette_to_rgb(png_ptr);
-		colorFormat = Color::G_8;  //FIXME does palette have alpha?
-		break;
-	case PNG_COLOR_TYPE_RGB:
-		colorFormat = Color::RGB_888;
-		break;
-	case PNG_COLOR_TYPE_RGBA:
-		colorFormat = Color::RGBA_8888;
+		colorFormat = Color::C1_U8;  //FIXME does palette have alpha?
 		break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
-		colorFormat = Color::GA_88;
+		colorFormat = Color::C2_U8;
 		break;
+	case PNG_COLOR_TYPE_RGB:
+		colorFormat = Color::C3_U8;
+		break;
+	case PNG_COLOR_TYPE_RGBA:
+		colorFormat = Color::C4_U8;
+		break;
+
 	default:
 		colorFormat = Color::UNKNOWN;
 		slog.d(TAG, "unknown color type: %d", color_type);
@@ -375,7 +376,7 @@ bool Image_PNG::save(const std::string& path) const
 		int color_type;
 		switch(colorFormat)
 		{
-		case Color::G_8:
+		case Color::C1_U8:
 			color_type = PNG_COLOR_TYPE_GRAY;
 			break;
 /*
@@ -384,18 +385,18 @@ bool Image_PNG::save(const std::string& path) const
 			colorFormat = Color::G_8;  //FIXME does palette have alpha?
 			break;
 */
-		case Color::RGB_888:
+		case Color::C2_U8:
+			color_type = PNG_COLOR_TYPE_GRAY_ALPHA;
+			break;
+		case Color::C3_U8:
 			color_type = PNG_COLOR_TYPE_RGB;
 			break;
 
-		case Color::GA_88:
-			color_type = PNG_COLOR_TYPE_GRAY_ALPHA;
-			break;
 		default:
 			slog.d(TAG, "unknown color format: %d", colorFormat);
 			assert(false);
 			[[fallthrough]];
-		case Color::RGBA_8888:
+		case Color::C4_U8:
 			color_type = PNG_COLOR_TYPE_RGBA;
 			break;
 		}

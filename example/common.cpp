@@ -33,7 +33,7 @@ std::string formatCurrentTime()
 
 void snapshot(const std::string& path, int32_t width, int32_t height)
 {
-	constexpr Color::Format format = Color::Format::RGBA_8888;
+	constexpr Color::Format format = Color::Format::C4_U8;
 	Image_PNG image(width, height, format);
 	uint8_t* pixels = image.getData();
 	

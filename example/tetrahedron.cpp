@@ -200,7 +200,7 @@ std::vector<vec4f> createInstances(float weight, int32_t depth)
 	return vertices;
 }
 
-void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+void onKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	std::ignore = scancode;
 	std::ignore = mods;
@@ -310,7 +310,7 @@ int main()
 	
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, onWindowResize);
-	glfwSetKeyCallback(window, onKeyEvent);
+	glfwSetKeyCallback(window, onKey);
 
 	loadGL();
 	GL::enableDebugMessage();
@@ -356,7 +356,7 @@ int main()
 #endif
 	glBindVertexArray(0);
 	
-	Image_PNG image(1024, 1024, Color::Format::RGBA_8888);
+	Image_PNG image(1024, 1024, Color::Format::C4_U8);
 	image.fillColor(0xFFFFFFFF);  // transparent
 	
 	sierpinski2(image);

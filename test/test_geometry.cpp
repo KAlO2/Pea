@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "geometry/Cube.h"
 #include "geometry/Cylinder.h"
 #include "geometry/Grid.h"
 #include "geometry/Sphere.h"
@@ -107,6 +108,18 @@ TEST_CASE("polygonsToTriangles", tag)
 	
 	std::vector<uint32_t> triangles = polygonsToTriangles(polygons, sizes, sizeofArray(sizes));
 	MATCH_ARRAY(triangles, trianglesExpect);
+}
+
+TEST_CASE("Cube", tag)
+{
+	vec3f normalsExpected[6] =
+	{
+		vec3f(-1, 0, 0), vec3f(+1, 0, 0),
+		vec3f(0, -1, 0), vec3f(0, +1, 0),
+		vec3f(0, 0, -1), vec3f(0, 0, +1),
+	};
+	std::vector<vec3f> normals = Cube::getNormalData();
+	matchArray(normals, normalsExpected, 6);
 }
 
 TEST_CASE("Plane", tag)
