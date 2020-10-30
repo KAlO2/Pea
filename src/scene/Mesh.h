@@ -42,6 +42,7 @@ public:
 	static constexpr int32_t VBO_COUNT = 11;
 	
 private:
+	uint32_t id;
 	std::string name;
 
 	std::vector<vec4f> vertices;
@@ -122,6 +123,10 @@ public:
 	void setName(const std::string& name);
 	const std::string& getName() const;
 	
+	// Id can be moved, and won't be copied.
+	void setId(uint32_t id);
+	uint32_t getId() const;
+	
 	void applyTransform();
 	
 	bool hasNormal() const;
@@ -159,6 +164,8 @@ public:
 	 */
 	void setTexture(const Texture& texture, uint32_t index);
 	
+	void removeTextures();
+	
 	/**
 	 * Allocate VAO, VBO and specify the primitive to draw.
 	 * @param[in] primitive Draw call primitive.
@@ -192,8 +199,11 @@ public:
 	/**
 	 * call this method after #setProgram()
 	 */
-	void setUniform(int32_t location, Type type, void* data);
+	void setUniform(int32_t location, Type type, const void* data);
 	
+	void removeUniform(int32_t location);
+	
+	void removeUniforms();
 //	void updateUniform(Uniform& uniform, void* data);
 	
 	/**
@@ -209,6 +219,9 @@ inline bool Mesh::hasNormal() const     { return !normals.empty();     }
 
 inline void Mesh::setName(const std::string& name) { this->name = name; }
 inline const std::string& Mesh::getName() const    { return name;       }
+
+inline void Mesh::setId(uint32_t id) { this->id = id; }
+inline uint32_t Mesh::getId() const  { return id;     }
 
 inline void Mesh::setMaterial(Material* material) { this->material = material; }
 inline const Material* Mesh::getMaterial() const { return material; }

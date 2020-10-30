@@ -119,7 +119,7 @@ void onMouseScroll(GLFWwindow* window, double xoffset, double yoffset)
 	float scaleFactor = yoffset > 0? factor: 1 / factor;
 	parameters->scale *= scaleFactor;
 #if 1
-	vec2i mousePosition = getMousePosition(window);
+	vec2i mousePosition = getCursorPosition(window);
 	vec2i windowSize = getWindowSize(window);
 	vec2f position;  // [-aspectRatio, +aspectRatio] x [-1, +1]
 	position.x = static_cast<float>(mousePosition.x) / windowSize.width;

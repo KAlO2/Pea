@@ -7,7 +7,7 @@
 
 using namespace pea;
 
-void UniformBlock::appendUniform(int32_t location, Type type, void* data)
+void UniformBlock::appendUniform(int32_t location, Type type, const void* data)
 {
 	assert(!hasUniform(location));
 	
@@ -47,7 +47,7 @@ bool UniformBlock::hasUniform(int32_t location, Uniform* &uniform)
 	return false;
 }
 
-void UniformBlock::updateUniform(int32_t location, Type type, void* data)
+void UniformBlock::updateUniform(int32_t location, Type type, const void* data)
 {
 	assert(hasUniform(location));
 	for(const Uniform& uniform: uniforms)
@@ -62,7 +62,7 @@ void UniformBlock::updateUniform(int32_t location, Type type, void* data)
 	}
 }
 
-void UniformBlock::updateUniform(Uniform& uniform, void* data)
+void UniformBlock::updateUniform(Uniform& uniform, const void* data)
 {
 	assert(hasUniform(uniform.location));
 	assert(0 <= uniform.offset && uniform.offset < static_cast<int32_t>(uniformData.size()));
@@ -121,6 +121,7 @@ void UniformBlock::feedUniforms() const
 		CASE(VEC2F, vec2f)
 		CASE(VEC3F, vec3f)
 		CASE(VEC4F, vec4f)
+		CASE(MAT4F, mat4f)
 #undef CASE
 		default:
 			assert(false);
@@ -147,6 +148,7 @@ std::string UniformBlock::toString() const
 		CASE(VEC2F, vec2f)
 		CASE(VEC3F, vec3f)
 		CASE(VEC4F, vec4f)
+		CASE(MAT4F, mat4f)
 #undef CASE
 		default:
 			assert(false);

@@ -22,7 +22,7 @@ inline vec2i getWindowSize(GLFWwindow* window)
 	return vec2i(width, height);
 }
 
-inline vec2i getMousePosition(GLFWwindow* window)
+inline vec2i getCursorPosition(GLFWwindow* window)
 {
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);

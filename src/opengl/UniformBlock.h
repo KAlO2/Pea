@@ -24,14 +24,14 @@ private:
 	std::vector<unsigned char> uniformData;
 	
 public:
-	void appendUniform(int32_t location, Type type, void* data);
+	void appendUniform(int32_t location, Type type, const void* data);
 	
 	bool hasUniform(int32_t location) const;
 	bool hasUniform(int32_t location, Uniform* &uniform);
 	
-	void updateUniform(int32_t location, Type type, void* data);
+	void updateUniform(int32_t location, Type type, const void* data);
 	
-	void updateUniform(Uniform& uniform, void* data);
+	void updateUniform(Uniform& uniform, const void* data);
 	
 	void removeUniform(int32_t location);
 	

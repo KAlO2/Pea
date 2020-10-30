@@ -17,6 +17,7 @@
 
 
 static const char* TAG = "Mesh";
+static constexpr uint32_t ID_NONE = 0;
 
 // why offset is a pointer, not a integer in OpenGL functions, such as glEnableVertexAttribArray
 // do you think ptr = ptr1 + ptr2, or ptr = ptr1 + offset ???
@@ -28,6 +29,7 @@ static inline const void* offset(int x)
 using namespace pea;
 
 Mesh::Mesh():
+		id(ID_NONE),
 		material(nullptr),
 //		aabb(),
 		vao(0),
@@ -56,6 +58,7 @@ Mesh::Mesh(const Mesh& mesh):
 }
 
 Mesh::Mesh(Mesh&& mesh):
+		id(mesh.id),
 		name(mesh.name),
 		material(mesh.material),
 //		aabb(mesh.aabb),
@@ -63,6 +66,7 @@ Mesh::Mesh(Mesh&& mesh):
 		primitive(mesh.primitive)
 {
 //	mesh.aabb.reset();
+	mesh.id = ID_NONE;
 	for(size_t i = 0; i < sizeofArray(vbo); ++i)
 	{
 		this->vbo[i] = mesh.vbo[i];
@@ -110,7 +114,9 @@ Mesh& Mesh::operator =(const Mesh& mesh)
 
 Mesh& Mesh::operator =(Mesh&& mesh)
 {
+	this->id   = mesh.id;
 	this->name = mesh.name;
+	mesh.id = ID_NONE;
 	
 	glDeleteBuffers(sizeofArray(vbo), this->vbo);
 	for(size_t i = 0; i < sizeofArray(vbo); ++i)
@@ -276,7 +282,7 @@ bool Mesh::verifyBone() const
 
 void Mesh::prepare(Primitive primitive/* = Primitive::TRIANGLES*/)
 {
-	slog.v(TAG, "primitive=%d, vao=%u, vertices.size=%zu", primitive, vao, getVertexSize());
+	slog.v(TAG, "primitive=%d, vertices.size=%zu", primitive, getVertexSize());
 	this->primitive = primitive;
 	
 	assert(vao == 0);  // if failed, prepare() has been called before.
@@ -308,7 +314,7 @@ void Mesh::upload() const
 	glBindVertexArray(vao);
 
 	assert(vbo[Shader::ATTRIBUTE_VEC_POSITION] != 0);  // prepare() needs to be called before.
-	slog.d(TAG, "size: vertex=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
+	slog.d(TAG, "quantity of position=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
 			getVertexSize(), colors.size(), texcoords.size(), normals.size(), indices.size());
 	
 	auto bindVertexBuffer = [&vbo = vbo](uint32_t attributeIndex, const std::vector<vec3f> data)
@@ -360,7 +366,7 @@ void Mesh::upload(uint32_t vboFlag[Mesh::VBO_COUNT]) const
 	glBindVertexArray(vao);
 
 	assert(vbo[Shader::ATTRIBUTE_VEC_POSITION] != 0);  // prepare() needs to be called before.
-	slog.d(TAG, "size: vertex=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
+	slog.d(TAG, "quantity of vertex=%zu, color=%zu, texcoord=%zu, normal=%zu, index=%zu",
 			getVertexSize(), colors.size(), texcoords.size(), normals.size(), indices.size());
 	
 	auto bindVertexBuffer = [&vbo = vbo, &vboFlag](uint32_t attributeIndex, const std::vector<vec3f> data)
@@ -515,6 +521,8 @@ void Mesh::setProgram(uint32_t program)
 			type = Texture::Type::NORMAL;
 		else if(startWith(start, "Height", 6))
 			type = Texture::Type::HEIGHT;
+		else if(startWith(start, "Depth", 5))
+			type = Texture::Type::DEPTH;
 		else
 		{
 			slog.w(TAG, "name=%s, texture type %s is not defined.", str, start);
@@ -543,8 +551,9 @@ bool Mesh::hasTextureUnit(Texture::Type type, uint32_t index) const
 
 void Mesh::setTexture(const Texture& texture, uint32_t index)
 {
-	assert(getProgram() != Program::NULL_PROGRAM);  // setProgram() must be called ahead.
 /*
+	assert(getProgram() != Program::NULL_PROGRAM);  // setProgram() must be called ahead.
+
 	const uint32_t program = getProgram();
 	assert(program != Program::NULL_PROGRAM);
 
@@ -566,14 +575,19 @@ void Mesh::setTexture(const Texture& texture, uint32_t index)
 	textures[textureUnit] = &texture;  // or textures.insert_or_assign(textureUnit, &texture); C++17
 }
 
+void Mesh::removeTextures()
+{
+	textures.clear();
+}
+
 bool Mesh::hasUniform(int32_t location) const
 {
 	return uniformBlock.hasUniform(location);
 }
 
-void Mesh::setUniform(int32_t location, Type type, void* data)
+void Mesh::setUniform(int32_t location, Type type, const void* data)
 {
-	uniformMutex.lock();
+	const std::lock_guard<std::mutex> lock(uniformMutex);
 	
 	Uniform* uniform;
 	if(uniformBlock.hasUniform(location, uniform)) [[likely]]
@@ -583,8 +597,18 @@ void Mesh::setUniform(int32_t location, Type type, void* data)
 	}
 	else
 		uniformBlock.appendUniform(location, type, data);
-	
-	uniformMutex.unlock();
+}
+
+void Mesh::removeUniform(int32_t location)
+{
+	const std::lock_guard<std::mutex> lock(uniformMutex);
+	uniformBlock.removeUniform(location);
+}
+
+void Mesh::removeUniforms()
+{
+	const std::lock_guard<std::mutex> lock(uniformMutex);
+	uniformBlock.removeUniforms();
 }
 
 void Mesh::render(const mat4f& viewProjection) const
