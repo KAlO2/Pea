@@ -158,12 +158,24 @@ template <typename T>
 constexpr T Rational<T>::gcd(T a, T b)
 {
 	auto abs = [](const T& x) { return x >= 0? x: -x; };
+	// gcd(a, 0) := a
+	// gcd(a, b) := gcd(b, a mod b)
+#if 0  // recursive implementation
 	if(a == 0)
 		return abs(b);
 	else if(b == 0)
 		return abs(a);
 	else
 		return gcd(b, a % b);
+#else  // non-recursive implementation
+	while(b != 0)
+	{
+		T c = a % b;
+		a = b;
+		b = c;
+	}
+	return abs(a);
+#endif
 }
 
 template <typename T>
