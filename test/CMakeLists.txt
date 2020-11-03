@@ -13,17 +13,24 @@ include_directories(${PROJECT_SOURCE_DIR}
 
 #file(GLOB PEA_TEST_SOURCE ${PEA_TEST_DIR}/*.cpp)
 set(PEA_TEST_SOURCE
-	test_Camera.cpp
 	test_geometry.cpp
 	test_Path.cpp
 	test_image.cpp
 	test_intersection.cpp
 	test_math.cpp
+	test_Rational.cpp
 	test_Transform.cpp
 	test_utility.cpp
 	test_IndexBuffer.cpp
 	main.cpp
 )
+
+find_package(GLM)
+if(GLM_FOUND)
+	message("GLM is found, add test cases for Camera")
+	set(PEA_TEST_SOURCE test_Camera.cpp ${PEA_TEST_SOURCE})
+endif()
+
 add_executable(test_pea ${PEA_TEST_SOURCE})
 
 target_link_libraries(test_pea
