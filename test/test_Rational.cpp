@@ -64,11 +64,16 @@ TEST_CASE("Rational to infinity and nan", tag)
 	REQUIRE((Ratio(1, -2) < Ratio::NaN) == false);
 	REQUIRE((Ratio(1, -2) > Ratio::NaN) == false);
 	
+	REQUIRE(Ratio::POSITIVE_INFINITY.isPositiveInfinity());
+	REQUIRE(Ratio::NEGATIVE_INFINITY.isNegativeInfinity());
+	REQUIRE(!Ratio::NaN.isPositiveInfinity());
+	
 	REQUIRE(Ratio(1, 2) < Ratio::POSITIVE_INFINITY);
 	REQUIRE(Ratio(1, 2) > Ratio::NEGATIVE_INFINITY);
 	REQUIRE(Ratio(1, -2) > Ratio::NEGATIVE_INFINITY);
 	REQUIRE(Ratio(0, -1) > Ratio::NEGATIVE_INFINITY);
-	REQUIRE(Ratio(0, 1) == Ratio::ZERO);
+	REQUIRE(Ratio::NEGATIVE_INFINITY < Ratio::POSITIVE_INFINITY);
+	Ratio ZERO = Ratio(0, 42);
 	
 	REQUIRE(Ratio::NEGATIVE_INFINITY < Ratio::POSITIVE_INFINITY);  // -inf < +inf
 	REQUIRE(Ratio(1, -2) + Ratio::POSITIVE_INFINITY == Ratio::POSITIVE_INFINITY);
@@ -77,10 +82,34 @@ TEST_CASE("Rational to infinity and nan", tag)
 	REQUIRE(Ratio::POSITIVE_INFINITY + Ratio::POSITIVE_INFINITY == Ratio::POSITIVE_INFINITY);
 	REQUIRE((Ratio::POSITIVE_INFINITY - Ratio::POSITIVE_INFINITY).isNaN());
 	REQUIRE(Ratio::POSITIVE_INFINITY * Ratio::POSITIVE_INFINITY == Ratio::POSITIVE_INFINITY);
-	REQUIRE((Ratio::POSITIVE_INFINITY * Ratio::ZERO).isNaN());
+	REQUIRE((Ratio::POSITIVE_INFINITY * ZERO).isNaN());
 	
 	REQUIRE((Ratio::POSITIVE_INFINITY / Ratio::POSITIVE_INFINITY).isNaN());
-	REQUIRE(Ratio(0, 2) / Ratio::POSITIVE_INFINITY == Ratio::ZERO);  // 0 / +inf = 0
-	REQUIRE(Ratio(0, 2) / Ratio::NEGATIVE_INFINITY == Ratio::ZERO);  // 0 / -inf = 0
+	REQUIRE(Ratio(0, 2) / Ratio::POSITIVE_INFINITY == ZERO);  // 0 / +inf = 0
+	REQUIRE(Ratio(0, 2) / Ratio::NEGATIVE_INFINITY == ZERO);  // 0 / -inf = 0
 	REQUIRE((Ratio(0, 2) * Ratio::POSITIVE_INFINITY).isNaN());  // 0 * inf = NaN
+}
+
+TEST_CASE("Rational positive zero and negative zero", tag)
+{
+	using Ratio = Rational<int32_t>;
+	REQUIRE(Ratio::POSITIVE_ZERO == Ratio::NEGATIVE_ZERO);
+	REQUIRE(Ratio::NEGATIVE_ZERO.reciprocal() == Ratio::NEGATIVE_INFINITY);
+	REQUIRE(Ratio::POSITIVE_ZERO.reciprocal() == Ratio::POSITIVE_INFINITY);
+	REQUIRE(1 / Ratio::NEGATIVE_ZERO == Ratio::NEGATIVE_INFINITY);
+	
+	REQUIRE((Ratio::NEGATIVE_ZERO * Ratio::NEGATIVE_INFINITY != Ratio::NaN));
+	REQUIRE((Ratio::NEGATIVE_ZERO * Ratio::NEGATIVE_INFINITY).isNaN());
+	
+	REQUIRE(Ratio(1, -2) < Ratio::NEGATIVE_ZERO);
+	REQUIRE(Ratio(1, -2) < Ratio::POSITIVE_ZERO);
+	REQUIRE(Ratio(1, +2) > Ratio::POSITIVE_ZERO);
+	REQUIRE(Ratio(1, -2) + Ratio::NEGATIVE_ZERO == Ratio(1, -2));
+	
+	REQUIRE(Ratio::NEGATIVE_ZERO - Ratio(1, -2) == Ratio(-1, -2));
+	REQUIRE(Ratio::NEGATIVE_ZERO + Ratio(1, -2) == Ratio(+1, -2));
+	
+	REQUIRE(Ratio::NEGATIVE_ZERO + Ratio::NEGATIVE_ZERO == Ratio::NEGATIVE_ZERO);
+	REQUIRE(Ratio::NEGATIVE_ZERO * Ratio::NEGATIVE_ZERO == Ratio::POSITIVE_ZERO);
+	REQUIRE(Ratio::POSITIVE_ZERO + Ratio::POSITIVE_ZERO == Ratio::POSITIVE_ZERO);
 }

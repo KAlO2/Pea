@@ -28,8 +28,9 @@ private:
 	
 public:
 	// Damn! NAN is a macro defined in <cmath> header, we have to change the name to NaN.
-	static const Rational<T> NaN;   // = Rational<T>(0, 0);
-	static const Rational<T> ZERO;  // = Rational<T>(0, 1);
+	static const Rational<T> NaN;  // = Rational<T>(0, 0);
+	static const Rational<T> POSITIVE_ZERO;      // = Rational<T>(0, +1);
+	static const Rational<T> NEGATIVE_ZERO;      // = Rational<T>(0, -1);
 	static const Rational<T> POSITIVE_INFINITY;  // = Rational<T>(+1, 0);
 	static const Rational<T> NEGATIVE_INFINITY;  // = Rational<T>(-1, 0);
 	
@@ -50,6 +51,7 @@ private:
 	 */
 	constexpr void normalize();
 	
+	constexpr Rational(T numerator, T denominator, bool normalize_);
 public:
 	using value_type = T;
 	
@@ -63,11 +65,16 @@ public:
 	constexpr bool isZero()   const { return num == 0 && den != 0; }
 	constexpr bool isFinite() const { return             den != 0; }
 	
-	constexpr Rational<T> reciprocal() const { return Rational<T>(den, num); }
+	constexpr bool isPositive() const         { return num > 0 && den  > 0; }
+	constexpr bool isNegative() const         { return num < 0 && den  > 0; }
+	constexpr bool isPositiveInfinity() const { return num > 0 && den == 0; }
+	constexpr bool isNegativeInfinity() const { return num < 0 && den == 0; }
+	
+	constexpr Rational<T> reciprocal() const;
 	
 	// unary operators
-	constexpr Rational<T> operator+ () const { return Rational<T>(+num, den); }
-	constexpr Rational<T> operator- () const { return Rational<T>(-num, den); }
+	constexpr Rational<T> operator+ () const { return Rational<T>(+num, den, false); }
+	constexpr Rational<T> operator- () const { return Rational<T>(-num, den, false); }
 	
 	// arithmetic
 	Rational<T>& operator+= (const Rational<T>& other);
@@ -111,7 +118,12 @@ public:
 		stream.precision(os.precision());
 		
 		if(r.den != 0)
-			stream << r.num << '/' << r.den;
+		{
+			if(r.num == 0)
+				stream << (r.den > 0 ? '+' : '-') << '0';
+			else
+				stream << r.num << '/' << r.den;
+		}
 		else
 		{
 			if(r.num > 0)
@@ -130,7 +142,10 @@ template <typename T>
 const Rational<T> Rational<T>::NaN(0, 0);
 
 template <typename T>
-const Rational<T> Rational<T>::ZERO(0, 1);
+const Rational<T> Rational<T>::POSITIVE_ZERO(0, +1);
+
+template <typename T>
+const Rational<T> Rational<T>::NEGATIVE_ZERO(0, -1);
 
 template <typename T>
 const Rational<T> Rational<T>::POSITIVE_INFINITY(+1, 0);
@@ -143,15 +158,21 @@ constexpr Rational<T>::Rational(T n):
 		num(n),
 		den(static_cast<T>(1))
 {
-
 }
 
 template <typename T>
 constexpr Rational<T>::Rational(T numerator, T denominator):
+		Rational(numerator, denominator, true/* normalize */)
+{
+}
+
+template <typename T>
+constexpr Rational<T>::Rational(T numerator, T denominator, bool normalize_):
 		num(numerator),
 		den(denominator)
 {
-	normalize();
+	if(normalize_)
+		normalize();
 }
 
 template <typename T>
@@ -181,32 +202,52 @@ constexpr T Rational<T>::gcd(T a, T b)
 template <typename T>
 constexpr void Rational<T>::normalize()
 {
-	if(den < 0)
-	{
-		num = -num;
-		den = -den;
-	}
-	
-	// convert to reduced form
 	if(den == 0)
 	{
 		if(num > 0)
 			num = 1;  // +infity
 		else if(num < 0)
 			num = -1;  // -infity
+//		else
+//			num = 0;  // nan
+		return;
 	}
-	else
+	
+	if(den < 0)
 	{
-		int32_t divisor = gcd(num, den);
-		num /= divisor;
-		den /= divisor;
+		if(den == -1 && num == 0)  // NEGATIVE_ZERO, the special case.
+			return;
+		
+		num = -num;
+		den = -den;
 	}
+
+	int32_t divisor = gcd(num, den);
+	num /= divisor;
+	den /= divisor;
+}
+
+template <typename T>
+constexpr Rational<T> Rational<T>::reciprocal() const
+{
+#if 0
+	return Rational<T> r(den, num);
+#else
+	Rational<T> r(den, num, false);
+	// In floating point calculation, 1/-inf = -0.0, 1/nan = nan, 1/+inf = +0.0,
+	if(r.den < -1 || (r.den == -1 && r.num != 0))
+	{
+		r.num = -r.num;
+		r.den = -r.den;
+	}
+	return r;
+#endif
 }
 
 template <typename T>
 Rational<T>& Rational<T>::operator+= (const Rational<T>& other)
 {
-	if((den | other.den) != 0)
+	if(den > 0 && other.den > 0)
 	{
 		// a/b + c/d = (a*d + b*c) / bd
 		T g = gcd(this->den, other.den);
@@ -216,16 +257,25 @@ Rational<T>& Rational<T>::operator+= (const Rational<T>& other)
 		num /= g;
 		den *= other.den / g;
 	}
-	else  // handle NaN and infinity cases.
+	else
 	{
-		if(isNaN() || other.isNaN())  // nan + any = nan
-			*this = Rational<T>::NaN;
-		else if(num + other.num == 0)  // +inf + -inf = nan
-			*this = Rational<T>::NaN;
-		else if(num == 0)  // inf + finite = inf
+		if(isNaN() || other.isZero())
+		{
+			// nan + any = nan
+			// any + zero = any
+		}
+		else if(isZero() || other.isNaN())
 			*this = other;
-//		else  // inf + finite = inf
-//			do nothing
+		else if(other.isFinite())
+		{
+			// inf + finite = inf
+		}
+		else if(isFinite())
+			*this = other;
+		else if((isPositiveInfinity() && other.isNegativeInfinity()) ||
+				(isNegativeInfinity() && other.isPositiveInfinity()))
+			*this = NaN;  // +inf + -inf = nan
+//		else  // inf + inf = inf, -inf + -inf = -inf
 	}
 	return *this;
 }
@@ -233,28 +283,7 @@ Rational<T>& Rational<T>::operator+= (const Rational<T>& other)
 template <typename T>
 Rational<T>& Rational<T>::operator-= (const Rational<T>& other)
 {
-	if(den != 0 && other.den != 0)
-	{
-		// This calculation avoids overflow, and minimises the number of expensive calculations.
-		// It corresponds exactly to the += case above
-		T d = gcd(den, other.den);
-		den /= d;
-		num = num * (other.den / d) - other.num * den;
-		d = gcd(num, d);
-		num /= d;
-		den *= other.den / d;
-	}
-	else  // handle NaN and infinity cases.
-	{
-		if(isNaN() || other.isNaN())  // nan + any = nan
-			*this = Rational<T>::NaN;
-		else if(num == other.num)  // inf - inf = nan
-			*this = Rational<T>::NaN;
-		else if(num == 0)  // any - inf = -inf
-			*this = -other;
-//		else  // inf - any = inf
-//			do nothing;
-	}
+	*this += -other;
 	return *this;
 }
 
@@ -292,70 +321,101 @@ bool operator< (const Rational<T>& lhs, const Rational<T>& rhs)
 {
 	// NaN is unordered: it is not equal to, greater than, or less than anything, including itself.
 	// x == x is false if and only if the value of x is NaN.
-	if(lhs.den != 0 && rhs.den != 0)
+	T lhs_num = lhs.num, lhs_den = lhs.den;
+	if(lhs_num == 0)
+	{
+		if(lhs_den == -1)
+			lhs_den = 1;  // -0.0 => +0.0
+		else if(lhs_den == 0)  // always return false when someone compares with NaN
+			return false;
+	}
+	
+	T rhs_num = rhs.num, rhs_den = rhs.den;
+	if(rhs_num == 0)
+	{
+		if(rhs_den == -1)
+			rhs_den = 1;
+		else if(rhs_den == 0)
+			return false;
+	}
+	
+	if(lhs_den != 0 && rhs_den != 0)
 	{
 		// a/b < c/d  is equivalent to a*d < b*c when b > 0 & d > 0.
 		// Notice that multipliation may overflows.
-		T d1 = Rational<T>::gcd(lhs.num, rhs.num);
-		T d2 = Rational<T>::gcd(lhs.den, rhs.den);
-		T a = lhs.num / d1, c = rhs.num / d1;
-		T b = lhs.den / d2, d = rhs.den / d2;
+		T d1 = Rational<T>::gcd(lhs_num, rhs_num);
+		T d2 = Rational<T>::gcd(lhs_den, rhs_den);
+		T a = lhs_num / d1, c = rhs_num / d1;
+		T b = lhs_den / d2, d = rhs_den / d2;
 		return a * d < b * c;
 	}
 	
-	// handle NaN and infinity cases
-	if(lhs.isNaN() || rhs.isNaN())  // always false when meet NaN
-		return false;
-	
 	// at least one is infinity
-	if(lhs.den == 0)
+	if(lhs_den == 0)
 	{
-		if(rhs.den == 0)  // both are infinities, -inf < +inf, +inf is not less than +inf
-			return lhs.num < rhs.num;
+		if(rhs_den == 0)  // both are infinities, -inf < +inf, +inf is not less than +inf
+			return lhs_num < rhs_num;
 		else  // lhs is infinity, -inf < finite < +inf, negative sign returns true
-			return lhs.num < 0;
+			return lhs_num < 0;
 	}
 	else  // rhs is infinity, -inf < finite < +inf, positive sign return true
-		return 0 < rhs.num;
+		return 0 < rhs_num;
 }
 
 template <typename T>
 bool operator> (const Rational<T>& lhs, const Rational<T>& rhs)
 {
-	if(lhs.den != 0 && rhs.den != 0)
+	// NaN is unordered: it is not equal to, greater than, or less than anything, including itself.
+	// x == x is false if and only if the value of x is NaN.
+	T lhs_num = lhs.num, lhs_den = lhs.den;
+	if(lhs_num == 0)
+	{
+		if(lhs_den == -1)
+			lhs_den = 1;  // -0.0 => +0.0
+		else if(lhs_den == 0)  // always return false when someone compares with NaN
+			return false;
+	}
+	
+	T rhs_num = rhs.num, rhs_den = rhs.den;
+	if(rhs_num == 0)
+	{
+		if(rhs_den == -1)
+			rhs_den = 1;
+		else if(rhs_den == 0)
+			return false;
+	}
+	
+	if(lhs_den != 0 && rhs_den != 0)
 	{
 		// a/b > c/d  is equivalent to a*d > b*c when b > 0 & d > 0.
-		T d1 = Rational<T>::gcd(lhs.num, rhs.num);
-		T d2 = Rational<T>::gcd(lhs.den, rhs.den);
-		T a = lhs.num / d1, c = rhs.num / d1;
-		T b = lhs.den / d2, d = rhs.den / d2;
+		T d1 = Rational<T>::gcd(lhs_num, rhs_num);
+		T d2 = Rational<T>::gcd(lhs_den, rhs_den);
+		T a = lhs_num / d1, c = rhs_num / d1;
+		T b = lhs_den / d2, d = rhs_den / d2;
 		return a * d > b * c;
 	}
 	
-	// handle NaN and infinity cases.
-	if(lhs.isNaN() || rhs.isNaN())  // always false when meet NaN
-			return false;
-	
 	// at least one is infinity
-	if(lhs.den == 0)
+	if(lhs_den == 0)
 	{
-		if(rhs.den == 0)  // both are infinities, +inf > -inf, +inf is not less than +inf
-			return lhs.num > rhs.num;
+		if(rhs_den == 0)  // both are infinities, +inf > -inf, +inf is not less than +inf
+			return lhs_num > rhs_num;
 		else  // lhs is infinity, +inf > finite > -inf, positive sign returns true
-			return lhs.num > 0;
+			return lhs_num > 0;
 	}
 	else  // rhs is infinity, +inf > finite > -inf, negative sign return true
-		return 0 > rhs.num;
+		return 0 > rhs_num;
+
 }
 
 template <typename T>
 bool operator== (const Rational<T>& lhs, const Rational<T>& rhs)
 {
 	if(lhs.den != 0 && rhs.den != 0)
-		return lhs.num == rhs.num && lhs.den == rhs.den;
+		return lhs.num == rhs.num && (lhs.num == 0 || lhs.den == rhs.den);
 	
 	// handle NaN and infinity cases.
-	if(lhs.isNaN() || rhs.isNaN())  // always false when meet NaN.
+	if(lhs.isNaN() || rhs.isNaN())  // always return false when someone compares with NaN
 		return false;
 	
 	return lhs.num == rhs.num;
