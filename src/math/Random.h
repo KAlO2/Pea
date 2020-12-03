@@ -20,6 +20,9 @@ public:
 	
 	static void setSeed(uint32_t seed);
 	
+	/**
+	 * @return a random number between 0.0 and 1.0
+	 */
 	static float emit();
 	static float emit(float min, float max);
 	

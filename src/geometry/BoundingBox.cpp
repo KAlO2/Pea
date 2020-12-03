@@ -50,7 +50,7 @@ void BoundingBox::add(const vec3f& point)
 		else if(value > high)
 			high = value;
 	};
-		
+	
 	if(isEmpty())
 		min = max = point;
 	else
@@ -73,12 +73,12 @@ bool BoundingBox::overlap(const BoundingBox &other) const
 	return (*this & other).isEmpty();
 }
 
-vec3f BoundingBox::center() const
+vec3f BoundingBox::getCenter() const
 {
 	return (min + max) * 0.5F;
 }
 
-float BoundingBox::volume() const
+float BoundingBox::calculateVolume() const
 {
 	vec3f e = max - min;
 	float v = e.x * e.y * e.z;

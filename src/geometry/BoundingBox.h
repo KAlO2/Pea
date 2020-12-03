@@ -66,9 +66,9 @@ public:
 	
 	bool overlap(const BoundingBox& other) const;
 
-	float volume() const;
+	float calculateVolume() const;
 
-	vec3f center() const;
+	vec3f getCenter() const;
 	
 	/**
 	 * Computes the intersection of two bounding boxes.

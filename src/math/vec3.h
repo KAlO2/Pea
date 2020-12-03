@@ -62,6 +62,7 @@ public:
 	// assignment operators
 	vec3<T>& operator +=(const vec3<T>& rhs) { x += rhs.x; y += rhs.y; z += rhs.z; return *this; }
 	vec3<T>& operator -=(const vec3<T>& rhs) { x -= rhs.x; y -= rhs.y; z -= rhs.z; return *this; }
+	vec3<T>& operator *=(const vec3<T>& rhs) { x *= rhs.x; y *= rhs.y; z *= rhs.z; return *this; }
 	vec3<T>& operator *=(T value)            { x *= value; y *= value; z *= value; return *this; }
 	vec3<T>& operator /=(T value)            { x /= value; y /= value; z /= value; return *this; }
 
@@ -72,7 +73,7 @@ public:
 	// binary operators, multiply and divide operations for scalar
 	friend vec3<T> operator +(const vec3<T>& lhs, const vec3<T>& rhs) { vec3<T> result(lhs); result += rhs; return result; }
 	friend vec3<T> operator -(const vec3<T>& lhs, const vec3<T>& rhs) { vec3<T> result(lhs); result -= rhs; return result; }
-//	friend vec3<T> operator *(const vec3<T>& lhs, const vec3<T>& rhs) { return vec3<T>(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z); }
+	friend vec3<T> operator *(const vec3<T>& lhs, const vec3<T>& rhs) { return vec3<T>(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z); }
 	friend vec3<T> operator *(const vec3<T>& lhs, T value) { return vec3<T>(lhs.x * value, lhs.y * value, lhs.z * value); }
 	friend vec3<T> operator *(T value, const vec3<T>& rhs) { return vec3<T>(rhs.x * value, rhs.y * value, rhs.z * value); }
 	friend vec3<T> operator /(const vec3<T>& lhs, T value) { return vec3<T>(lhs.x / value, lhs.y / value, lhs.z / value); }
@@ -143,7 +144,7 @@ public:
 	friend vec3<T> cartesian_cast(const vec3<T>& polar)
 	{
 		assert(polar.rho >= 0);
-		assert(-M_PI / 2 <= polar.phi && polar.phi <= +M_PI / 2);
+		assert(std::abs(polar.phi) <= M_PI / 2);
 		vec3<T> position;
 		position.z = polar.rho * std::sin(polar.phi);
 		T r = polar.rho * std::cos(polar.phi);
