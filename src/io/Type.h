@@ -33,6 +33,10 @@ enum class Type: unsigned char
 	VEC3F,
 	VEC4F,
 
+	MAT2F,
+	MAT3F,
+	MAT4F,
+	
 	STRING,
 };
 

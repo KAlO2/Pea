@@ -304,7 +304,7 @@ bool Model_MTL::save(const std::string& path) const
 	file << '#' << _ << "Material Count:" << _ << materials.size() << '\n';
 	file << '\n';
 
-	for(const std::pair<std::string, std::shared_ptr<Material>>& pair: materials)
+	for(const std::pair<const std::string, std::shared_ptr<Material>>& pair: materials)
 		file << Model_MTL::toString(pair.second.get()) << '\n';
 
 	file.close();
@@ -362,7 +362,7 @@ std::string Model_MTL::toString(const Material* material)
 std::string Model_MTL::toString() const
 {
 	std::ostringstream os;
-	for(const std::pair<std::string, std::shared_ptr<Material>>& pair: materials)
+	for(const std::pair<const std::string, std::shared_ptr<Material>>& pair: materials)
 	{
 //		const std::string& name = pair.first;
 		const Material* material = pair.second.get();

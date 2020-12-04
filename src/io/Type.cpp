@@ -1,5 +1,7 @@
 #include "io/Type.h"
 
+#include <cassert>
+
 namespace pea {
 
 std::uint32_t sizeofType(Type type)
@@ -36,8 +38,19 @@ std::uint32_t sizeofType(Type type)
 	
 	case Type::VEC4I:
 	case Type::VEC4F:
+	case Type::MAT2F:
 		return 16;
 	
+	case Type::MAT3F:
+		return 36;
+	
+	case Type::MAT4F:
+		return 64;
+	
+	case Type::UNKNOWN:
+	default:
+		assert(false);
+		return 0;
 	}
 }
 

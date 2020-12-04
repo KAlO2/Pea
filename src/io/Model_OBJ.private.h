@@ -1,5 +1,5 @@
-#ifndef MODEL_OBJ_PRIVATE_H_
-#define MODEL_OBJ_PRIVATE_H_
+#ifndef PEA_MODEL_OBJ_PRIVATE_H_
+#define PEA_MODEL_OBJ_PRIVATE_H_
 
 static const std::string comment("# https://github.com/KAlO2/Pea engine");
 
@@ -52,4 +52,4 @@ inline bool matchString(const char* &p, const char* key, size_t len)
 #define MATCH_STRING(str)         matchString(p, str, sizeof(str) - 1)
 
 
-#endif  // MODEL_OBJ_PRIVATE_H_
+#endif  // PEA_MODEL_OBJ_PRIVATE_H_

@@ -23,8 +23,6 @@
 using namespace pea;
 
 static const char* TAG = "Model_OBJ";
-
-
 static const std::string EMPTY_PATH;
 
 Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
@@ -34,11 +32,6 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 	std::ifstream stream(path, std::ios::binary);
 	if(!stream.is_open())
 		throw std::invalid_argument("could not open path for read. path=" + path);
-	
-//	std::vector<std::shared_ptr<Model_OBJ>> objects;
-//	std::shared_ptr<Model_OBJ> object = std::make_shared<Model_OBJ>(path);
-	// .OBJ format is one-based, to make index zero-based, start from 1.
-//	uint32_t vertexIndex = 1, texcoordIndex = 1, normalIndex = 1;
 	
 	uint32_t faceIndex = 0;
 	Group group(GroupType::FACE);
@@ -87,13 +80,21 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 			uint32_t faceVertexSize = 0;
 			while(!isNewLine(*p))
 			{
-				vec3u index = TypeUtility::parseUint3(p);
-				indices.push_back(index);
+				vec3i index = TypeUtility::parseInt3(p);
+				// handles negative vertex reference numbers, -1 means last index.
+				if(index[0] < 0)
+					index[0] += vertices.size();
+				if(index[1] < 0)
+					index[1] += texcoords.size();
+				if(index[2] < 0)
+					index[2] += normals.size();
+				
+				indices.emplace_back(index[0], index[1], index[2]);
 				
 				++faceVertexSize;
 				p += std::strspn(p, " \t\r");
 			}
-//			assert(faceVertexSize >= 3);
+			
 			if(faceVertexSize < 3)
 				slog.w(TAG, "bad face. face #%" PRId32 " with %" PRId32 " vertex", faceIndex, faceVertexSize);
 			if(!groups.empty())
@@ -125,11 +126,9 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 		{
 			std::string name(p);
 			std::string path_mtl = FileSystem::dirname(path) + FileSystem::SEPERATOR + name;
-//			slog.d(TAG, "path_mtl=%s", path_mtl.c_str());
 			try
 			{
 				materials = new Model_MTL(path_mtl);
-//				slog.d(TAG, "material.size=%zu", materials->getSize());
 			}
 			catch(const std::bad_alloc& e)
 			{
@@ -179,6 +178,18 @@ Model_OBJ::Model_OBJ(const std::string& path) noexcept(false):
 				std::string name = std::string(p);
 				object->setName(name);
 			}
+		}
+		else if(MATCH_STRING("cstype"))
+		{
+		}
+		else if(MATCH_STRING("parm"))
+		{
+		}
+		else if(MATCH_STRING("deg"))
+		{
+		}
+		else if(MATCH_STRING("end"))
+		{
 		}
 */
 		else if(MATCH_CHAR('s'))  // smooth group
@@ -321,8 +332,7 @@ void Model_OBJ::addGroup(const std::string& name, const Group& group)
 		std::vector<uint32_t>& existingIndices = existingGroup.indices;
 		std::vector<uint32_t> indices0, intersection, existingIndices0;
 		partitionSet(indices, existingIndices, indices0, intersection, existingIndices0);
-
-//		slog.d(TAG, "existingIndices0.size=%zu, intersection.size=%zu, indices0.size=%zu, ", existingIndices0.size(), intersection.size(), indices0.size());
+		
 		if(intersection.empty())
 			continue;
 		hasIntersection = true;
@@ -384,8 +394,6 @@ void Model_OBJ::addGroup(const std::string& name, const Group& group)
 		groupArray.push_back(newGroup);
 		groups.emplace(name, ids);
 	}
-
-//	slog.v(TAG, "Model_OBJ.groups.size=%zu", groupArray.size());
 }
 
 const std::string& Model_OBJ::getPath() const
@@ -411,7 +419,7 @@ Model_OBJ::~Model_OBJ()
 
 std::shared_ptr<Model> Model_OBJ::exportModel() const
 {
-	slog.v(TAG, "+%d Model_OBJ v.size=%zu, vt.size=%zu, vn.size=%zu", __LINE__, vertices.size(), texcoords.size(), normals.size());
+	slog.v(TAG, "+%d Model_OBJ quantity of v=%zu, vt=%zu, vn=%zu", __LINE__, vertices.size(), texcoords.size(), normals.size());
 	
 	std::vector<vec3f> modelVertices;
 	std::vector<vec2f> modelTexcoords;
@@ -419,20 +427,39 @@ std::shared_ptr<Model> Model_OBJ::exportModel() const
 	
 	std::vector<uint32_t> indexArray;
 	std::vector<vec3u> uniqueIndices = Group::createIndex(indices, indexArray);
+	const size_t count = uniqueIndices.size();
+	if(indices.size() != count)
+		slog.d(TAG, "remove duplicated indices from %zu to %zu", indices.size(), count);
 	
 	// keep vertex order in .obj file
-	std::sort(uniqueIndices.begin(), uniqueIndices.end());
+//	std::sort(uniqueIndices.begin(), uniqueIndices.end());
 	
 	// index array to index map
 	std::unordered_map<vec3u, uint32_t> indexMap;
-	const size_t size = uniqueIndices.size();
-	for(size_t i = 0; i < size; ++i)
+	
+	for(size_t i = 0; i < count; ++i)
 		indexMap[uniqueIndices[i]] = i;
 	
-	modelVertices.reserve(size);
-	modelTexcoords.reserve(size);
-	modelNormals.reserve(size);
+	modelVertices.reserve(count);
+	modelTexcoords.reserve(count);
+	modelNormals.reserve(count);
 	
+	const bool hasPosition = count > 0 && uniqueIndices[0][0] > 0;
+	const bool hasTexcoord = count > 0 && uniqueIndices[0][1] > 0;
+	const bool hasNormal   = count > 0 && uniqueIndices[0][2] > 0;
+#if 1
+	if(hasPosition)
+		for(const vec3u& index: uniqueIndices)
+			modelVertices.push_back(vertices[index[0] - 1]);
+	
+	if(hasTexcoord)
+		for(const vec3u& index: uniqueIndices)
+			modelTexcoords.push_back(texcoords[index[1] - 1]);
+	
+	if(hasNormal)
+		for(const vec3u& index: uniqueIndices)
+			modelNormals.push_back(normals[index[2] - 1]);
+#else
 	for(const vec3u& index: uniqueIndices)
 	{
 		// vec3u  0/1/2  v/vt/vn
@@ -440,78 +467,15 @@ std::shared_ptr<Model> Model_OBJ::exportModel() const
 //		assert(index[0] < vertices.size());
 //		assert(index[1] < texcoords.size());
 //		assert(index[2] < normals.size());
-		if(index[0] > 0)
+		if(hasPosition)
 			modelVertices.push_back(vertices[index[0] - 1]);
-		if(index[1] > 0)
+		if(hasTexcoord)
 			modelTexcoords.push_back(texcoords[index[1] - 1]);
-		if(index[2] > 0)
+		if(hasNormal)
 			modelNormals.push_back(normals[index[2] - 1]);
 	}
-
-/*
-	// keep input vertex data order
-	size_t maxSize = std::max(std::max(vertices.size(), texcoords.size()), normals.size());
-	std::vector<uint32_t> histogram;
-	
-	histogram.resize(vertices.size());
-//	std::fill(histogram.begin(), histogram.end(), 0);
-	for(const vec3u& index: uniqueIndices)
-		if(index.i > 0)
-			++histogram[index.i - 1];
-
-	for(size_t i = 0, size = vertices.size(); i < size; ++i)
-	{
-#if 0  // 0 value may come from point of lines
-		const vec3f& vertex = vertices[i];
-		if(histogram[i] <= 1)  // probably
-			modelVertices.push_back(vertex);
-		else
-			for(uint32_t k = 1; k < histogram[i]; ++k)
-				modelVertices.push_back(vertex);
-#else
-		for(uint32_t k = 0; k < histogram[i]; ++k)
-			modelVertices.push_back(vertices[i]);
 #endif
-	}
-	
-	if(!texcoords.empty())
-	{
-		histogram.resize(texcoords.size());
-		std::fill(histogram.begin(), histogram.end(), 0);
-		for(const vec3u& index: uniqueIndices)
-			if(index.j > 0)
-				++histogram[index.j - 1];
-		
-		for(size_t i = 0, size = texcoords.size(); i < size; ++i)
-			for(uint32_t k = 0; k < histogram[i]; ++k)
-				modelTexcoords.push_back(texcoords[i]);
-	}
-	
-	if(!normals.empty())
-	{
-		histogram.resize(normals.size());
-		std::fill(histogram.begin(), histogram.end(), 0);
-		for(const vec3u& index: uniqueIndices)
-			if(index.k > 0)
-				++histogram[index.k - 1];
-		
-		for(size_t i = 0, size = texcoords.size(); i < size; ++i)
-			for(uint32_t k = 0; k < histogram[i]; ++k)
-				modelNormals.push_back(normals[i]);
-	}
-
-for(const vec3u& index: indices)
-	std::cout << index << ' ';
-std::cout << '\n' << '\n';
-for(const vec3u& index: uniqueIndices)
-	std::cout << index << ' ';
-std::cout << '\n' << '\n';
-	for(size_t i = 0, size = indexArray.size(); i < size; ++i)
-		std::cout << i << " => " << indexArray[i] << '\n';
-
-*/
-
-	slog.v(TAG, "+%d Model v.size=%zu, vt.size=%zu, vn.size=%zu", __LINE__, modelVertices.size(), modelTexcoords.size(), modelNormals.size());
+	slog.v(TAG, "+%d Model quantity of v=%zu, vt=%zu, vn=%zu", __LINE__, modelVertices.size(), modelTexcoords.size(), modelNormals.size());
 
 	std::shared_ptr<Model> model = std::make_shared<Model>();
 	model->vertices  = std::move(modelVertices);
@@ -529,7 +493,7 @@ std::cout << '\n' << '\n';
 		else
 			++sizen;
 	}
-	
+	slog.i(TAG, "triangle.count=%" PRIu32 ", quadrilateral.count=%" PRIu32 ", polygon.count=%" PRIu32, size3, size4, sizen);
 	std::vector<uint32_t> modelTriangles;
 	std::vector<uint32_t> modelQuadrilaterals;
 	std::vector<uint32_t> modelPolygons;
@@ -538,9 +502,6 @@ std::cout << '\n' << '\n';
 	modelQuadrilaterals.reserve(size4);
 	modelPolygons.reserve(sizen * 5);  // at least pentagon
 	modelPolygonVertexSizes.reserve(sizen);
-	
-//	for(uint8_t k = 0; k < 4; ++k)
-//		std::cout << "i/j/k=" << indices[k] << "map to index #" << indexMap[indices[k]] << '\n';
 	
 	uint32_t start = 0;
 	for(const uint32_t& faceVertexSize: faceVertexSizes)
@@ -569,10 +530,10 @@ std::cout << '\n' << '\n';
 			index = indexMap[index];
 	}
 */
-	model->triangleIndices       = std::move(modelTriangles);
-	model->quadrilateralIndices  = std::move(modelQuadrilaterals);
-	model->polygonIndices        = std::move(modelPolygons);
-	model->polygonVertexSizes    = std::move(modelPolygonVertexSizes);
+	model->triangleIndices      = std::move(modelTriangles);
+	model->quadrilateralIndices = std::move(modelQuadrilaterals);
+	model->polygonIndices       = std::move(modelPolygons);
+	model->polygonVertexSizes   = std::move(modelPolygonVertexSizes);
 	
 	return model;
 }
@@ -683,8 +644,6 @@ bool Model_OBJ::save_OBJ(const std::string& path, const std::string& materialFil
 	
 	if(groups.empty())
 	{
-//		std::vector<vec3u> indices;
-//		std::vector<uint32_t> faceVertexSizes;
 		uint32_t vertexCount = 0;
 		uint32_t polygonIndex = 0;
 		for(const vec3u& index: indices)
@@ -752,53 +711,7 @@ bool Model_OBJ::save_OBJ(const std::string& path, const std::string& materialFil
 		}
 		stream << '\n';
 	}
-
-	stream << '\n';
-/*
-//	const size_t meshCount = meshes.size();
-	for(const std::pair<std::string, Mesh*>& name_mesh : meshes)
-	{
-		const std::string& name = name_mesh.first;
-		const Mesh&        mesh =*name_mesh.second;
-
-		const std::vector<uint32_t>& indices = mesh.indices;
-		const bool has_texture = !mesh.texcoords.empty();
-		const bool has_normal  = !mesh.normals.empty();
-
-		stream << '#' << _ << "mesh '" << name << "' with" << _ << indices.size() << _ << "faces" << '\n';
-		if(!name.empty())
-			stream << 'g' << _ << name << '\n';
-
-		assert(mesh.material_id < static_cast<int32_t>(materials.size()));
-		if(mesh.material_id >= 0)
-			PUT_SCALAR("usemtl",  materials[mesh.material_id].name);
-
-		PUT_STRING("usemtl", mesh.name);
-		PUT_SCALAR('o', 0);  // TODO smooth on or off?
-
-		// write triangulated face
-		const size_t indexSize = indices.size();
-		if(indexSize % 3 != 0)
-			slog.w(TAG, "index size (%zu) should be divided by 3 to form i/j/k triple", indexSize);
-		for(size_t index = 0; index < indexSize / 3; index += 3)
-		{
-			stream << 'f' << _;
-
-#define TRIPLE(i) \
-	do {                                                                       \
-	                      stream << lut_vertices[mesh.vertices[i]] + 1 << '/'; \
-	    if(has_texture) { stream << lut_texcoords[mesh.texcoords[i]] + 1;    } \
-	    if(has_normal)  { stream << '/' << lut_normals[mesh.normals[i]] + 1; } \
-	} while(false)
-
-			TRIPLE(indices[index]);     stream << _;
-			TRIPLE(indices[index + 1]); stream << _;
-			TRIPLE(indices[index + 2]); stream << '\n';
-#undef TRIPLE
-		}
-		stream << '\n';
-	}
-*/
+	
 	stream.close();
 	return true;
 }
@@ -855,80 +768,3 @@ vec3i parseTriple(const char* &token)
 	// .OBJ's file index are one based.
 	return vec3i(i - 1, j - 1, k - 1);
 }
-/*
-bool Model_OBJ::check(const char*& str, Key key)
-{
-	Property prop = Model_OBJ::property[key];
-	bool hasKey = !strncmp(str, prop.key, prop.skip) && isspace(str[prop.skip]);
-	if(hasKey)
-		str += prop.skip + 1;
-	return hasKey;
-}
-*/
-bool Model_OBJ::parse(const std::string& path)
-{
-	const char* filename = path.c_str();
-	FILE* file = fopen(filename, "r");
-	if(!file)
-	{
-		slog.d(TAG, "cannot open file %s", filename);
-		return false;
-	}
-/*
-	const char* line = nullptr;
-	const char* start = line;
-	size_t length = 0;
-	while((getline(const_cast<char**>(&line), &length, file)) != EOF)
-	{
-		if(line[0] == '#')  continue;  // skip comment line
-		if(line[0] == '\0') continue;  // skip empty line
-
-		if(check(line, KEY_MATERIALS))  // mtllib filename1 filename2 . . .
-			filename_mtl = TypeUtility::split(line, TypeUtility::BLANK);
-		else if(check(line, KEY_USE_MATERIAL))
-		{
-
-		}
-		else if(check(line, KEY_VERTEX))
-			mesh.positions.push_back(TypeUtility::parseFloat3(line));
-		else if(check(line, KEY_NORMAL))
-			mesh.normals.push_back(TypeUtility::parseFloat3(line));
-		else if(check(line, KEY_TEXTURE))
-			mesh.texture_coords.push_back(TypeUtility::parseFloat2(line));
-		else if(check(line, KEY_FACE))
-		{
-			// f triplet1 triplet2 triplet3 ...
-			const std::vector<std::string> triplets = TypeUtility::split(line, TypeUtility::BLANK);
-			size_t count = triplets.size();
-			if(count < 3)
-			{
-				slog.e(TAG, "not enough data!");
-				return false;
-			}
-
-			// if(count > 3) trianglute face
-			const vec3i _0 = parseTriple(triplets[0]);
-			vec3i _1 = parseTriple(triplets[1]);
-			vec3i _2 = parseTriple(triplets[2]);
-			for(size_t i = 3; ; ++i)
-			{
-				mesh.faces.push_back(_0);
-				mesh.faces.push_back(_1);
-				mesh.faces.push_back(_2);
-
-				if(i >= count)
-					break;
-
-				_1 = _2;
-				_2 = parseTriple(triplets[i]);
-			}
-		}
-		else
-			slog.i(TAG, "unhandled line: %s", line);
-	}
-
-	free(const_cast<char*>(start));
-*/
-	return true;
-}
-
