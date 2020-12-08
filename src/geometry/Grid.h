@@ -106,7 +106,7 @@ public:
 
 constexpr size_t Grid::getVertexSize(uint32_t stepsX, uint32_t stepsY)
 {
-	return (stepsX + 1) * (stepsY + 1);
+	return (stepsX + 1U) * (stepsY + 1U);
 }
 
 constexpr size_t Grid::getIndexSize(uint32_t stepsX, uint32_t stepsY, Primitive primitive)
@@ -125,7 +125,10 @@ constexpr size_t Grid::getIndexSize(uint32_t stepsX, uint32_t stepsY, Primitive 
 	
 	case Primitive::TRIANGLE_STRIP:
 	case Primitive::QUADRILATERAL_STRIP:
-		return (stepsX + 2) * 2 * stepsY - 2;
+		if(stepsX > 0 && stepsY > 0)
+			return (stepsX + 2) * 2 * stepsY - 2U;
+		else
+			return 0;
 	
 	case Primitive::QUADRILATERALS:
 		return stepsX * stepsY * 4;

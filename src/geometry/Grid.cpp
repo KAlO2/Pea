@@ -106,8 +106,6 @@ std::vector<vec2f> Grid::getTexcoordData(const float& width, const float& height
 
 std::vector<uint32_t> Grid::getIndexData(uint32_t stepsX, uint32_t stepsY, Primitive primitive)
 {
-	assert(stepsX > 0 && stepsY > 0);
-	
 	// glDrawElements use type GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, or GL_UNSIGNED_INT.
 	// note that `typename` is needed here, or C++ standard assumes std::remove_cv<T>::type is a
 	// variable rather than a type.
