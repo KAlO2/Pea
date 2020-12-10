@@ -5,14 +5,12 @@
 #include "geometry/Sphere.h"
 #include "io/FileSystem.h"
 #include "opengl/GL.h"
+#include "opengl/glLoader.h"
 #include "opengl/Shader.h"
 #include "scene/Mesh.h"
-#include "scene/Skybox.h"
 #include "scene/Floor.h"
 #include "util/Log.h"
-#include "widget/LinearLayout.h"
 
-#include "opengl/glLoader.h"
 #include <GLFW/glfw3.h>
 
 using namespace pea;
@@ -30,7 +28,6 @@ static_assert(0 < CROUCH_HEIGHT && CROUCH_HEIGHT < STAND_HEIGHT, "the height get
 World::World(int32_t width, int32_t height, const char* title):
 		Window(width, height, title),
 		camera(vec3f(0, -3, STAND_HEIGHT), vec3f(0.0f, 0.0f, 0.0f), vec3f(0.0f, 0.0f, 1.0f)),
-		skybox(nullptr),
 		floor(nullptr),
 		velocity(0),
 		humanState(HumanState::ON_THE_GROUND)
@@ -44,7 +41,6 @@ World::~World()
 		delete object;
 	objects.clear();
 	delete floor;
-	delete skybox;
 }
 
 void World::setState(HumanState state)
@@ -62,7 +58,7 @@ void World::setState(HumanState state)
 
 void World::stand(float dt)
 {
-	vec3 position = camera.getPosition();
+	vec3f position = camera.getPosition();
 	float z = position.z;
 	if(humanState == HumanState::IN_THE_AIR)
 	{
@@ -108,12 +104,10 @@ void World::onKey(int32_t key, int32_t scanCode, int32_t action, int32_t modifie
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 	
-	Visibility visibility;
 	if(glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS)
-		visibility = Visibility::VISIBLE;
+		setLayoutVisibility(Visibility::VISIBLE);
 	else
-		visibility = Visibility::INVISIBLE;
-	setLayoutVisibility(visibility);
+		setLayoutVisibility(Visibility::INVISIBLE);
 	
 	float speed = 2.0f;
 	float offset = speed * deltaTime;
@@ -183,18 +177,14 @@ void World::onMouseScroll(float dx, float dy)
 	camera.setFieldOfView(fieldOfView);
 }
 
-void World::loadSkyBox(const std::string& dir, const std::string filenames[6])
+void World::setTextureSky(Texture* texture)
 {
-	// initialize once for all
-	if(skybox == nullptr)
-	{
-		skybox = new Skybox();
-		skybox->prepare();
-		skybox->upload();
-	}
-	
-	if(skybox != nullptr)
-		skybox->loadTextureCube(dir, filenames);
+	skybox.setTexture(texture);
+}
+
+Texture* World::getTextureSky() const
+{
+	return skybox.getTexture();
 }
 
 void World::prepare()
@@ -225,6 +215,9 @@ void World::prepare()
 		texture.setParameter(parameter);
 		floor->setTexture(std::move(texture));
 	}
+	
+	skybox.prepare();
+	skybox.upload();
 }
 
 void World::updateViewPositionUniform()
@@ -270,8 +263,7 @@ void World::render(const mat4f& view, const mat4f& projection) const
 		object->render(viewProjection);
 	
 	// skybox render last. Early fragment test.
-	if(skybox)
-		skybox->render(view, projection);
+	skybox.render(view, projection);
 }
 
 void World::update(float dt)
@@ -281,14 +273,6 @@ void World::update(float dt)
 	
 	for(Object* object: objects)
 		object->update(dt);
-}
-
-const Texture* World::getSkyboxTexture() const
-{
-	if(skybox)
-		return skybox->getTexture();
-	else
-		return nullptr;
 }
 
 void World::addObject(Mesh* object)

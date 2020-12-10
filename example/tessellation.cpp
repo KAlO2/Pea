@@ -173,8 +173,6 @@ int main()
 	camera.setDepthRange(1.0, 8);
 	Program wireframeProgram(ShaderFactory::VERT_M_VP, ShaderFactory::FRAG_UNIFORM_COLOR);
 	Program solidProgram(ShaderFactory::VERT_M_VP_NORMAL, ShaderFactory::FRAG_MATCAP);
-	
-	Program normalProgram(ShaderFactory::VERT_M_VP_NORMAL2, ShaderFactory::GEOM_NORMAL, ShaderFactory::FRAG_UNIFORM_COLOR);
 
 	Teapot teapot(3);  // 4x4 patch's subdivision value is 3
 	std::unique_ptr<Mesh> wireframeTeapot = createMesh(teapot, true/*wireframe*/);

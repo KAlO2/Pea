@@ -91,16 +91,12 @@ private:
 	uint32_t vao;
 	uint32_t vbo[VBO_COUNT];
 	Primitive primitive;
-	
 	int32_t viewProjectionLocation;
 	
 	UniformBlock uniformBlock;
 	mutable std::mutex uniformMutex;
 	
-//	std::unordered_map<std::string, int32_t> attributes;
-//	std::map<std::string, int32_t> attributes;
 private:
-
 	inline bool hasFaceNormal() const;
 	
 	void remapIndex(std::vector<uint32_t>&& indexMap, const uint32_t& size);
@@ -166,6 +162,8 @@ public:
 	
 	void removeTextures();
 	
+	Primitive getPrimitive() const;
+	
 	/**
 	 * Allocate VAO, VBO and specify the primitive to draw.
 	 * @param[in] primitive Draw call primitive.
@@ -213,6 +211,8 @@ public:
 	void render(const mat4f& viewProjection) const override;
 
 };
+
+inline Primitive Mesh::getPrimitive() const { return primitive; }
 
 inline bool Mesh::hasFaceNormal() const { return !faceNormals.empty(); }
 inline bool Mesh::hasNormal() const     { return !normals.empty();     }

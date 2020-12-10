@@ -44,7 +44,7 @@ void QuadRenderer::upload() const
 #if 0
 	const float vertices[] =
 	{ 
-		//       position ,   texcoord,
+		//        position,   texcoord,
 		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,  // left top
 		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // left bottom
 		 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,  // right top

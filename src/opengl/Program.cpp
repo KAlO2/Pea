@@ -5,8 +5,6 @@
 #include <map>
 
 #include "opengl/Shader.h"
-#include "opengl/ShaderFactory.h"
-
 #include "util/compiler.h"
 #include "util/Log.h"
 
@@ -54,10 +52,10 @@ uint32_t Program::release()
 	return result;
 }
 
-Program::Program(uint32_t vertexShaderIndex, uint32_t fragmentShaderIndex)
+Program::Program(ShaderFactory::Index vertexShaderIndex, ShaderFactory::Index fragmentShaderIndex)
 {
-	uint32_t vertexShader = ShaderFactory::loadShader(static_cast<ShaderFactory::Index>(vertexShaderIndex));
-	uint32_t fragmentShader = ShaderFactory::loadShader(static_cast<ShaderFactory::Index>(fragmentShaderIndex));
+	uint32_t vertexShader = ShaderFactory::loadShader(vertexShaderIndex);
+	uint32_t fragmentShader = ShaderFactory::loadShader(fragmentShaderIndex);
 	assert(vertexShader != 0 && fragmentShader != 0);
 	program = Program::createProgram(2, vertexShader, fragmentShader);
 	assert(program != 0);
@@ -66,12 +64,38 @@ Program::Program(uint32_t vertexShaderIndex, uint32_t fragmentShaderIndex)
 	glDeleteShader(fragmentShader);
 }
 
-Program::Program(uint32_t vertexShaderIndex, uint32_t geometryShaderIndex, uint32_t fragmentShaderIndex)
+Program::Program(const std::string& vertexShaderSource, const std::string& fragmentShaderSource)
 {
-	uint32_t vertexShader = ShaderFactory::loadShader(static_cast<ShaderFactory::Index>(vertexShaderIndex));
-	uint32_t geometryShader = ShaderFactory::loadShader(static_cast<ShaderFactory::Index>(geometryShaderIndex));
-	uint32_t fragmentShader = ShaderFactory::loadShader(static_cast<ShaderFactory::Index>(fragmentShaderIndex));
+	uint32_t vertexShader = ShaderFactory::loadShader(Shader::VERTEX_SHADER, vertexShaderSource);
+	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::FRAGMENT_SHADER, fragmentShaderSource);
+	assert(vertexShader != 0 && fragmentShader != 0);
+	program = Program::createProgram(2, vertexShader, fragmentShader);
+	assert(program != 0);
+	
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+}
+
+Program::Program(ShaderFactory::Index vertexShaderIndex, ShaderFactory::Index geometryShaderIndex, ShaderFactory::Index fragmentShaderIndex)
+{
+	uint32_t vertexShader = ShaderFactory::loadShader(vertexShaderIndex);
+	uint32_t geometryShader = ShaderFactory::loadShader(geometryShaderIndex);
+	uint32_t fragmentShader = ShaderFactory::loadShader(fragmentShaderIndex);
 	assert(vertexShader != 0 && geometryShader != 0 &&fragmentShader != 0);
+	program = Program::createProgram(3, vertexShader, geometryShader, fragmentShader);
+	assert(program != 0);
+	
+	glDeleteShader(vertexShader);
+	glDeleteShader(geometryShader);
+	glDeleteShader(fragmentShader);
+}
+
+Program::Program(const std::string& vertexShaderSource, const std::string& geometryShaderSource, const std::string& fragmentShaderSource)
+{
+	uint32_t vertexShader = ShaderFactory::loadShader(Shader::VERTEX_SHADER, vertexShaderSource);
+	uint32_t geometryShader = ShaderFactory::loadShader(Shader::GEOMETRY_SHADER, geometryShaderSource);
+	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::FRAGMENT_SHADER, fragmentShaderSource);
+	assert(vertexShader != 0 && geometryShader != 0 && fragmentShader != 0);
 	program = Program::createProgram(3, vertexShader, geometryShader, fragmentShader);
 	assert(program != 0);
 	
@@ -206,6 +230,8 @@ std::vector<Program::Variable> Program::getActiveVariables(uint32_t program, GLe
 			glGetActiveAttrib(program, index, bufferSize, &length, &variable.size, &variable.type, name);
 			location = glGetAttribLocation(program, name);
 		}
+		else  // unreachable branch
+			location = 0;
 		
 		variable.location = location;
 		variable.name = std::string(name, length);

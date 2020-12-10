@@ -31,7 +31,10 @@ int main()
 	
 	std::string dir = FileSystem::getRelativePath("res/image/skybox/");
 	const std::string filenames[6] = {"left.jpg", "right.jpg", "back.jpg", "front.jpg", "bottom.jpg", "top.jpg"};
-	world.loadSkyBox(dir, filenames);
+	Texture textureSky(GL_TEXTURE_CUBE_MAP);
+	textureSky.loadCube(dir, filenames);
+	textureSky.setParameter(Texture::Parameter(1));
+	world.setTextureSky(&textureSky);
 
 	Program program(ShaderFactory::VERT_M_VP_HEIGHT_TEXCOORD, ShaderFactory::FRAG_TEXTURE_RGB);
 	

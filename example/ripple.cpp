@@ -62,8 +62,8 @@ void main()
 )"";
 
 	std::string fragmentShaderSource = ShaderFactory::VERSION + R""(
-layout(location = 9) uniform float time;
-layout(location =12) uniform sampler2D texture0;
+layout(location =15) uniform float time;
+layout(location =16) uniform sampler2D texture0;
 
 in vec2 _texcoord;
 
@@ -124,16 +124,7 @@ void main()
 }
 )"";
 	
-	uint32_t vertexShader = ShaderFactory::loadShader(Shader::VERTEX_SHADER, vertexShaderSource);
-	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::FRAGMENT_SHADER, fragmentShaderSource);
-	assert(vertexShader != 0 && fragmentShader != 0);
-	uint32_t program = Program::createProgram(2, vertexShader, fragmentShader);
-	slog.i(TAG, "create program %" PRIu32, program);
-	
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-	
-	return Program(program);
+	return Program(vertexShaderSource, fragmentShaderSource);
 }
 
 int main(int argc, char* argv[])
@@ -141,7 +132,7 @@ int main(int argc, char* argv[])
 	const char* usage = R""(
 This program demonstrates water ripple effect.
 strike LEFT/RIGHT key to decrease/increate blending weight,
-combined with Ctrl key, you get bigger step.
+combined with Ctrl key, you get big step.
 )"";
 	std::ignore = argc;  // to suppress warning: unused parameter ‘argc’
 	printf("%s - %s", argv[0], usage);
@@ -175,7 +166,6 @@ combined with Ctrl key, you get bigger step.
 	loadGL();
 	GL::enableDebugMessage();
 
-	// build and compile our shader program
 	Program program = createProgram();
 	
 	QuadRenderer quadRenderer;
@@ -184,7 +174,6 @@ combined with Ctrl key, you get bigger step.
 	
 	Texture texture0;
 	Texture::Parameter parameter(1);
-	glActiveTexture(GL_TEXTURE0);
 	texture0.load(FileSystem::getRelativePath("res/image/lena_std.jpg"));
 	texture0.setParameter(parameter);
 	quadRenderer.setTexture(&texture0);
@@ -200,6 +189,7 @@ combined with Ctrl key, you get bigger step.
 */
 	int64_t startTimeUs = getCurrentTime();
 //	glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+	const mat4f viewProjection(1.0);
 	while(!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -212,7 +202,6 @@ combined with Ctrl key, you get bigger step.
 		mat4f viewProjection = Camera::multiply(viewMatrix, projectionMatrix);
 */
 		Program::setUniform(Shader::UNIFORM_FLT_TIME, time);
-		const mat4f viewProjection(1.0);  // unused here
 		quadRenderer.render(viewProjection);
 		
 		glfwPollEvents();

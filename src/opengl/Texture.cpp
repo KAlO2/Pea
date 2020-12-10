@@ -277,6 +277,14 @@ bool Texture::loadCube(const std::string paths[6])
 	return loadCube(_images);
 }
 
+bool Texture::loadCube(const std::string& directory, const std::string filenames[6])
+{
+	std::string paths[6];
+	for(uint8_t i = 0; i < 6; ++i)
+		paths[i] = directory + '/' + filenames[i];
+	return loadCube(paths);
+}
+
 bool Texture::loadCube(const Image* images[6])
 {
 	constexpr GLenum target = GL_TEXTURE_CUBE_MAP;

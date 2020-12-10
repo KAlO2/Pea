@@ -7,6 +7,7 @@
 
 // vector and matrix
 #include "opengl/GL.h"
+#include "opengl/ShaderFactory.h"
 #include "math/mat2.h"
 #include "math/mat3.h"
 #include "math/mat3x4.h"
@@ -77,14 +78,18 @@ public:
 	 * @param[in] vertexShaderIndex   builtin vertex shader defined in ShaderFactory::VERT_XXX
 	 * @param[in] fragmentShaderIndex builtin fragment shader defined in ShaderFactory::FRAG_XXX
 	 */
-	Program(uint32_t vertexShaderIndex, uint32_t fragmentShaderIndex);
+	Program(ShaderFactory::Index vertexShaderIndex, ShaderFactory::Index fragmentShaderIndex);
+	
+	Program(const std::string& vertexShader, const std::string& fragmentShader);
 	
 	/**
 	 * @param[in] vertexShaderIndex   builtin vertex shader defined in ShaderFactory::VERT_XXX
 	 * @param[in] geometryShaderIndex builtin geometry shader defined in ShaderFactory::GEOM_XXX
 	 * @param[in] fragmentShaderIndex builtin fragment shader defined in ShaderFactory::FRAG_XXX
 	 */
-	Program(uint32_t vertexShaderIndex, uint32_t geometryShaderIndex, uint32_t fragmentShaderIndex);
+	Program(ShaderFactory::Index vertexShaderIndex, ShaderFactory::Index geometryShaderIndex, ShaderFactory::Index fragmentShaderIndex);
+	
+	Program(const std::string& vertexShader, const std::string& geometryShader, const std::string& fragmentShader);
 	
 	Program(const Program& other) = delete;
 	Program& operator =(const Program& other) = delete;

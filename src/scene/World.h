@@ -4,13 +4,13 @@
 #include <vector>
 
 #include "scene/Camera.h"
+#include "scene/Skybox.h"
 #include "view/Window.h"
 
 namespace pea {
 
 // forward declaritions
 class Mesh;
-class Skybox;
 class Texture;
 class Floor;
 
@@ -20,7 +20,7 @@ class World: public Window
 private:
 	Camera camera;
 	std::vector<Mesh*> objects;
-	Skybox* skybox;
+	Skybox skybox;
 	Floor* floor;
 	
 	float velocity;
@@ -69,11 +69,10 @@ public:
 
 	Camera& getCamera();
 	
-	void loadSkyBox(const std::string& dir, const std::string filenames[6]);
-	
 	virtual void prepare();
 	
-	const Texture* getSkyboxTexture() const;
+	void setTextureSky(Texture* texture);
+	Texture* getTextureSky() const;
 	
 	size_t getObjectArraySize() const;
 	Mesh* getObject(size_t index);

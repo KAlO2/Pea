@@ -490,7 +490,7 @@ void Mesh::setProgram(uint32_t program)
 	}
 
 	std::vector<Program::Variable> variables = Program::getActiveVariables(program, GL_ACTIVE_UNIFORMS);
-	uint32_t textureUnit = 0;
+	int32_t textureUnit = 0;
 	
 	Program::use(program);
 	for(const Program::Variable& variable: variables)

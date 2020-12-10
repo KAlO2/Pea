@@ -159,6 +159,16 @@ public:
 	 * load texture cube.
 	 */
 	bool loadCube(const std::string paths[6]);
+
+	/**
+	 * @brief Create a skybox from 6 textures.
+	 *
+	 * @param[in] directory the directory of the texture file.
+	 * @param[in] filenames Texture filename for the left, right, back, front, bottom, top side of
+	 *                      the texture cube face.
+	 * @return true if textures are loaded successfully, otherwise false.
+	 */
+	bool loadCube(const std::string& directory, const std::string filenames[6]);
 	bool loadCube(const Image* images[6]);
 
 	/**
