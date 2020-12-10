@@ -221,7 +221,8 @@ void World::prepare()
 		Texture texture(GL_TEXTURE_2D);
 		Texture::Parameter parameter(10);
 		parameter.setMapMode(GL_MIRRORED_REPEAT);
-		texture.load(FileSystem::getRelativePath("res/image/brick.jpg"), parameter);
+		texture.load(FileSystem::getRelativePath("res/image/brick.jpg"));
+		texture.setParameter(parameter);
 		floor->setTexture(std::move(texture));
 	}
 }

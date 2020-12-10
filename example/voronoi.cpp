@@ -193,7 +193,8 @@ strike H to show/hide tiles under water.
 	Texture texture0;
 	Texture::Parameter parameter(1);
 	glActiveTexture(GL_TEXTURE0);
-	texture0.load(FileSystem::getRelativePath("res/image/tiles.jpg"), parameter);
+	texture0.load(FileSystem::getRelativePath("res/image/tiles.jpg"));
+	texture0.setParameter(parameter);
 
 	quadRenderer.setProgram(program.getName());
 	slog.d(TAG, "program %s", program.getActiveVariables().c_str());

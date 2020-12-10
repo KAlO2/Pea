@@ -188,7 +188,8 @@ int main()
 	Texture texture(GL_TEXTURE_2D);
 	std::string path = FileSystem::getRelativePath("res/image/matcap/metal.jpg");
 	Texture::Parameter parameter(10);
-	texture.load(path, parameter);
+	texture.load(path);
+	texture.setParameter(parameter);
 	solidTeapot->setTexture(texture, 0);
 	
 	while(!glfwWindowShouldClose(window))

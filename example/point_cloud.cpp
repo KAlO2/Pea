@@ -20,10 +20,8 @@ enum Type: uint32_t
 {
 	SQUARE = 0,
 	CUBE,
-	
 	DISK,
 	SPHERE,
-	
 //	COUNT,
 };
 
@@ -237,9 +235,7 @@ std::pair<std::vector<vec3f>, std::vector<IndexType>> createSphereLine()
 
 void usage()
 {
-	const char* mannual = R""(
-
-DESCRIPTION
+	const char* manual = R""(DESCRIPTION
   -h, --help
     Show a summary of the options and exit.
   
@@ -250,10 +246,8 @@ DESCRIPTION
     type can be square, cube, disk, or sphere.
 )"";
 
-	printf("%s", mannual);
+	printf("%s", manual);
 }
-
-
 
 int main(int argc, char* argv[])
 {

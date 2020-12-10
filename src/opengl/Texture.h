@@ -43,7 +43,7 @@ public:
 		EMISSIVE  = 5,
 		HEIGHT    = 6,
 		NORMAL    = 7,
-		
+		DEPTH     = 8,
 //		UNDIFINED = 255,
 	};
 
@@ -138,21 +138,28 @@ public:
 	
 	uint32_t getKey(uint32_t index) const;
 	
-	bool load(const std::string& path, const Parameter& parameter);
-	bool load(const Image& image, const Parameter& parameter);
+	bool load(const std::string& path);
+	bool load(const Image& image);
 	
 	/**
 	 * OpenGL uses textures that are exact powers of 2 in width and height. A 64x16 2D texture can 
 	 * have 6 mip-maps: 32x8, 16x4, 8x2, 4x1, 2x1, and 1x1. OpenGL does not require that the entire 
 	 * mipmap chain is complete; you can specify what range of mipmaps in a texture are available. 
 	 */
-	bool loadLevel(uint32_t levelCount, uint32_t width, uint32_t height, Color::Format colorFormat, const void* data, const Parameter& parameter);
+	bool loadLevel(uint32_t levelCount, int32_t width, int32_t height, Color::Format colorFormat, const void* data);
+	
+	/**
+	 * Used to load 3D textures.
+	 */
+	bool load(int32_t width, int32_t height, int32_t depth, Color::Format format, const void* data);
+	
+	void setParameter(const Parameter& parameter);
 	
 	/**
 	 * load texture cube.
 	 */
-	bool loadCube(const std::string paths[6], const Parameter& parameter);
-	bool loadCube(const Image* images[6], const Parameter& parameter);
+	bool loadCube(const std::string paths[6]);
+	bool loadCube(const Image* images[6]);
 
 	/**
 	 * KTX file format https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/

@@ -19,7 +19,7 @@ Description:
 	1. Key ASDW or direction keys for move left / back / right / top;
 	2. Space bar for jump;
 	3. Key C for crouch;
-	4. mouse move for change viewing horizon.
+	4. Moving mouse for change viewing horizon.
 */
 int main()
 {
@@ -40,13 +40,15 @@ int main()
 	std::string path = FileSystem::getRelativePath("res/image/height_map2.png");
 	Texture::Parameter parameter(1);
 	parameter.setMapMode(GL_MIRRORED_REPEAT);
-	textureHeight.load(path, parameter);
+	textureHeight.load(path);
+	textureHeight.setParameter(parameter);
 	textureHeight.setType(Texture::Type::HEIGHT);
 	
 	path = FileSystem::getRelativePath("res/image/forest-evergreen.jpg");
 	parameter.levels = 10;
 	Texture texture(GL_TEXTURE_2D);
-	texture.load(path, parameter);
+	texture.load(path);
+	texture.setParameter(parameter);
 	
 	float left = -50, right = +50;  // meter
 	uint32_t stepCount = 800;

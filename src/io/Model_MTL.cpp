@@ -242,8 +242,9 @@ std::unordered_map<std::string, std::shared_ptr<Texture>> Model_MTL::loadTexture
 		if(textureMap.find(textureName) != textureMap.end())
 			return;
 		slog.v(TAG, "loadTexture() %s", path.c_str());
-		if(texture->load(path, parameter))
+		if(texture->load(path))
 		{
+			texture->setParameter(parameter);
 			texture->setType(type);
 			textureMap.emplace(textureName, texture);
 		}

@@ -536,9 +536,9 @@ void Mesh::setProgram(uint32_t program)
 			index = 0U;
 		
 		uint32_t key = Texture::getKey(type, index);
-		glUniform1i(variable.location, textureUnit);
+		Program::setUniform(variable.location, textureUnit);
 		textureMap[key] = textureUnit;
-		slog.d(TAG, "%s key=0x%08X, occupies texture unit #%d", str, key, textureUnit);
+//		slog.d(TAG, "%s key=0x%08X, occupies texture unit #%d", str, key, textureUnit);
 		++textureUnit;
 	}
 }
@@ -552,10 +552,8 @@ bool Mesh::hasTextureUnit(Texture::Type type, uint32_t index) const
 void Mesh::setTexture(const Texture& texture, uint32_t index)
 {
 /*
-	assert(getProgram() != Program::NULL_PROGRAM);  // setProgram() must be called ahead.
-
 	const uint32_t program = getProgram();
-	assert(program != Program::NULL_PROGRAM);
+	assert(program != Program::NULL_PROGRAM);  // setProgram() must be called ahead.
 
 	std::string textureName;
 	switch(texture->getType())

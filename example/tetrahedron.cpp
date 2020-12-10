@@ -368,7 +368,8 @@ int main()
 	int32_t maxLevel = 10;  //(std::max(image.getWidth(), image.getHeight()));
 	Texture::Parameter parameter(maxLevel);
 	glActiveTexture(GL_TEXTURE0);
-	texture0.load(image, parameter);
+	texture0.load(image);
+	texture0.setParameter(parameter);
 
 #if USE_INSTANCING
 	assert(glGetAttribLocation(program, "instance") == Shader::ATTRIBUTE_VEC_INSTANCE);

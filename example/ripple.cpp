@@ -62,8 +62,8 @@ void main()
 )"";
 
 	std::string fragmentShaderSource = ShaderFactory::VERSION + R""(
-layout(location =12) uniform sampler2D texture0;
 layout(location = 9) uniform float time;
+layout(location =12) uniform sampler2D texture0;
 
 in vec2 _texcoord;
 
@@ -185,8 +185,8 @@ combined with Ctrl key, you get bigger step.
 	Texture texture0;
 	Texture::Parameter parameter(1);
 	glActiveTexture(GL_TEXTURE0);
-	texture0.load(FileSystem::getRelativePath("res/image/lena_std.jpg"), parameter);
-
+	texture0.load(FileSystem::getRelativePath("res/image/lena_std.jpg"));
+	texture0.setParameter(parameter);
 	quadRenderer.setTexture(&texture0);
 	quadRenderer.setProgram(program.getName());
 	

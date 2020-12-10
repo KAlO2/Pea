@@ -40,25 +40,14 @@ Texture::Texture(uint32_t target):
 		target(target),
 		name(0),
 		type(Type::NONE)
-//		image(nullptr),
-//		mipmapImage(nullptr)
-//		has_mipmap(false),
-//		is_compressed(false)
 {
 	glGenTextures(1, &name);
 }
 
 Texture::~Texture()
 {
-//	slog.d(TAG, "free Texture2D resource %u", name);
 	glDeleteTextures(1, &name);  // silently ignore name 0
-//	texture_id = 0;
-//	delete image;
-//	delete[] mipmapImage;
-	//FIXME cast to right type, then delete.
-	// raw data cannot be delete'd.
-//	delete[] texture_data;
-//	texture_data = nullptr;
+//	name = 0;
 }
 
 Texture::Texture(Texture&& other):
@@ -101,7 +90,7 @@ uint32_t Texture::getKey(uint32_t index) const
 	return getKey(type, index);
 }
 
-bool Texture::load(const std::string& path, const Parameter& parameter)
+bool Texture::load(const std::string& path)
 {
 	std::shared_ptr<Image> image = ImageFactory::decodeFile(path);
 	if(!image)
@@ -111,11 +100,25 @@ bool Texture::load(const std::string& path, const Parameter& parameter)
 	}
 	image->flipVertical();
 //	assert(image->getColorFormat() == Color::RGBA_8888);
-	return load(*image, parameter);
+	return load(*image);
 }
 
-//bool load(const std::string paths[6], const Parameter& parameter);
-bool Texture::load(const Image& image, const Parameter& parameter)
+static int32_t calculateAlignment(int32_t width, Color::Format colorFormat)
+{
+	int32_t alignment = 1;
+	for(int32_t rowStride = width * Color::size(colorFormat); (rowStride & 1) == 0; rowStride >>= 1)
+	{
+		alignment <<= 1;
+		
+		// The allowable alignment values are 1, 2, 4, 8
+		if(alignment >= 8)
+			break;
+	}
+	
+	return alignment;
+}
+
+bool Texture::load(const Image& image)
 {
 //	is_compressed = false;  // TODO: ?
 //	this->image = image;
@@ -134,15 +137,7 @@ bool Texture::load(const Image& image, const Parameter& parameter)
 		assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE);
 //	assert(isPowerOfTwo(width) && isPowerOfTwo(height));  // TODO: GL_TEXTURE_RECTANGLE,
 	
-	int32_t alignment = 1;
-	for(int32_t rowStride = width * Color::size(colorFormat); (rowStride & 1) == 0; rowStride >>= 1)
-	{
-		alignment <<= 1;
-		
-		// The allowable alignment values are 1, 2, 4, 8
-		if(alignment >= 8)
-			break;
-	}
+	int32_t alignment = calculateAlignment(width, colorFormat);
 	slog.v(TAG, "width=%d, pixel size=%d, alignment=%d", width, Color::size(colorFormat), alignment);
 	// Pixel data in user memory is said to be packed. Therefore, transfers to OpenGL memory are 
 	// called unpack operations, and transfers from OpenGL memory are called pack operations.
@@ -163,19 +158,11 @@ bool Texture::load(const Image& image, const Parameter& parameter)
 //		glTexImage3D(target, level, format, width, height, depth, border, format, type, pixels);
 	else
 		assert(false);
-	// why two naming convention: glGen*, glGenerate*
-	if(parameter.levels > 1)
-	{
-		// Rectangle textures contain exactly one image; they cannot have mipmaps.
-		assert(target != GL_TEXTURE_RECTANGLE);
-//		glGenerateTextureMipmap(name);  // OpenGL 4.5+
-		glGenerateMipmap(target);  // OpenGL 3.0+
-	}
-	setParameter(target, parameter);
+
 	return true;
 }
 
-bool Texture::loadLevel(uint32_t levelCount, uint32_t width, uint32_t height, Color::Format colorFormat, const void* data, const Parameter& parameter)
+bool Texture::loadLevel(uint32_t levelCount, int32_t width, int32_t height, Color::Format colorFormat, const void* data)
 {
 	assert(levelCount > 0 && width > 0 && height > 0 && data != nullptr);
 	GLenum format = GL::pixelFormat(colorFormat);
@@ -207,8 +194,27 @@ bool Texture::loadLevel(uint32_t levelCount, uint32_t width, uint32_t height, Co
 			break;
 	}
 	
-	setParameter(target, parameter);
 	return true;
+}
+
+bool Texture::load(int32_t width, int32_t height, int32_t depth, Color::Format format, const void* data)
+{
+	assert(target == GL_TEXTURE_3D);
+	assert(width > 0 && height > 0 && depth > 0 && data != nullptr);
+	
+	int32_t alignment = calculateAlignment(width, format);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+	constexpr int32_t level = 0, border = 0;
+	
+	GLenum pixelFormat = GL::pixelFormat(format);
+	GLenum type = GL::dataType(format);
+	glTexImage3D(GL_TEXTURE_3D, level, format, width, height, depth, border, pixelFormat, type, data);
+	return true;
+}
+
+void Texture::setParameter(const Parameter& parameter)
+{
+	setParameter(target, parameter);
 }
 
 static bool isSame(const std::string& path1, const std::string& path2)
@@ -238,7 +244,7 @@ https://www.khronos.org/opengl/wiki/Cubemap_Texture
        |bottom|
        +------+
 */
-bool Texture::loadCube(const std::string paths[6], const Parameter& parameter)
+bool Texture::loadCube(const std::string paths[6])
 {
 	std::shared_ptr<Image> images[6];
 	
@@ -268,10 +274,10 @@ bool Texture::loadCube(const std::string paths[6], const Parameter& parameter)
 	for(uint8_t i = 0; i < 6; ++i)
 		_images[i] = images[i].get();
 	
-	return loadCube(_images, parameter);
+	return loadCube(_images);
 }
 
-bool Texture::loadCube(const Image* images[6], const Parameter& parameter)
+bool Texture::loadCube(const Image* images[6])
 {
 	constexpr GLenum target = GL_TEXTURE_CUBE_MAP;
 	assert(this->target == target);
@@ -306,9 +312,6 @@ bool Texture::loadCube(const Image* images[6], const Parameter& parameter)
 		GLenum type   = GL::dataType(colorFormat);
 		glTexImage2D(targets[i], level, format, width, height, border, format, type, pixels);
 	}
-	if(parameter.levels > 1)
-		glGenerateTextureMipmap(name);
-	setParameter(target, parameter);
 	
 	return true;
 }
@@ -519,24 +522,33 @@ void Texture::bind() const
 {
 	glBindTexture(target, name);
 }
-/*
+
 void Texture::bind(uint32_t textureUnit) const
 {
-	bind(Shader::UNIFORM_TEX_TEXTURE0 + textureUnit, textureUnit);
-}
-*/
-void Texture::bind(uint32_t textureUnit) const
-{
-//	glUniform1i(location, textureUnit);
 	glActiveTexture(GL_TEXTURE0 + textureUnit);
 	glBindTexture(target, name);
 }
-
+/*
+void Texture::bind(uint32_t textureUnit) const
+{
+	int32_t location = Shader::UNIFORM_TEX_TEXTURE0 + textureUnit;
+	glUniform1i(location, textureUnit);
+	bind(textureUnit);
+}
+*/
 // glTexParameteri affects only the currently bound texture.
 // it does not affect the way the texture is uploaded (glTexImage2D)
 void Texture::setParameter(uint32_t target, const Parameter& parameter)
 {
 	assert(parameter.levels > 0);
+	// Rectangle textures contain exactly one image; they cannot have mipmaps.
+	if(parameter.levels > 1 && target != GL_TEXTURE_RECTANGLE)
+	{
+		// Why OpenGL use two naming conventions: glGen*, glGenerate*?
+//		glGenerateTextureMipmap(name);  // OpenGL 4.5+
+		glGenerateMipmap(target);  // OpenGL 3.0+
+	}
+	
 	glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, parameter.levels - 1);
 
