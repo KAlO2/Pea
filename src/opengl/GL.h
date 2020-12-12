@@ -165,6 +165,13 @@ public:
 	
 	static uint32_t sizeofChannel(GLint format);
 	
+	/**
+	 * @param[in] width Width of window.
+	 * @param[in] colorFormat Color format.
+	 * @return max alignment for the start of each pixel row in memory, which is used in OpenGL
+	 *         pixel transfer operations.
+	 */
+	static int32_t align(int32_t width, Color::Format colorFormat);
 	// $ glxinfo
 //	static void displayVersionInfo();
 	

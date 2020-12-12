@@ -103,21 +103,6 @@ bool Texture::load(const std::string& path)
 	return load(*image);
 }
 
-static int32_t calculateAlignment(int32_t width, Color::Format colorFormat)
-{
-	int32_t alignment = 1;
-	for(int32_t rowStride = width * Color::size(colorFormat); (rowStride & 1) == 0; rowStride >>= 1)
-	{
-		alignment <<= 1;
-		
-		// The allowable alignment values are 1, 2, 4, 8
-		if(alignment >= 8)
-			break;
-	}
-	
-	return alignment;
-}
-
 bool Texture::load(const Image& image)
 {
 //	is_compressed = false;  // TODO: ?
@@ -137,7 +122,7 @@ bool Texture::load(const Image& image)
 		assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE);
 //	assert(isPowerOfTwo(width) && isPowerOfTwo(height));  // TODO: GL_TEXTURE_RECTANGLE,
 	
-	int32_t alignment = calculateAlignment(width, colorFormat);
+	int32_t alignment = GL::align(width, colorFormat);
 	slog.v(TAG, "width=%d, pixel size=%d, alignment=%d", width, Color::size(colorFormat), alignment);
 	// Pixel data in user memory is said to be packed. Therefore, transfers to OpenGL memory are 
 	// called unpack operations, and transfers from OpenGL memory are called pack operations.
@@ -202,7 +187,7 @@ bool Texture::load(int32_t width, int32_t height, int32_t depth, Color::Format f
 	assert(target == GL_TEXTURE_3D);
 	assert(width > 0 && height > 0 && depth > 0 && data != nullptr);
 	
-	int32_t alignment = calculateAlignment(width, format);
+	int32_t alignment = GL::align(width, format);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 	constexpr int32_t level = 0, border = 0;
 	

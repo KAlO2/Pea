@@ -261,6 +261,21 @@ uint32_t GL::sizeofChannel(GLint format)
 	}
 }
 
+int32_t GL::align(int32_t width, Color::Format colorFormat)
+{
+	int32_t alignment = 1;
+	for(int32_t rowStride = width * Color::size(colorFormat); (rowStride & 1) == 0; rowStride >>= 1)
+	{
+		alignment <<= 1;
+		
+		// The allowable alignment values are 1, 2, 4, 8
+		if(alignment >= 8)
+			break;
+	}
+	
+	return alignment;
+}
+
 /*
 void GL::displayVersionInfo()
 {

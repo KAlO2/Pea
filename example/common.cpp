@@ -36,17 +36,7 @@ void snapshot(const std::string& path, int32_t width, int32_t height)
 	constexpr Color::Format format = Color::Format::C4_U8;
 	Image_PNG image(width, height, format);
 	uint8_t* pixels = image.getData();
-	
-	const int32_t rowStride = width * Color::size(format);
-	int32_t alignment = 1;
-	for(int32_t i = rowStride; (i & 1) == 0; i >>= 1)
-	{
-		alignment <<= 1;
-		
-		// The allowable alignment values are 1, 2, 4, 8
-		if(alignment >= 8)
-			break;
-	}
+	int32_t alignment = GL::align(width, format);
 	glPixelStorei(GL_PACK_ALIGNMENT, alignment);
 	
 	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
