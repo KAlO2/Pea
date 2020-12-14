@@ -1,15 +1,20 @@
-#include "math/Random.h"
-#include "math/function.h"
-
-#include "scene/Object.h"
-#include "util/utility.h"
-
-#include "common.h"
-
 #include <cstdlib>  // std::atoi
 #include <cstring>  // std::strcmp
+#include <vector>
+
+#include "math/Random.h"
+#include "math/function.h"
+#include "scene/Object.h"
+#include "scene/Camera.h"
+#include "util/utility.h"
+#include "util/Log.h"
+#include "opengl/GL.h"
+#include "opengl/glLoader.h"
+#include "opengl/Program.h"
+#include "opengl/Shader.h"
 
 #include <getopt.h>
+#include <GLFW/glfw3.h>
 
 using namespace pea;
 
@@ -18,7 +23,8 @@ static const char* TAG = "PointCloud";
 using IndexType = uint8_t;  // change to uint16_t or uint32_t if not fit.
 enum Type: uint32_t
 {
-	SQUARE = 0,
+	UNKNOWN = 0,
+	SQUARE,
 	CUBE,
 	DISK,
 	SPHERE,
@@ -63,7 +69,7 @@ PointCloudViewer::PointCloudViewer():
 	glGenBuffers(sizeofArray(vbo), vbo);
 	
 	setProgram(program.getName());
-	slog.d(TAG, "program = %s", program.getActiveVariables().c_str());
+	slog.d(TAG, "%s:%d %s", __FILE__, __LINE__, program.getActiveVariables().c_str());
 }
 
 PointCloudViewer::~PointCloudViewer()
@@ -233,6 +239,19 @@ std::pair<std::vector<vec3f>, std::vector<IndexType>> createSphereLine()
 	return std::make_pair(vertices, indices);
 }
 
+void onKey(GLFWwindow* window, int key, int scanCode, int action, int modifierKeys)
+{
+	(void)scanCode; (void)action; (void)modifierKeys;
+	
+	switch(key)
+	{
+	case GLFW_KEY_ESCAPE:
+		if(action == GLFW_RELEASE)
+			glfwSetWindowShouldClose(window, true);
+		break;
+	}
+}
+
 void usage()
 {
 	const char* manual = R""(DESCRIPTION
@@ -251,18 +270,18 @@ void usage()
 
 int main(int argc, char* argv[])
 {
-	Type type = Type::SQUARE;
+	Type type = Type::UNKNOWN;
 	uint32_t quantity = 1000;
 	const struct option longOptions[] =
 	{
 		{"help",           no_argument, nullptr, 'h'},
-		{"quantity", required_argument, nullptr, 'n'},
+		{"quantity", required_argument, nullptr, 'q'},
 		{"type",     required_argument, nullptr, 't'},
 		{nullptr,                    0, nullptr,   0},
 	};
 	int ch;
 	int optionIndex = 0;
-	while((ch = getopt_long(argc, argv, "ht:", longOptions, &optionIndex)) != -1)
+	while((ch = getopt_long(argc, argv, "hq:t:", longOptions, &optionIndex)) != -1)
 	{
 		switch(ch)
 		{
@@ -277,13 +296,18 @@ int main(int argc, char* argv[])
 				type = Type::SPHERE;
 			else
 			{
-				printf("unknown type \'%s\', option can be {square, cube, disk, sphere}", optarg);
-				return 0;
+				slog.w("unknown type \'%s\', should be one of {square, cube, disk, sphere}\n", optarg);
+				return -1;
 			}
 			break;
 		
 		case 'q':
 			quantity = std::atoi(optarg);
+			if(quantity <= 0)
+			{
+				slog.e(TAG, "quantity should be positive");
+				return -2;
+			}
 			
 			break;
 		case 'h':
@@ -293,6 +317,12 @@ int main(int argc, char* argv[])
 		default:
 			return 0;
 		}
+	}
+	
+	if(type == Type::UNKNOWN)
+	{
+		usage();
+		return -1;
 	}
 	
 	if(!glfwInit())  // needs to call glfwTerminate() after glfwInit successfully. 
@@ -318,7 +348,8 @@ int main(int argc, char* argv[])
 	}
 	
 	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, onWindowResize);
+//	glfwSetFramebufferSizeCallback(window, onWindowResize);
+	glfwSetKeyCallback(window, onKey);
 
 	loadGL();
 	GL::enableDebugMessage();
@@ -356,6 +387,9 @@ int main(int argc, char* argv[])
 		for(uint32_t i = 0; i < quantity; ++i)
 			points[i] = Random::sphereEmit(1.0);
 		lines = createSphereLine();
+		break;
+	default:
+		assert(false);
 		break;
 	}
 

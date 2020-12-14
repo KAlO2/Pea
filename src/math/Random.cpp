@@ -39,13 +39,13 @@ vec3f Random::sphereEmit(float radius)
 	std::uniform_real_distribution<real> distribution(0.0, 1.0);
 	auto random = [&distribution](){ return distribution(generator); };
 	real theta = 2 * M_PI * random();
-	real phi   = std::acos(2 * random() - 1.0F);
+	real phi   = std::acos(2 * random() - 1.0F);  // [0, pi]
 	
-	real _radius = radius * std::sin(phi);
-	real x = _radius * std::cos(theta);
-	real y = _radius * std::sin(theta);
-	real z = radius * std::cos(phi);
-	return vec3f(x, y, z);
+	real r = std::sin(phi);
+	real x = r * std::cos(theta);
+	real y = r * std::sin(theta);
+	real z = std::cos(phi);
+	return radius * vec3f(x, y, z);
 }
 
 vec2f Random::diskEmit(float radius)
@@ -56,12 +56,9 @@ vec2f Random::diskEmit(float radius)
 	using real = double;  // float
 	std::uniform_real_distribution<real> distribution(0.0, 1.0);
 	auto random = [&](){ return distribution(generator); };
+	real rho = radius * std::sqrt(random());
 	real theta = 2 * M_PI * random();
-	real _radius = radius * std::sqrt(random());
-	real x = _radius * std::cos(theta);
-	real y = _radius * std::sin(theta);
-	
-	return vec2f(x, y);
+	return rho * vec2f(std::cos(theta), std::sin(theta));
 }
 
 vec2f Random::circleEmit(float radius)
@@ -70,9 +67,6 @@ vec2f Random::circleEmit(float radius)
 	using real = double;  // float
 	std::uniform_real_distribution<real> distribution(0.0, 2 * M_PI);
 	real theta = distribution(generator);
-	real x = radius * std::cos(theta);
-	real y = radius * std::sin(theta);
-	
-	return vec2f(x, y);
+	return radius * vec2f(std::cos(theta), std::sin(theta));
 }
 
