@@ -20,7 +20,8 @@ public:
 	BoundingBox();
 	
 	/**
-	 * construct an box with lower and upper bounds.
+	 * construct an box with lower and upper bounds. Note that if @p min is not element-wise less
+	 * than @p max, a #repare() operation is needed aftewards.
 	 */
 	BoundingBox(const vec3f& min, const vec3f& max);
 	
@@ -51,10 +52,23 @@ public:
 	/**
 	 * Adds a point to the bounding box. The box will grow bigger if vector is outside of the box.
 	 *
-	 * @param[in] point the point to be added
+	 * @param[in] point The point to be added
 	 */
 	void add(const vec3f& point);
-
+	
+	/*
+	 * Expand the box uniformly for 3 axes.
+	 * @param[in] amount The amount to grow, can be negative.
+	 */
+	void expand(float amount);
+	
+	/**
+	 * Expand the box to some extend. You use positive value to grow, negative value to shrink. when
+	 * box shrinks too much, it becomes a center point.
+	 * @param[in] amount The amount to grow, can be negative.
+	 */
+	void expand(const vec3f& amount);
+	
 	/**
 	 * Adds another bounding box. The box will grow bigger if vector is outside of the box.
 	 *

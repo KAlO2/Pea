@@ -4,11 +4,11 @@
 
 using namespace pea;
 
-constexpr float EXTEND = 1.0F;
+constexpr float NaN = std::numeric_limits<float>::quiet_NaN();
 
 BoundingBox::BoundingBox():
-		min(+EXTEND),
-		max(-EXTEND)
+		min(NaN),
+		max(NaN)
 {
 }
 
@@ -16,17 +16,19 @@ BoundingBox::BoundingBox(const vec3f& min, const vec3f& max):
 		min(min),
 		max(max)
 {
+	auto isNaN = [](const vec3f& v) {return std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z);};
+	assert(!isNaN(min) && !isNaN(max));
 }
 
 void BoundingBox::reset()
 {
-	min = vec3(+EXTEND);
-	max = vec3(-EXTEND);
+	min = vec3(NaN);
+	max = vec3(NaN);
 }
 
 bool BoundingBox::isEmpty() const
 {
-	return min.x > max.x || min.y > max.y || min.z > max.z;
+	return std::isnan(min.x);
 }
 
 vec3f BoundingBox::getSize() const
@@ -45,13 +47,14 @@ void BoundingBox::add(const vec3f& point)
 {
 	auto expand = [](float& low, float& high, const float& value)
 	{
+		assert(low <= high);
 		if(value < low)
 			low = value;
 		else if(value > high)
 			high = value;
 	};
 	
-	if(isEmpty())
+	if(isEmpty()) [[unlikely]]
 		min = max = point;
 	else
 	{
@@ -59,6 +62,28 @@ void BoundingBox::add(const vec3f& point)
 		expand(min.y, max.y, point.y);
 		expand(min.z, max.z, point.z);
 	}
+}
+
+void BoundingBox::expand(float amount)
+{
+	expand(vec3f(amount));
+}
+
+void BoundingBox::expand(const vec3f& amount)
+{
+	auto expand = [](float& low, float& high, const float& delta)
+	{
+		assert(low <= high && std::isfinite(delta));
+		low -= delta;
+		high += delta;
+		
+		if(low > high)  // shrink to a point
+			low = high = (low + high) * 0.5F;
+	};
+	
+	expand(min.x, max.x, amount.x);
+	expand(min.y, max.y, amount.y);
+	expand(min.z, max.z, amount.z);
 }
 
 bool BoundingBox::contain(const vec3f& point) const
@@ -81,10 +106,8 @@ vec3f BoundingBox::getCenter() const
 float BoundingBox::calculateVolume() const
 {
 	vec3f e = max - min;
-	float v = e.x * e.y * e.z;
-
-	assert(v >= 0);
-	return v;
+	assert(e.x >= 0 && e.y >= 0 && e.z >= 0);
+	return e.x * e.y * e.z;
 }
 
 namespace pea {
