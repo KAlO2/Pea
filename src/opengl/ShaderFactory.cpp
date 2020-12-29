@@ -288,7 +288,7 @@ uint32_t ShaderFactory::loadShader(Index index)
 	return loadShader(index, nullptr, 0U);
 }
 
-uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_t macroSize)
+uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_t macroCount)
 {
 	auto it = builtinShaderMap.find(index);
 	if(it == builtinShaderMap.end())
@@ -297,29 +297,29 @@ uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_
 		return 0;
 	}
 	
-	Shader::Type shaderType = Shader::UNKNOWN_SHADER;
+	using Stage = Shader::Stage;
+	Stage stage = Stage::UNKNOWN;
 	if(index < Index::TESS_CONTROL_SHADER_START)
-		shaderType = Shader::VERTEX_SHADER;
+		stage = Stage::VERTEX;
 	else if(index < Index::TESS_EVALUATION_SHADER_START)
-		shaderType = Shader::TESS_CONTROL_SHADER;
+		stage = Stage::TESS_CONTROL;
 	else if(index < Index::GEOMETRY_SHADER_START)
-		shaderType = Shader::TESS_EVALUATION_SHADER;
+		stage = Stage::TESS_EVALUATION;
 	else if(index < Index::FRAGMENT_SHADER_START)
-		shaderType = Shader::GEOMETRY_SHADER;
+		stage = Stage::GEOMETRY;
 	else if(index < Index::COMPUTE_SHADER_START)
-		shaderType = Shader::FRAGMENT_SHADER;
+		stage = Stage::FRAGMENT;
 	else
-		shaderType = Shader::COMPUTE_SHADER;
+		stage = Stage::COMPUTE;
 
 	const char* content = it->second;
 	
-//	slog.v(TAG, "shader type=%d, source=R\"\"(%s)\"\"", shaderType, source);
-	const bool hasMacro = macros != nullptr && macroSize > 0;
+	const bool hasMacro = macros != nullptr && macroCount > 0;
 	size_t length = VERSION.length() + std::strlen(content);
 	if(hasMacro)
 	{
 		// "#define" ' ' key ' ' value '\n'
-		for(uint32_t i = 0; i < macroSize; ++i)
+		for(uint32_t i = 0; i < macroCount; ++i)
 			length += 10 + macros[i][0].length() + macros[i][1].length();
 	}
 	
@@ -328,7 +328,7 @@ uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_
 	source.append(VERSION);
 	if(hasMacro)
 	{
-		for(uint32_t i = 0; i < macroSize; ++i)
+		for(uint32_t i = 0; i < macroCount; ++i)
 			source.append("#define").append(1, ' ')
 					.append(macros[i][0]).append(1, ' ')
 					.append(macros[i][1]).append(1, '\n');
@@ -336,17 +336,17 @@ uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_
 	
 	source.append(content);
 	assert(source.length() == length);
-	return loadShader(shaderType, source);
+	return loadShader(stage, source);
 }
 
-uint32_t ShaderFactory::loadShader(Shader::Type type, const char* source, size_t length)
+uint32_t ShaderFactory::loadShader(Shader::Stage stage, const char* source, size_t length)
 {
-	return Shader::compile(type, source, length);
+	return Shader::compile(stage, source, length);
 }
 
-uint32_t ShaderFactory::loadShader(Shader::Type type, const std::string& source)
+uint32_t ShaderFactory::loadShader(Shader::Stage stage, const std::string& source)
 {
-	return Shader::compile(type, source.c_str(), source.length());
+	return Shader::compile(stage, source.c_str(), source.length());
 }
 
 uint32_t ShaderFactory::at(const std::string& filename)

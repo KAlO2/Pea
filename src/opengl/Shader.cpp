@@ -9,7 +9,7 @@ static const char* TAG = "Shader";
 
 using namespace pea;
 
-static const std::pair<int32_t, const char*> map2GL[Shader::TYPE_COUNT] =
+static const std::pair<int32_t, const char*> map2GL[Shader::Stage::COUNT] =
 {
 	{ GL_VERTEX_SHADER, "vertex shader" },
 	{ GL_TESS_CONTROL_SHADER, "tessellation control shader" },
@@ -19,16 +19,16 @@ static const std::pair<int32_t, const char*> map2GL[Shader::TYPE_COUNT] =
 	{ GL_COMPUTE_SHADER, "compute shader" },
 };
 
-Shader::Shader(Type type):
-		type(type),
-		shader_id(0)
+Shader::Shader(Stage stage):
+		stage(stage),
+		id(0)
 {
 
 }
 
 Shader::Shader(const Shader& other):
-		type(other.type),
-		shader_id(other.shader_id),
+		stage(other.stage),
+		id(other.id),
 		tag(other.tag),
 		source()
 {
@@ -39,9 +39,9 @@ Shader& Shader::operator =(const Shader& other)
 {
 	if(this != &other)
 	{
-		type = other.type;
-		shader_id = other.shader_id;
-		tag = other.tag;
+		stage  = other.stage;
+		id     = other.id;
+		tag    = other.tag;
 		source = std::string();  // source.clear(); source.shrink_to_fit();
 	}
 	return *this;
@@ -63,45 +63,26 @@ bool Shader::loadFromMemory(const std::string& tag, const std::string& source)
 	this->source = source;
 	return true;
 }
-/*
-bool Shader::compile()
+
+uint32_t Shader::compile(Stage stage, const std::string& source)
 {
-	assert(0 <= type && type < Shader::TYPE_COUNT);
-	shader_id = glCreateShader(map2GL[type].first);
-	const char* src = source.c_str();
-	const int32_t length = source.length();
-
-	glShaderSource(shader_id, 1, &src, &length);
-	glCompileShader(shader_id);
-
-	slog.v(TAG, "create %s, id: %d", map2GL[type].second, shader_id);
-
-	GLint compiled = GL_FALSE;
-	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compiled);
-
-	if(compiled != GL_TRUE)
-	{
-		showCompilerLog();
-		return false;
-	}
-
-	return true;
-}
-*/
-uint32_t Shader::compile(Type type, const char* source, int32_t length)
-{
-	return compile(type, 1, &source, &length);
+	return compile(stage, source.data(), source.length());
 }
 
-uint32_t Shader::compile(Type type, uint32_t count, const char** source, int32_t* length)
+uint32_t Shader::compile(Stage stage, const char* source, int32_t length)
 {
-	assert(0 <= type && type < Shader::TYPE_COUNT);
-	GLenum shaderType = map2GL[type].first;
+	return compile(stage, 1, &source, &length);
+}
+
+uint32_t Shader::compile(Stage stage, uint32_t count, const char** source, int32_t* length)
+{
+	assert(0 <= stage && stage < Stage::COUNT);
+	GLenum shaderType = map2GL[stage].first;
 	uint32_t shader = glCreateShader(shaderType);
 	constexpr uint32_t INVALID_SHADER = 0;
 	if(shader == INVALID_SHADER)
 	{
-		slog.e(TAG, "create shader of type=%s (%d)", map2GL[type].second, shaderType);
+		slog.e(TAG, "create shader of type=%s (%d)", map2GL[stage].second, shaderType);
 		GL::checkError();
 		return INVALID_SHADER;
 	}
@@ -114,7 +95,7 @@ uint32_t Shader::compile(Type type, uint32_t count, const char** source, int32_t
 
 	if(compiled != GL_TRUE)
 	{
-		showCompilerLog(map2GL[type].second, shader);
+		showCompilerLog(map2GL[stage].second, shader);
 		return INVALID_SHADER;
 	}
 #endif
@@ -143,14 +124,3 @@ void Shader::showCompilerLog(const char* tag, uint32_t shader)
 		delete[] info;
 	}
 }
-/*
-void GeometryShader::setProgramParameter(uint32_t program_id)
-{
-	assert(glIsProgram(program_id) == GL_TRUE);
-
-	glProgramParameter(program_id, GL_GEOMETRY_INPUT_TYPE, GL::glCast(input));
-	glProgramParameter(program_id, GL_GEOMETRY_OUTPUT_TYPE, GL::glCast(output));
-	glProgramParameter(program_id, GL_GEOMETRY_VERTICES_OUT, out_vertices_size);
-}
-*/
-

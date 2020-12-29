@@ -66,8 +66,8 @@ Program::Program(ShaderFactory::Index vertexShaderIndex, ShaderFactory::Index fr
 
 Program::Program(const std::string& vertexShaderSource, const std::string& fragmentShaderSource)
 {
-	uint32_t vertexShader = ShaderFactory::loadShader(Shader::VERTEX_SHADER, vertexShaderSource);
-	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::FRAGMENT_SHADER, fragmentShaderSource);
+	uint32_t vertexShader = ShaderFactory::loadShader(Shader::Stage::VERTEX, vertexShaderSource);
+	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::Stage::FRAGMENT, fragmentShaderSource);
 	assert(vertexShader != 0 && fragmentShader != 0);
 	program = Program::createProgram(2, vertexShader, fragmentShader);
 	assert(program != 0);
@@ -92,9 +92,9 @@ Program::Program(ShaderFactory::Index vertexShaderIndex, ShaderFactory::Index ge
 
 Program::Program(const std::string& vertexShaderSource, const std::string& geometryShaderSource, const std::string& fragmentShaderSource)
 {
-	uint32_t vertexShader = ShaderFactory::loadShader(Shader::VERTEX_SHADER, vertexShaderSource);
-	uint32_t geometryShader = ShaderFactory::loadShader(Shader::GEOMETRY_SHADER, geometryShaderSource);
-	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::FRAGMENT_SHADER, fragmentShaderSource);
+	uint32_t vertexShader = ShaderFactory::loadShader(Shader::Stage::VERTEX, vertexShaderSource);
+	uint32_t geometryShader = ShaderFactory::loadShader(Shader::Stage::GEOMETRY, geometryShaderSource);
+	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::Stage::FRAGMENT, fragmentShaderSource);
 	assert(vertexShader != 0 && geometryShader != 0 && fragmentShader != 0);
 	program = Program::createProgram(3, vertexShader, geometryShader, fragmentShader);
 	assert(program != 0);

@@ -269,7 +269,7 @@ void main()
 }
 )"";
 
-	uint32_t vertexShader = ShaderFactory::loadShader(Shader::VERTEX_SHADER, vertexShaderSource);
+	uint32_t vertexShader = ShaderFactory::loadShader(Shader::Stage::VERTEX, vertexShaderSource);
 #else
 	uint32_t vertexShader = ShaderFactory::loadShader(ShaderFactory::VERT_TRANSFORM_TEXTURE);
 #endif

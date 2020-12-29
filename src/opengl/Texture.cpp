@@ -309,6 +309,40 @@ bool Texture::loadCube(const Image* images[6])
 	return true;
 }
 
+void Texture::attachBuffer(pea::Type type, uint32_t buffer)
+{
+	using Type = pea::Type;
+	GLenum format;
+	switch(type)
+	{
+	case Type::UINT8:   format = GL_R8UI;  break;
+	case Type::UINT16:  format = GL_R16UI; break;
+	case Type::UINT32:  format = GL_R32UI; break;
+	
+	case Type::INT8:    format = GL_R8I;  break;
+	case Type::INT16:   format = GL_R16I; break;
+	case Type::INT32:   format = GL_R32I; break;
+	
+	case Type::HALF:    format = GL_R16F; break;
+	case Type::FLOAT:   format = GL_R32F; break;
+	
+	case Type::VEC2I:   format = GL_RG32I;   break;
+	case Type::VEC3I:   format = GL_RGB32I;  break;
+	case Type::VEC4I:   format = GL_RGBA32I; break;
+
+	case Type::VEC2U:   format = GL_RG32UI;   break;
+	case Type::VEC3U:   format = GL_RGB32UI;  break;
+	case Type::VEC4U:   format = GL_RGBA32UI; break;
+	
+	case Type::VEC2F:   format = GL_RG32F;   break;
+	case Type::VEC3F:   format = GL_RGB32F;  break;
+	case Type::VEC4F:   format = GL_RGBA32F; break;
+	default: assert(false); format = 0; break;
+	}
+
+	glTexBuffer(GL_TEXTURE_BUFFER, format, buffer);
+}
+
 static const uint8_t KTX_MAGIC[] =
 {
 	0xAB, 'k', 'T', 'X', ' ', '1', '1', 0xBB, '\r', '\n', 0x1A, '\n'

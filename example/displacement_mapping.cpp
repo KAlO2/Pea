@@ -69,7 +69,7 @@ int main()
 	mesh->upload();
 	mesh->setProgram(program.getName());
 	mesh->setTexture(textureHeight, 0);
-	mesh->setTexture(texture, 0);
+	mesh->setTexture(texture, 1);
 	vec3f scale(10, 10, 3);
 	mesh->setUniform(Shader::UNIFORM_VEC_SCALE, Type::VEC3F, &scale);
 	

@@ -142,14 +142,13 @@ public:
 	
 	static uint32_t loadShader(const std::string& path);
 	static uint32_t loadShader(Index index);
-	static uint32_t loadShader(Index index, std::string macros[][2], uint32_t macroSize);
+	static uint32_t loadShader(Index index, std::string macros[][2], uint32_t macroCount);
 	
-	static uint32_t loadShader(Shader::Type type, const char* source, size_t length);
-	static uint32_t loadShader(Shader::Type type, const std::string& source);
+	static uint32_t loadShader(Shader::Stage stage, const char* source, size_t length);
+	static uint32_t loadShader(Shader::Stage stage, const std::string& source);
 
 	uint32_t at(const std::string& filename);
 };
-
 
 }  // namespace pea
 #endif  // PEA_OPENGL_SHADER_FACTORY_H_

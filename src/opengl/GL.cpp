@@ -333,36 +333,19 @@ const char* GL::glslTypeToString(GLenum type)
 	case GL_DOUBLE_MAT4x2:  return "dmat4x2";
 	case GL_DOUBLE_MAT4x3:  return "dmat4x3";
 	
-	case GL_SAMPLER_1D:  return "sampler1D";
-	case GL_SAMPLER_2D:  return "sampler2D";
+	case GL_SAMPLER_1D:       return "sampler1D";
+	case GL_SAMPLER_2D:       return "sampler2D";
 	case GL_SAMPLER_2D_RECT:  return "sample2DRect";
-	case GL_SAMPLER_3D:  return "sampler3D";
-	case GL_SAMPLER_CUBE:return "samplerCube";
-
+	case GL_SAMPLER_3D:       return "sampler3D";
+	case GL_SAMPLER_CUBE:     return "samplerCube";
+	case GL_SAMPLER_BUFFER:   return "samplerBuffer";
+	case GL_INT_SAMPLER_BUFFER: return "isamplerBuffer";
+	case GL_UNSIGNED_INT_SAMPLER_BUFFER: return "usamplerBuffer";
+	
 	default:             return "???";
 	}
 }
 #if 0
-uint32_t GL::glCast(Buffer::Usage usage)
-{
-/*
-#define GL_STREAM_DRAW                    0x88E0
-#define GL_STREAM_READ                    0x88E1
-#define GL_STREAM_COPY                    0x88E2
-
-#define GL_STATIC_DRAW                    0x88E4
-#define GL_STATIC_READ                    0x88E5
-#define GL_STATIC_COPY                    0x88E6
-
-#define GL_DYNAMIC_DRAW                   0x88E8
-#define GL_DYNAMIC_READ                   0x88E9
-#define GL_DYNAMIC_COPY                   0x88EA
-*/
-	uint32_t offset = static_cast<uint32_t>(usage);
-	assert(offset <= 0xA && offset != 3 && offset != 7);
-	return GL_STREAM_DRAW + offset;
-}
-
 uint32_t GL::glCast(Buffer::Type type)
 {
 	switch(type)

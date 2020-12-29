@@ -9,18 +9,18 @@ class Shader final
 {
 public:
 	// https://www.opengl.org/wiki/Rendering_Pipeline_Overview
-	enum Type
+	enum Stage: int32_t
 	{
-		UNKNOWN_SHADER = -1,
+		UNKNOWN = -1,
 
-		VERTEX_SHADER = 0,
-		TESS_CONTROL_SHADER,
-		TESS_EVALUATION_SHADER,
-		GEOMETRY_SHADER,
-		FRAGMENT_SHADER,
-		COMPUTE_SHADER,  // available only if GL_VERSION >= 4.3
+		VERTEX = 0,
+		TESS_CONTROL,
+		TESS_EVALUATION,
+		GEOMETRY,
+		FRAGMENT,
+		COMPUTE,  // available only if GL_VERSION >= 4.3
 
-		TYPE_COUNT,
+		COUNT,
 	};
 
 	enum Location: int32_t
@@ -76,10 +76,12 @@ public:
 		UNIFORM_VEC_DELTA         = 11,  // vec2 delta
 		UNIFORM_VEC_ATTENNUATION  = 11,
 		UNIFORM_FLT_ALPHA         = 11,
-		UNIFORM_FLT_RATIO         = 11,
+		UNIFORM_FLT_DEPTH         = 11,
 		UNIFORM_FLT_FACTOR        = 11,
 		UNIFORM_FLT_LENGTH        = 11,
 		UNIFORM_FLT_RADIUS        = 11,
+		UNIFORM_FLT_RATIO         = 11,
+		UNIFORM_FLT_ETA           = 11,  // float ior;  // index of reflection
 		UNIFORM_FLT_SCALE         = 11,
 		UNIFORM_FLT_STEP          = 11,
 		UNIFORM_FLT_WEIGHT        = 11,
@@ -102,7 +104,7 @@ public:
 		UNIFORM_TEX_TEXTURE6,
 		UNIFORM_TEX_TEXTURE7,
 
-	/*
+/*
 		
 		UNIFORM_TEX_EMISSIVE,
 		UNIFORM_TEX_DIFFUSE,
@@ -113,18 +115,18 @@ public:
 		UNIFORM_MIX_AMBIENT,
 		UNIFORM_MIX_DIFFUSE,
 		UNIFORM_MIX_SPECULAR,
-	*/
+*/
 	};
 	
 protected:
-	Type type;
-	uint32_t shader_id;  //< 0 if an error occurs creating the shader object
+	Stage stage;
+	uint32_t id;  //< 0 if an error occurs creating the shader object
 
 	std::string tag;  //< filename if loaded from file, else hash(source)
 	std::string source;
 
 protected:
-	Shader(Type type);
+	Shader(Stage stage);
 	
 	static void showCompilerLog(const char* tag, uint32_t shader);
 
@@ -136,29 +138,26 @@ public:
 	bool loadFromFile(const std::string& filename);
 	bool loadFromMemory(const std::string& tag, const std::string& source);
 
+	static uint32_t compile(Stage stage, const std::string& source);
+	
 	/**
 	 * Compile shader source in one file.
 	 */
-	static uint32_t compile(Type type, const char* source, int32_t length);
+	static uint32_t compile(Stage stage, const char* source, int32_t length);
 	
 	/**
 	 * Compile shader source with several segments. You seperate shader source into version, macros,
 	 * variables, common utility functions, main function segments.
 	 */
-	static uint32_t compile(Type type, uint32_t count, const char** source, int32_t* length);
+	static uint32_t compile(Stage stage, uint32_t count, const char** source, int32_t* length);
 	
-//	bool compile(const std::string& source);
-//	bool compile(Type type, const std::string& filename);
+	Stage getStage() const;
 	
-
-	inline Type     getType() const { return type; }
-	inline uint32_t getId() const   { return shader_id;  }
-
-//	GLint getAttribute(const std::string& name) const { return getAttribute(name.c_str()); }
-//	GLint getUniform(const std::string& name) const { return getUniform(name.c_str()); }
-
-
+	uint32_t getId() const;
 };
+
+inline Shader::Stage Shader::getStage() const { return stage; }
+inline uint32_t      Shader::getId()    const { return id;    }
 
 }  // namespace pea
 #endif  // PEA_OPENGL_SHADER_H_

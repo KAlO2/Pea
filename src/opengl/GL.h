@@ -168,7 +168,7 @@ public:
 	/**
 	 * @param[in] width Width of window.
 	 * @param[in] colorFormat Color format.
-	 * @return max alignment for the start of each pixel row in memory, which is used in OpenGL
+	 * @return The max alignment for the start of each pixel row in memory, which is used in OpenGL
 	 *         pixel transfer operations.
 	 */
 	static int32_t align(int32_t width, Color::Format colorFormat);
@@ -177,8 +177,8 @@ public:
 	
 	static const char* glslTypeToString(GLenum type);
 	
+
 /*
-	static uint32_t glCast(Buffer::Usage usage);
 	static uint32_t glCast(Buffer::Type type);
 	static uint32_t glCast(Data::Type type);
 	static uint32_t glCast(Mesh::Primitive primitive);

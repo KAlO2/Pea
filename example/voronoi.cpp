@@ -133,16 +133,7 @@ void main()
 }
 )"";
 	
-	uint32_t vertexShader = ShaderFactory::loadShader(Shader::VERTEX_SHADER, vertexShaderSource);
-	uint32_t fragmentShader = ShaderFactory::loadShader(Shader::FRAGMENT_SHADER, fragmentShaderSource);
-	assert(vertexShader != 0 && fragmentShader != 0);
-	uint32_t program = Program::createProgram(2, vertexShader, fragmentShader);
-	slog.i(TAG, "create program %" PRIu32, program);
-	
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-	
-	return Program(program);
+	return Program(vertexShaderSource, fragmentShaderSource);
 }
 
 int main(int argc, char* argv[])

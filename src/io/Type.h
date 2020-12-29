@@ -5,6 +5,7 @@
 
 namespace pea {
 
+
 enum class Type: unsigned char
 {
 	UNKNOWN = 0,
@@ -28,6 +29,10 @@ enum class Type: unsigned char
 	VEC2I,
 	VEC3I,
 	VEC4I,
+
+	VEC2U,
+	VEC3U,
+	VEC4U,
 	
 	VEC2F,
 	VEC3F,

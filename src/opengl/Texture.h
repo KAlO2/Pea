@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "graphics/Image.h"
+#include "io/Type.h"
 #include "math/vec2.h"
 
 
@@ -20,7 +21,7 @@ namespace pea {
  * @see http://www.opengl.org/registry/specs/NV/bindless_texture.txt
  * @see https://www.khronos.org/opengl/wiki/Common_Mistakes
  */
-class Texture
+class Texture final
 {
 public:
 	static const int32_t MAX_SIZE;
@@ -44,7 +45,20 @@ public:
 		HEIGHT    = 6,
 		NORMAL    = 7,
 		DEPTH     = 8,
-//		UNDIFINED = 255,
+		BUFFER    = 9,  // Texture Buffer Object
+		
+		UNKNOWN = 255,
+	};
+	
+	enum Dimension: uint8_t
+	{
+		_1,  // sampler1D
+		_2,  // sampler2D
+		_3,  // sampler3D
+		CUBE,  // samplerCube
+		_1_ARRAY,    // sampler1DArray
+		_2_ARRAY,    // sampler2DArray
+		CUBE_ARRAY,  // samplerCubeArray
 	};
 
 	enum Mapping: uint32_t
@@ -171,6 +185,14 @@ public:
 	bool loadCube(const std::string& directory, const std::string filenames[6]);
 	bool loadCube(const Image* images[6]);
 
+	/**
+	 * Attach a buffer object's data store to a buffer texture object.
+	 * @param[in] type Specifies the format of the data in the store belonging to buffer.
+	 * @param[in] buffer Texture buffer created by @link Buffer. If buffer is zero, any buffer
+	 *                   object attached to the buffer texture is detached
+	 */
+	void attachBuffer(pea::Type type, uint32_t buffer);
+	
 	/**
 	 * KTX file format https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
 	 */

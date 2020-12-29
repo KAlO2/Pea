@@ -354,11 +354,17 @@ int main(int argc, char* argv[])
 	loadGL();
 	GL::enableDebugMessage();
 	
+	float pointSize = 1.0f;
+//	glPointSize(pointSize);  // setPointSize()
+	float sizes[2], step;  // Store supported point size range and increment.
+	glGetFloatv(GL_POINT_SIZE_RANGE, sizes);
+	glGetFloatv(GL_POINT_SIZE_GRANULARITY, &step);
+	glGetFloatv(GL_POINT_SIZE, &pointSize);  // getPointSize()
+	slog.d(TAG, "pointSize=%f, start=%f, stop=%f, step=%f", pointSize, sizes[0], sizes[1], step);
+
 	// global OpenGL state
 	glEnable(GL_DEPTH_TEST);
-	glPointSize(1.0);
-	
-	
+
 	std::vector<vec3f> points(quantity);
 	std::pair<std::vector<vec3f>, std::vector<IndexType>> lines;
 
