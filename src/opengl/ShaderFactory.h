@@ -23,6 +23,7 @@ public:
 	{
 		VERTEX_SHADER_START = 0,
 		VERT_POSITION = 0,             // position
+		VERT_M,                        // position, model
 		VERT_MVP,                      // position, modelViewProjection
 		VERT_M_VP,                     // position, model, viewProjection
 		VERT_M_VP2,                    // position, model, viewProjection => vec3 texcoord
@@ -77,6 +78,7 @@ public:
 		FRAG_UNIFORM_INDEX,  // int
 		FRAG_LAMBERT,        // vec3 ambientColor, lightPosition, lightColor, attenuation
 		FRAG_LAMBERT_FLAT,  // ditto, with flat shadding
+		FRAG_PBR,  // USE_MULTIPLE_LIGHTS
 //		FRAG_PHONG,
 		FRAG_TEXTURE_LUMINANCE,
 //		FRAG_TEXTURE_LUMINANCE_ALPHA,

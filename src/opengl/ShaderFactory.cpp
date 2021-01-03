@@ -29,6 +29,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	map[ShaderFactory::VERT_POSITION] =
 #include "./shader/position.vert"
 	;
+	map[ShaderFactory::VERT_M] =
+#include "./shader/model.vert"
+	;
 	map[ShaderFactory::VERT_MVP] =
 #include "./shader/modelViewProjection.vert"
 	;
@@ -203,6 +206,9 @@ static std::unordered_map<ShaderFactory::Index, const char*> createIndexNameMap(
 	;
 	map[ShaderFactory::FRAG_LAMBERT_FLAT] =
 #include "./shader/lambert.flat.frag"
+	;
+	map[ShaderFactory::FRAG_PBR] =
+#include "./shader/pbr.frag"
 	;
 	map[ShaderFactory::FRAG_ENVIRONMENT_REFLECT] =
 #include "./shader/environment_reflect.frag"
