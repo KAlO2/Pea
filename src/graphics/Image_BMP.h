@@ -103,7 +103,7 @@ private:
 public:
 	Image_BMP();
 	Image_BMP(uint32_t width, uint32_t height, Color::Format format);
-	Image_BMP(uint32_t width, uint32_t height, Color::Format format, uint8_t* data);
+	Image_BMP(uint32_t width, uint32_t height, Color::Format format, uint8_t* data, bool move);
 	virtual ~Image_BMP();
 	
 	Format getImageFormat() const override { return Format::BMP; }

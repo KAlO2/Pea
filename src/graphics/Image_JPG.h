@@ -14,7 +14,7 @@ private:
 
 public:
 	Image_JPG();
-	Image_JPG(int32_t width, int32_t height, uint8_t* data);
+	Image_JPG(int32_t width, int32_t height, uint8_t* data, bool move);
 	virtual ~Image_JPG();
 
 	Format getImageFormat() const override { return Format::JPG; }

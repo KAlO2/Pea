@@ -340,21 +340,19 @@ bool Image_DXT::save(const std::string& path) const
 	uint32_t channel = Color::sizeofChannel(colorFormat);
 	/*	error check	*/
 	if((path.empty()) ||
-		(width < 1) || (height < 1) ||
-		(channel < 1U) || (channel > 4U) ||
-		(data == nullptr))
-	{
+			(width < 1) || (height < 1) ||
+			(channel < 1U) || (channel > 4U) ||
+			(data == nullptr))
 		return false;
-	}
 
 	/*	Convert the image	*/
 	uint8_t *DDS_data;
 	int DDS_size;
 	const bool hasAlpha = (channel & 1U) != 1U;
 	if(hasAlpha)  // has alpha, so use DXT5
-		DDS_data = convertImageToDXT5(data, width, height, channel, &DDS_size);
+		DDS_data = convertImageToDXT5(getData(), width, height, channel, &DDS_size);
 	else  // no alpha, just use DXT1
-		DDS_data = convertImageToDXT1(data, width, height, channel, &DDS_size);
+		DDS_data = convertImageToDXT1(getData(), width, height, channel, &DDS_size);
 
 	/*	save it	*/
 	DDS_header header;

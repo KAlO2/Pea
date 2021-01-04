@@ -1,10 +1,10 @@
 #ifndef PEA_IO_IMAGE_H_
 #define PEA_IO_IMAGE_H_
 
+#include <string>
+
 #include "graphics/Color.h"
 //#include "graphics/Rect.h"
-
-#include <string>
 
 namespace pea {
 
@@ -53,7 +53,7 @@ protected:
 	uint32_t  height;
 	Color::Format colorFormat;
 	uint8_t* data;
-
+	bool move;
 public:
 	static void convert_RGBX5551_to_RGB888(const uint8_t* src, uint8_t* dst, size_t count);
 	static void convert_RGB565_to_RGB888(const uint8_t* src, uint8_t* dst, size_t count);
@@ -76,7 +76,7 @@ public:
 	 * @param[in] format Image color format
 	 * @param[in] data   it serves as unique_ptr, namely transfer ownership to this image.
 	 */
-	Image(uint32_t width, uint32_t height, Color::Format format, uint8_t* data);
+	Image(uint32_t width, uint32_t height, Color::Format format, uint8_t* data, bool move = true);
 	
 	virtual ~Image();
 

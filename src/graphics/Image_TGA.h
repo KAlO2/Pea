@@ -107,7 +107,7 @@ private:
 
 public:
 	Image_TGA();
-	Image_TGA(uint32_t width, uint32_t height, Color::Format format, uint8_t* data);
+	Image_TGA(uint32_t width, uint32_t height, Color::Format format, uint8_t* data, bool move);
 	
 	virtual ~Image_TGA();
 	

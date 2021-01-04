@@ -15,7 +15,7 @@ private:
 public:
 	Image_PNG();
 	Image_PNG(uint32_t width, uint32_t height, Color::Format format);
-	Image_PNG(uint32_t width, uint32_t height, Color::Format format, uint8_t* data);
+	Image_PNG(uint32_t width, uint32_t height, Color::Format format, uint8_t*& data, bool move);
 	virtual ~Image_PNG();
 	
 	Format getImageFormat() const override { return Format::PNG; }

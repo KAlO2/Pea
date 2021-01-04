@@ -70,6 +70,18 @@ T Rect<T>::getHeight() const
 }
 
 template <typename T>
+T Rect<T>::horizontalSum() const
+{
+	return right + left;
+}
+
+template <typename T>
+T Rect<T>::verticalSum() const
+{
+	return bottom + top;
+}
+
+template <typename T>
 bool Rect<T>::contains(T x, T y) const
 {
 	if(isEmpty())  // check for empty first

@@ -33,8 +33,8 @@ Image_BMP::Image_BMP(uint32_t width, uint32_t height, Color::Format format):
 {
 }
 
-Image_BMP::Image_BMP(uint32_t width, uint32_t height, Color::Format format, uint8_t* data):
-		Image(width, height, format, data),
+Image_BMP::Image_BMP(uint32_t width, uint32_t height, Color::Format format, uint8_t* data, bool move):
+		Image(width, height, format, data, move),
 		table(nullptr)
 {
 }
@@ -122,7 +122,7 @@ std::shared_ptr<Image_BMP> Image_BMP::decodeByteArray(const uint8_t* data, size_
 	
 	// TODO:
 bail:
-	return std::make_shared<Image_BMP>(width, height, colorFormat, imageData);
+	return std::make_shared<Image_BMP>(width, height, colorFormat, imageData, true);
 }
 
 std::shared_ptr<Image_BMP> Image_BMP::decodeFile(const std::string& path)
@@ -373,7 +373,7 @@ std::shared_ptr<Image_BMP> Image_BMP::decodeFile(const std::string& path)
 //	free(line);
 bail:
 	file.close();
-	return std::make_shared<Image_BMP>(width, height, colorFormat, data);
+	return std::make_shared<Image_BMP>(width, height, colorFormat, data, true);
 }
 /*
 bool Image_BMP::load(const void* data, DataType type, long width, long height)
@@ -436,7 +436,7 @@ bool Image_BMP::save(const std::string& path) const
 	// write 32 bit RGBA color mode, no palette
 	file.write(reinterpret_cast<char*>(&fileHeader), sizeof(fileHeader));
 	file.write(reinterpret_cast<char*>(&infoHeader), sizeof(infoHeader));
-	file.write(reinterpret_cast<char*>(this->data), dataSize);
+	file.write(reinterpret_cast<const char*>(getData()), dataSize);
 	file.close();
 
 	return true;

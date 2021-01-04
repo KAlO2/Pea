@@ -39,14 +39,13 @@ Image_PNG::Image_PNG(uint32_t width, uint32_t height, Color::Format format):
 {
 }
 
-Image_PNG::Image_PNG(uint32_t width, uint32_t height, Color::Format format, uint8_t* data):
-		Image(width, height, format, data)
+Image_PNG::Image_PNG(uint32_t width, uint32_t height, Color::Format format, uint8_t*& data, bool move):
+		Image(width, height, format, data, move)
 {
 }
 
 Image_PNG::~Image_PNG()
 {
-	// TODO: Auto-generated destructor stub
 }
 
 bool Image_PNG::probe(const uint8_t* data, size_t length)
@@ -177,7 +176,7 @@ std::shared_ptr<Image_PNG> Image_PNG::decodeByteArray(const uint8_t* data, size_
 		delete[] row_pointers;
 	} while(false);
 
-	return std::make_shared<Image_PNG>(width, height, colorFormat, imageData);
+	return std::make_shared<Image_PNG>(width, height, colorFormat, imageData, true);
 }
 
 std::shared_ptr<Image_PNG> Image_PNG::decodeFile(const std::string& path)
@@ -237,7 +236,7 @@ std::shared_ptr<Image_PNG> Image_PNG::decodeFile(const std::string& path)
 	FILE *file = fopen(path.c_str(), "rb");
 	if(!file)
 	{
-		slog.w(TAG, "can't open file %s for writing", path.c_str());
+		slog.w(TAG, "can't open file %s for reading", path.c_str());
 		return std::make_shared<Image_PNG>();
 	}
 
@@ -329,7 +328,7 @@ std::shared_ptr<Image_PNG> Image_PNG::decodeFile(const std::string& path)
 
 bail:
 	fclose(file);
-	return std::make_shared<Image_PNG>(width, height, colorFormat, data);
+	return std::make_shared<Image_PNG>(width, height, colorFormat, data, true);
 }
 
 bool Image_PNG::save(const std::string& path) const
@@ -444,11 +443,11 @@ bool Image_PNG::save(const std::string& path) const
 		
 		std::vector<png_byte*> row_pointers(height);
 		uint32_t row_stride = width * Color::size(colorFormat);
-		uint8_t* row_pointer = this->data;
+		const uint8_t* row_pointer = this->getData();
 //		slog.i(TAG, "width=%d, height=%d, row_stride=%d", width, height, row_stride);
 		for(uint32_t k = 0; k < height; ++k)
 		{
-			row_pointers[k] = row_pointer;
+			row_pointers[k] = const_cast<png_byte*>(row_pointer);
 			row_pointer += row_stride;
 		}
 		

@@ -18,12 +18,12 @@ static const uint8_t MAGIC[18] = "TRUEVISION-XFILE.";
 
 
 Image_TGA::Image_TGA():
-		Image_TGA(0, 0, Color::Format::C4_U8, nullptr)
+		Image_TGA(0, 0, Color::Format::C4_U8, nullptr, true)
 {
 }
 
-Image_TGA::Image_TGA(uint32_t width, uint32_t height, Color::Format format, uint8_t* data):
-		Image(width, height, format, data),
+Image_TGA::Image_TGA(uint32_t width, uint32_t height, Color::Format format, uint8_t* data, bool move):
+		Image(width, height, format, data, move),
 		xOrigin(0),
 		yOrigin(0),
 		descriptor(static_cast<Descriptor>(0))
@@ -90,7 +90,7 @@ std::shared_ptr<Image_TGA> Image_TGA::decodeByteArray(const uint8_t* data, size_
 
 	// TODO big endian with BYTE2SWAP
 	assert(false);
-	std::shared_ptr<Image_TGA> image = std::make_shared<Image_TGA>(width, height, colorFormat, imageData);
+	std::shared_ptr<Image_TGA> image = std::make_shared<Image_TGA>(width, height, colorFormat, imageData, true);
 	image->setOrigin(header->xOrigin, header->yOrigin);
 	return image;
 }
@@ -270,7 +270,7 @@ std::shared_ptr<Image_TGA> Image_TGA::decodeFile(const std::string& path)
 bail:
 	fclose(file);
 	
-	std::shared_ptr<Image_TGA> image = std::make_shared<Image_TGA>(width, height, colorFormat, data);
+	std::shared_ptr<Image_TGA> image = std::make_shared<Image_TGA>(width, height, colorFormat, data, true);
 //	slog.d(TAG, "width=%u, height=%u, format=%d, data=%p", width, height, colorFormat, data);
 	image->setOrigin(xOrigin, yOrigin);
 	image->descriptor = descriptor;
@@ -391,8 +391,9 @@ bool Image_TGA::save(const std::string& path) const
 
 	// write 32 bit RGBA color mode, no palette
 	// 1. TGA File Header; 2. Image/ColorMap Data; 3. Developer Area; 4. Extension Area; 5. TGA File Footer.
+	const size_t length = header.width * header.height * (header.depth / 8);
 	file.write(reinterpret_cast<char*>(&header), sizeof(header));
-	file.write(reinterpret_cast<char*>(data), header.width * header.height * (header.depth/8));
+	file.write(reinterpret_cast<const char*>(getData()), length);
 //	file.write(reinterpret_cast<char*>(&developer), sizeof(developer));  // omit this part
 	file.write(reinterpret_cast<char*>(&extension), sizeof(extension));
 	file.write(reinterpret_cast<char*>(&footer), sizeof(footer));

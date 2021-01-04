@@ -12,7 +12,6 @@
 #include "graphics/Image_JPG.h"
 #include "graphics/Image_PNG.h"
 #include "util/Log.h"
-#include "util/utility.h"
 
 
 static const char* TAG = "Image";
@@ -97,7 +96,8 @@ Image::Image():
 		width(0),
 		height(0),
 		colorFormat(Color::C4_U8),
-		data(nullptr)
+		data(nullptr),
+		move(false)
 {
 }
 
@@ -105,24 +105,26 @@ Image::Image(uint32_t width, uint32_t height, Color::Format format) noexcept(fal
 		width(width),
 		height(height),
 		colorFormat(format),
-		data(new uint8_t[width * height * Color::size(format)])
+		data(new uint8_t[width * height * Color::size(format)]),
+		move(true)
 {
 	if(data == nullptr)  // std::bad_alloc
 		width = height = 0;
 }
 
-Image::Image(uint32_t width, uint32_t height, Color::Format format, uint8_t* data):
+Image::Image(uint32_t width, uint32_t height, Color::Format format, uint8_t* data, bool move/*= true*/):
 		width(width),
 		height(height),
 		colorFormat(format),
-		data(data)
+		data(data),
+		move(move)
 {
-	
 }
 
 Image::~Image()
 {
-	SAFE_DELETE_ARRAY(data);
+	if(move)
+		delete[] data;
 }
 
 bool Image::isValid() const
@@ -136,7 +138,7 @@ void Image::setPixel(uint32_t x, uint32_t y, uint32_t color)
 	assert(data != nullptr);
 
 	int32_t offset = (y * width + x) * Color::size(colorFormat);
-	uint8_t* p = data + offset;
+	uint8_t* p = getData() + offset;
 
 	switch(colorFormat)
 	{
@@ -189,7 +191,7 @@ uint32_t Image::getPixel(uint32_t x, uint32_t y) const
 //	}
 
 	int32_t offset = (y * width + x) * Color::size(colorFormat);
-	const uint8_t* p = data + offset;
+	const uint8_t* p = getData() + offset;
 
 	switch(colorFormat)
 	{
@@ -294,8 +296,8 @@ void Image::flipVertical()
 	size_t rowStride = width * Color::size(colorFormat);
 	std::vector<uint8_t> line(rowStride);
 	
-	uint8_t* src = data;
-	uint8_t* dst = data + (height - 1) * rowStride;
+	uint8_t* src = getData();
+	uint8_t* dst = getData() + (height - 1) * rowStride;
 	uint8_t* tmp = line.data();
 	for(uint32_t i = 0; i < height / 2; ++i)
 	{

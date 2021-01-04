@@ -8,6 +8,9 @@ namespace pea {
 
 uint32_t color_cast(const vec4f& color)
 {
+	for(uint8_t c = 0; c < 4; ++c)
+		assert(0.0F <= color[c] && color[c] <= 1.0F);
+	
 	constexpr float s = 255.999;
 	uint8_t r = static_cast<uint8_t>(color.r * s);
 	uint8_t g = static_cast<uint8_t>(color.g * s);

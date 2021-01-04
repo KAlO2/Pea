@@ -12,13 +12,13 @@ using namespace pea;
 static const uint8_t MAGIC[2] = {0xFF, 0xD8};
 
 Image_JPG::Image_JPG():
-		Image_JPG(0, 0, nullptr)
+		Image_JPG(0, 0, nullptr, true)
 {
 	
 }
 
-Image_JPG::Image_JPG(int32_t width, int32_t height, uint8_t* data):
-		Image(width, height, Color::C3_U8, data),
+Image_JPG::Image_JPG(int32_t width, int32_t height, uint8_t* data, bool move):
+		Image(width, height, Color::C3_U8, data, move),
 		quality(92)
 {
 	// JPEG only support RGB
@@ -121,7 +121,7 @@ std::shared_ptr<Image_JPG> Image_JPG::decodeFile(const std::string& path)
 		goto bail;
 	}
 
-	image = std::make_shared<Image_JPG>(cinfo.output_width, cinfo.output_height, data);
+	image = std::make_shared<Image_JPG>(cinfo.output_width, cinfo.output_height, data, true);
 	
 	while(cinfo.output_scanline < cinfo.output_height)
 	{
@@ -170,10 +170,12 @@ bool Image_JPG::save(const std::string& filename) const
 
 	// while (scan lines remain to be written)
 	const int row_stride = this->width * 3;  // JSAMPLEs per row width in image buffer
-	JSAMPROW row_pointer[1];  // pointer to a single row
+	const uint8_t* data = getData();
+	JSAMPROW row_pointer[1];
 	while(cinfo.next_scanline < this->height)
 	{
-		row_pointer[0] = &data[cinfo.next_scanline * row_stride];
+		// pointer to a single row
+		row_pointer[0] = const_cast<JSAMPROW>(data) + cinfo.next_scanline * row_stride;
 		(void)jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}
 

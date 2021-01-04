@@ -41,7 +41,7 @@ public:
 	
 	Rect(const Rect& other) = default;
 	
-	Rect& operator = (const Rect& other);
+	Rect& operator =(const Rect& other);
 	
 	/**
 	 * Returns true if the rectangle is empty (left >= right or top >= bottom)
@@ -73,6 +73,10 @@ public:
 	 * (i.e. top <= bottom) so the result may be negative.
 	 */
 	T getHeight() const;
+	
+	T horizontalSum() const;
+	
+	T verticalSum() const;
 	
 	/**
 	 * Returns true if (x,y) is inside the rectangle. The left and top are
