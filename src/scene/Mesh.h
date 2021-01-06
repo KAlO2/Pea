@@ -168,7 +168,7 @@ public:
 	 * Allocate VAO, VBO and specify the primitive to draw.
 	 * @param[in] primitive Draw call primitive.
 	 */
-	virtual void prepare(Primitive primitive = Primitive::TRIANGLES);
+	virtual void prepare(Primitive primitive);
 	
 	/**
 	 * must call after preprare(), or you will get zero.

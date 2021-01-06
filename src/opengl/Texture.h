@@ -47,6 +47,12 @@ public:
 		DEPTH     = 8,
 		BUFFER    = 9,  // Texture Buffer Object
 		
+		// PBR (Physically Based Rendering)
+		ALBEDO    = 10,
+		AO        = 11,  // ambient occlusion
+		METALLIC  = 12,
+		ROUGHNESS = 13,
+		
 		UNKNOWN = 255,
 	};
 	

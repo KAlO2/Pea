@@ -280,7 +280,7 @@ bool Mesh::verifyBone() const
 	return valid;
 }
 
-void Mesh::prepare(Primitive primitive/* = Primitive::TRIANGLES*/)
+void Mesh::prepare(Primitive primitive)
 {
 	slog.v(TAG, "primitive=%d, vertices.size=%zu", primitive, getVertexSize());
 	this->primitive = primitive;
@@ -452,6 +452,46 @@ static bool startWith(const char* &start, const char* prefix, size_t prefixLengt
 	return false;
 }
 
+// convention, texture variable name must begin with "texture".
+static Texture::Type getType(const std::string& name)
+{
+	const size_t length = 7;  // std::strlen(TEXTURE_PREFIX)
+	const char* str = name.c_str();
+	assert(std::strncmp(str, TEXTURE_PREFIX, length) == 0);
+	size_t end = name.size();
+	while(std::isdigit(name[end - 1]))
+		--end;
+	
+	using Type = Texture::Type;
+	Type type;
+	const char* start = str + length;
+	if(length == end)
+		type = Type::NONE;
+	else if(startWith(start, "Diffuse", 7))
+		type = Type::DIFFUSE;
+	else if(startWith(start, "Specular", 8))
+		type = Type::SPECULAR;
+	else if(startWith(start, "Shininess", 9))
+		type = Type::SHININESS;
+	else if(startWith(start, "Normal", 6))
+		type = Type::NORMAL;
+	else if(startWith(start, "Height", 6))
+		type = Type::HEIGHT;
+	else if(startWith(start, "Depth", 5))
+		type = Type::DEPTH;
+	else if(startWith(start, "Albedo", 6))
+		type = Type::ALBEDO;
+	else if(startWith(start, "Ao", 2))
+		type = Type::AO;
+	else if(startWith(start, "Metallic", 8))
+		type = Type::METALLIC;
+	else if(startWith(start, "Roughness", 9))
+		type = Type::ROUGHNESS;
+	else
+		type = Type::UNKNOWN;
+	return type;
+}
+
 void Mesh::setProgram(uint32_t program)
 {
 	uint32_t oldProgram = getProgram();
@@ -483,7 +523,7 @@ void Mesh::setProgram(uint32_t program)
 	assert(viewProjectionLocation == Shader::UNIFORM_MAT_VIEW_PROJECTION ||
 			viewProjectionLocation != Shader::INVALID_LOCATION);
 	
-	if(oldProgram != 0)
+	if(oldProgram != Program::NULL_PROGRAM)
 	{
 		textureMap.clear();
 		textures.clear();
@@ -491,51 +531,31 @@ void Mesh::setProgram(uint32_t program)
 
 	std::vector<Program::Variable> variables = Program::getActiveVariables(program, GL_ACTIVE_UNIFORMS);
 	int32_t textureUnit = 0;
-	
 	Program::use(program);
+	uint32_t indices[256] = {0};
+	static_assert(std::is_same_v<std::underlying_type<Texture::Type>::type, std::uint8_t>, "");
 	for(const Program::Variable& variable: variables)
 	{
 		// type+index -> location
-		if(variable.type < GL_SAMPLER_1D || variable.type > GL_SAMPLER_CUBE)
-			continue;
-		
-		// convention, texture variable name must begin with "texture".
-		const size_t length = 7;  // std::strlen(TEXTURE_PREFIX)
-		const char* str = variable.name.c_str();
-		assert(std::strncmp(str, TEXTURE_PREFIX, length) == 0);
-		size_t end = variable.name.size();
-		while(std::isdigit(variable.name[end - 1]))
-			--end;
-		
 		Texture::Type type;
-		const char* start = str + length;
-		if(length == end)
-			type = Texture::Type::NONE;
-		else if(startWith(start, "Diffuse", 7))
-			type = Texture::Type::DIFFUSE;
-		else if(startWith(start, "Specular", 8))
-			type = Texture::Type::SPECULAR;
-		else if(startWith(start, "Shininess", 9))
-			type = Texture::Type::SHININESS;
-		else if(startWith(start, "Normal", 6))
-			type = Texture::Type::NORMAL;
-		else if(startWith(start, "Height", 6))
-			type = Texture::Type::HEIGHT;
-		else if(startWith(start, "Depth", 5))
-			type = Texture::Type::DEPTH;
-		else
+		const char* str = variable.name.c_str();
+		if(GL_SAMPLER_1D <= variable.type && variable.type <= GL_SAMPLER_CUBE)
 		{
-			slog.w(TAG, "name=%s, texture type %s is not defined.", str, start);
-			continue;
+			type = getType(variable.name);
+			if(type == Texture::Type::UNKNOWN)
+			{
+				slog.w(TAG, "name %s has unknown texture type", str);
+				continue;
+			}
 		}
-
-		uint32_t index;
-		if(length < end)
-			index = static_cast<uint32_t>(std::atoi(start));
-		else  // no trailing digits
-			index = 0U;
+		else if(variable.type == GL_SAMPLER_BUFFER)
+			type = Texture::Type::BUFFER;
+		else
+			continue;
 		
+		uint32_t& index = indices[type];
 		uint32_t key = Texture::getKey(type, index);
+		++index;
 		Program::setUniform(variable.location, textureUnit);
 		textureMap[key] = textureUnit;
 //		slog.d(TAG, "%s key=0x%08X, occupies texture unit #%d", str, key, textureUnit);
@@ -568,6 +588,7 @@ void Mesh::setTexture(const Texture& texture, uint32_t index)
 	uint32_t location = glGetUniformLocation(program, textureName.c_str());
 */
 	uint32_t key = texture.getKey(index);
+	// assertion may fail for not (correctly) setting texture type.
 	assert(textureMap.find(key) != textureMap.end());
 	uint32_t textureUnit = textureMap.at(key);
 	textures[textureUnit] = &texture;  // or textures.insert_or_assign(textureUnit, &texture); C++17
@@ -580,16 +601,20 @@ void Mesh::removeTextures()
 
 bool Mesh::hasUniform(int32_t location) const
 {
+	assert(location >= 0);
 	return uniformBlock.hasUniform(location);
 }
 
 void Mesh::setUniform(int32_t location, Type type, const void* data)
 {
+	assert(location >= 0);
 	const std::lock_guard<std::mutex> lock(uniformMutex);
 	
 	Uniform* uniform;
 	if(uniformBlock.hasUniform(location, uniform)) [[likely]]
 	{
+		if(uniform->type != type)
+			slog.e(TAG, "location=%" PRId32 ", type=%" PRId32 ", set with type=%" PRId32, location, static_cast<int32_t>(uniform->type), type);
 		assert(uniform->type == type);
 		uniformBlock.updateUniform(*uniform, data);
 	}
@@ -599,6 +624,7 @@ void Mesh::setUniform(int32_t location, Type type, const void* data)
 
 void Mesh::removeUniform(int32_t location)
 {
+	assert(location >= 0);
 	const std::lock_guard<std::mutex> lock(uniformMutex);
 	uniformBlock.removeUniform(location);
 }

@@ -294,7 +294,7 @@ uint32_t ShaderFactory::loadShader(Index index)
 	return loadShader(index, nullptr, 0U);
 }
 
-uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_t macroCount)
+uint32_t ShaderFactory::loadShader(Index index, const std::string* macros, size_t macroCount)
 {
 	auto it = builtinShaderMap.find(index);
 	if(it == builtinShaderMap.end())
@@ -320,25 +320,24 @@ uint32_t ShaderFactory::loadShader(Index index, std::string macros[][2], uint32_
 
 	const char* content = it->second;
 	
-	const bool hasMacro = macros != nullptr && macroCount > 0;
 	size_t length = VERSION.length() + std::strlen(content);
-	if(hasMacro)
+	// "#define" ' ' key ' ' value '\n'
+	for(size_t i = 0; i < macroCount; ++i)
 	{
-		// "#define" ' ' key ' ' value '\n'
-		for(uint32_t i = 0; i < macroCount; ++i)
-			length += 10 + macros[i][0].length() + macros[i][1].length();
+		size_t keyLength = macros[i << 1U].length();
+		size_t valueLength = macros[(i << 1U) + 1U].length();
+		assert(keyLength > 0 && valueLength > 0);
+		length += 10 + keyLength + valueLength;
 	}
 	
 	std::string source;
 	source.reserve(length);
 	source.append(VERSION);
-	if(hasMacro)
-	{
-		for(uint32_t i = 0; i < macroCount; ++i)
-			source.append("#define").append(1, ' ')
-					.append(macros[i][0]).append(1, ' ')
-					.append(macros[i][1]).append(1, '\n');
-	}
+	
+	for(size_t i = 0; i < macroCount; ++i)
+		source.append("#define").append(1, ' ')
+				.append(macros[i << 1U]).append(1, ' ')
+				.append(macros[(i << 1U) + 1U]).append(1, '\n');
 	
 	source.append(content);
 	assert(source.length() == length);

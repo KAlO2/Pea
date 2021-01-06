@@ -79,7 +79,7 @@ uint32_t Texture::getKey(Texture::Type type, uint32_t index)
 	constexpr uint32_t MASK = 0x00FFFFFF;
 	assert((index & ~MASK) == 0);  // key is made of type (1 byte) and index(3 bytes).
 	if((index & ~MASK) != 0)
-		slog.w(TAG, "index %" PRIu32 "is out of range [0, 2^24), wrap around", index);
+		slog.w(TAG, "index %" PRIu32 " is out of range [0, 2^24), wrap around", index);
 	
 	uint32_t key = underlying_cast<Texture::Type>(type) << 24 | (index & MASK);
 	return key;

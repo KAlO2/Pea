@@ -144,7 +144,14 @@ public:
 	
 	static uint32_t loadShader(const std::string& path);
 	static uint32_t loadShader(Index index);
-	static uint32_t loadShader(Index index, std::string macros[][2], uint32_t macroCount);
+	
+	/**
+	 * Load builtin shader with some macros defined.
+	 * @param[in] index  Builtin shader index
+	 * @param[in] macros Data is organized in format {key1, value1, key2, value2, ...}
+	 * @param[in] macroCount Number of macros.
+	 */
+	static uint32_t loadShader(Index index, const std::string* macros, size_t macroCount);
 	
 	static uint32_t loadShader(Shader::Stage stage, const char* source, size_t length);
 	static uint32_t loadShader(Shader::Stage stage, const std::string& source);
