@@ -240,7 +240,7 @@ public:
 		a[3] = a[2] = a[1] = a[0] = value;
 	}
 	
-	void identity()
+	void setIdentity()
 	{
 		a[3] = a[0] = 1; a[2] = a[1] = 0;
 	}

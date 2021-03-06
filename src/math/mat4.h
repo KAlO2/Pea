@@ -293,7 +293,7 @@ public:
 			a[i] = value;
 	}
 
-	void identity()
+	void setIdentity()
 	{
 		for(int8_t i = 1; i < 14; ++i)
 			a[i] = static_cast<T>(0);

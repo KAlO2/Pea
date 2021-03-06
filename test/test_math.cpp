@@ -181,7 +181,7 @@ TEST_CASE("mat3", tag)
 	mat3r m = m1 * m2;
 	REQUIRE(m.determinant() == m1.determinant() * m2.determinant());
 
-	m.identity();
+	m.setIdentity();
 	REQUIRE(static_cast<mat3r::value_type>(1) == m.determinant());
 
 	m2 = m1;

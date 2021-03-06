@@ -139,7 +139,7 @@ public:
 
 	void setIdentity()
 	{
-		basis.identity();
+		basis.setIdentity();
 		origin = vec3<T>(T(0));
 	}
 

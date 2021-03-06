@@ -266,20 +266,23 @@ public:
 			a[i] = value;
 	}
 
-	void identity()
+	void setIdentity()
 	{
 		for(int8_t i = 1; i < 8; ++i)
 			a[i] = static_cast<T>(0);
 		a[8] = a[4] = a[0] = static_cast<T>(1);
 	}
 
-	void transpose()
+	mat3<T>& transpose()
 	{
 		std::swap(a[1], a[3]); // m[0][1] <--> m[1][0]
 		std::swap(a[2], a[6]); // m[0][2] <--> m[2][0]
 		std::swap(a[5], a[7]); // m[1][2] <--> m[2][1]
+		return *this;
 	}
 
+	friend mat3<T> transpose(const mat3<T>& m) { return mat3<T>(m).transpose(); }
+	
 	bool isDiagonal() const
 	{
 		return

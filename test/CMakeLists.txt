@@ -18,6 +18,7 @@ set(PEA_TEST_SOURCE
 	test_image.cpp
 	test_intersection.cpp
 	test_math.cpp
+	test_opengl.cpp
 	test_Rational.cpp
 	test_Transform.cpp
 	test_utility.cpp

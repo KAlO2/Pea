@@ -2,7 +2,7 @@
 #define PEA_GEOMETRY_TEAPOT_H_
 
 #include "geometry/BezierPatch.h"
-#include "geometry/Primitive.h"
+#include "opengl/Primitive.h"
 
 namespace pea {
 

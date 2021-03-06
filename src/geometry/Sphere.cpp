@@ -1,6 +1,7 @@
 #include "geometry/Sphere.h"
 
 #include "math/function.h"
+#include "geometry/Primitive.h"
 
 using namespace pea;
 

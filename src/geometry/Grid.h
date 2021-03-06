@@ -5,7 +5,7 @@
 
 #include "math/vec2.h"
 #include "math/vec3.h"
-#include "geometry/Primitive.h"
+#include "opengl/Primitive.h"
 
 
 namespace pea {

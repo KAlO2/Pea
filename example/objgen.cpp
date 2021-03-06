@@ -1,6 +1,7 @@
 #include <cstring>
 
 #include "geometry/Cube.h"
+#include "geometry/Primitive.h"
 #include "geometry/Sphere.h"
 #include "geometry/Tetrahedron.h"
 #include "io/Group.h"

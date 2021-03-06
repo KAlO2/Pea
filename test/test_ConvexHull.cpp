@@ -3,7 +3,7 @@
 #include <random>
 
 #include "geometry/algorithm.h"
-#include "util/unit_test.h"
+#include "util/test.h"
 
 #include <GL/glut.h>
 // use fixed function pipeline for drawing.

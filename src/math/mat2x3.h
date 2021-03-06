@@ -133,9 +133,9 @@ public:
 
 	friend bool fuzzyEqual(const mat2x3<T>& lhs, const mat2x3<T>& rhs) { return lhs == rhs; }
 
-	void loadIdentity()
+	void setIdentity()
 	{
-		basis.identity();
+		basis.setIdentity();
 		origin = vec2<T>(T(0));
 	}
 

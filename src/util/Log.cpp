@@ -170,4 +170,4 @@ void Log::f(const char* tag, const char* format, ...)
 
 }
 
-} /* namespace pea */
+}  // namespace pea

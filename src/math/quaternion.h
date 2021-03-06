@@ -22,7 +22,7 @@ namespace pea {
 template<typename T>
 class quaternion
 {
-private:
+public:
 	// Using WXYZ or XYZW layout doesn't matter, some prefer one than another.
 	// q = scalar + vector = w + x*i + y*j + z*k
 	T x, y, z, w;
@@ -228,7 +228,10 @@ public:
 				fuzzyEqual(q1.x, q2.x) && fuzzyEqual(q1.y, q2.y) && fuzzyEqual(q1.z, q2.z);
 	}
 	
-	bool constexpr operator !=(const vec3<T>& rhs) const { return !(*this == rhs); }
+	friend constexpr bool operator !=(const quaternion<T>& q1, const quaternion<T>& q2)
+	{
+		return !(q1 == q2);
+	}
 	
 	/**
 	 * cast a quaternion to 3x3 matrix, note that rotation matrices here apply to column vectors.

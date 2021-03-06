@@ -3,9 +3,9 @@
 
 #include <vector>
 
-#include "geometry/Primitive.h"
 #include "math/vec2.h"
 #include "math/vec3.h"
+#include "opengl/Primitive.h"
 
 namespace pea {
 

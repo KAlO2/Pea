@@ -5,6 +5,7 @@
 #include "geometry/Cube.h"
 #include "geometry/Cylinder.h"
 #include "geometry/Grid.h"
+#include "geometry/Primitive.h"
 #include "geometry/Sphere.h"
 #include "geometry/Torus.h"
 #include "util/Log.h"
@@ -12,10 +13,8 @@
 
 using namespace pea;
 
-
 static const char* tag = "[geometry]";  // used by Catch2
 static const char* TAG = "geometry";   // used by log
-
 
 template <typename T>
 inline void matchArray(const std::vector<T>& actual, const T* expect, size_t length)
