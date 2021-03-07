@@ -1,19 +1,17 @@
 #ifndef PEA_MATH_QUATERNION_H_
 #define PEA_MATH_QUATERNION_H_
 
-#include <complex>
-
 #include "math/vec3.h"
-#include "math/mat3.h"
 
 namespace pea {
 
 /**
- * Quaternions consist of 4 values w, x, y, z, where w is the real (scalar) part, and x, y, z are the complex (vector) part.
- * Here, we care more about unit quaternions, also known as versors, provide a convenient mathematical notation for
- * representing orientations and rotations of objects in three dimensions. Compared to
- * Euler angles they are simpler to compose and avoid the problem of gimbal lock. Compared
- * to rotation matrices they are more numerically stable and may be more efficient.
+ * Quaternions consist of 4 values w, x, y, z, where w is the real (scalar) part, and x, y, z are
+ * the complex (vector) part. Here, we care more about unit quaternions, also known as versors,
+ * provide a convenient mathematical notation for representing orientations and rotations of objects
+ * in three dimensions. Compared to Euler angles they are simpler to compose and avoid the problem
+ * of gimbal lock. Compared to rotation matrices they are more numerically stable and may be more
+ * efficient.
  * see {@link http://en.wikipedia.org/wiki/Quaternion }
  * see {@link http://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation }
  * see Ken Shoemake {@link http://www.cs.ucr.edu/~vbz/resources/quatut.pdf }
@@ -28,6 +26,33 @@ public:
 	T x, y, z, w;
 
 public:
+	/*
+	 * You can construct a unit quaternion from two complex numbers.
+	 *
+	 * (a, b, c, d) = a + bi +cj + dk = (a+bi)+(c+di)j = ((a, b), (c, d))
+	 * See, "two dimensional" complex number! By saying two, I mean i != j.
+	 *
+	 * The quaternions can be represented using complex 2×2 matrices
+	 * H =
+	 * 	 / a+bi, c+di\
+	 * 	 \-c+di, a-bi/
+	 *
+	 * Quaternions can also be represented using the complex 2×2 matrices
+	 * U =      I =       J =       K =
+	 *   /1 0\    /i  0\    / 0 1\    /0 i\
+	 *   \0 1/    \0 -i/    \-1 0/    \i 0/
+	 *
+	 * or real 4x4 matrices
+	 * U =            I =            J =            K =
+	 *   /1 0 0 0\      / 0 1  0 0\    /0 0  0 -1\    /0  0 -1 0\
+	 *   |0 1 0 0|      |-1 0  0 1|    |0 0 -1  0|    |0  0  0 1|
+	 *   |0 0 1 0|      | 0 0  0 1|    |0 1  0  0|    |1  0  0 0|
+	 *   \0 0 0 1/      \ 0 0 -1 0/    \1 0  0  0/    \0 -1  0 0/
+	 *
+	 * Q = wI + xI + yJ + zK behaves just like a quaternion, for they satisfy the following rules.
+	 * U^2 = 1, I^2 = J^2 = K^2 = -1,
+	 * IJ = -JI = K, JK = -KJ = I, KI = -IK = J.
+	 */
 	constexpr quaternion(): quaternion(T(0), T(0), T(0), T(1)) {}
 	constexpr quaternion(const T& x, const T& y, const T& z, const T& w): x(x), y(y), z(z), w(w) {}
 	constexpr quaternion(const T& scalar, const vec3<T>& vector): x(vector.x), y(vector.y), z(vector.z), w(scalar) {}
@@ -74,39 +99,6 @@ public:
 		x = s * normal.x;
 		y = s * normal.y;
 		z = s * normal.z;
-	}
-
-	/**
-	 * construct a unit quaternion from two complex numbers
-	 *
-	 * (a, b, c, d) = a + bi +cj + dk = (a+bi)+(c+di)j = ((a, b), (c, d))
-	 * See, "two dimensional" complex number! By saying two, I mean i != j.
-	 *
-	 * The quaternions can be represented using complex 2×2 matrices
-	 * H =
-	 * 	 [ a+bi, c+di]
-	 * 	 [-c+di, a-bi]
-	 *
-	 * Quaternions can also be represented using the complex 2×2 matrices
-	 * U =      I =       J =       K =
-	 *   [1 0]    [i  0]    [ 0 1]    [0 i]
-	 *   [0 1]    [0 -i]    [-1 0]    [i 0]
-	 *
-	 * or real 4x4 matrices
-	 * U =            I =            J =            K =
-	 *   [1 0 0 0]      [ 0 1  0 0]    [0 0  0 -1]    [0  0 -1 0]
-	 *   [0 1 0 0]      [-1 0  0 1]    [0 0 -1  0]    [0  0  0 1]
-	 *   [0 0 1 0]      [ 0 0  0 1]    [0 1  0  0]    [1  0  0 0]
-	 *   [0 0 0 1]      [ 0 0 -1 0]    [1 0  0  0]    [0 -1  0 0]
-	 *
-	 * Q = wI + xI + yJ + zK behaves just like a quaternion, for they satisfy the following rules.
-	 * U^2 = 1, I^2 = J^2 = K^2 = -1,
-	 * IJ = -JI = K, JK = -KJ = I, KI = -IK = J.
-	 */
-	constexpr quaternion(const std::complex<T>& a, const std::complex<T>& b):
-			w(a.real()), x(a.imag()),
-			y(b.real()), z(b.imag())
-	{
 	}
 
 	constexpr quaternion<T>& operator =(const quaternion<T>& rhs)
@@ -183,15 +175,13 @@ public:
 	constexpr quaternion<T>& operator *=(const quaternion<T>& q)
 	{
 /*
-		T _w = w*q.w - x*q.x - y*q.y - z*q.z;
-		T _x = w*q.x + x*q.w + y*q.z - z*q.y;
-		T _y = w*q.y - x*q.z + y*q.w + z*q.x;
-		T _z = w*q.z + x*q.y - y*q.x + z*q.w;
+		quaternion<T> p;
+		p.w = w*q.w - x*q.x - y*q.y - z*q.z;
+		p.x = w*q.x + x*q.w + y*q.z - z*q.y;
+		p.y = w*q.y - x*q.z + y*q.w + z*q.x;
+		p.z = w*q.z + x*q.y - y*q.x + z*q.w;
 
-		w = _w;
-		x = _x;
-		y = _y;
-		z = _z;
+		*this = p;
 */
 		vec3<T> v(x, y, z), q_v(q.x, q.y, q.z);
 		T       _w = w * q.w - dot(v, q_v);
@@ -234,48 +224,60 @@ public:
 	}
 	
 	/**
-	 * cast a quaternion to 3x3 matrix, note that rotation matrices here apply to column vectors.
+	 * cast a quaternion to 3x3 matrix.
+	 * @param[out] a          Address of a mat3 matrix.
+	 * @param[in] columnMajor Matrix layout, column_major (the default) or row_major.
 	 */
-	constexpr mat3<T> mat3_cast() const
+	constexpr void mat3_cast(T* const a, bool columnMajor = true) const
 	{
 		T xx = x*x, yy = y*y, zz = z*z;
 		T xy = x*y, yz = y*z, xz = x*z;
 		T wx = w*x, wy = w*y, wz = w*z;
-
-		return mat3<T>(
-			1 - 2*(yy + zz),     2*(xy - wz),     2*(xz + wy),
-			    2*(xy + wz), 1 - 2*(xx + zz),     2*(yz - wx),
-			    2*(xz - wy),     2*(yz + wx), 1 - 2*(xx + yy));
+		
+		a[0] = 1 - 2*(yy + zz); a[3] =     2*(xy - wz); a[6] =     2*(xz + wy);
+		a[1] =     2*(xy + wz); a[4] = 1 - 2*(xx + zz); a[7] =     2*(yz - wx);
+		a[2] =     2*(xz - wy); a[5] =     2*(yz + wx); a[8] = 1 - 2*(xx + yy);
+		
+		if(!columnMajor)
+		{
+			// mat3::transpose()
+			std::swap(a[1], a[3]);
+			std::swap(a[2], a[6]);
+			std::swap(a[5], a[7]);
+		}
 	}
-/*
-	mat4<T> mat4_cast() const
+
+	/**
+	 * cast a quaternion to 4x4 matrix.
+	 * @param[out] a          Address of a mat4 matrix.
+	 * @param[in] columnMajor Matrix layout, column_major (the default) or row_major.
+	 */
+	constexpr void mat4_cast(T* const a, bool columnMajor = true) const
 	{
+		// an elegant way to express the result:
+		// /  w,  z,  y,  x \   /  w,  z, -y, -x \
+		// | -z,  w,  x,  y |   | -z,  w,  x, -y |
+		// |  y, -x,  w,  z |   |  y, -x,  w, -z |
+		// \ -x, -y, -z,  w /   \  x,  y,  z,  w /
 		T xx = x*x, yy = y*y, zz = z*z;
 		T xy = x*y, yz = y*z, xz = x*z;
 		T wx = w*x, wy = w*y, wz = w*z;
 
-		return mat4<T>(
-		1 - 2*(yy + zz),     2*(xy - wz),     2*(xz + wy), 0,
-		    2*(xy + wz), 1 - 2*(xx + zz),     2*(yz - wx), 0,
-		    2*(xz - wy),     2*(yz + wx), 1 - 2*(xx + yy), 0,
-			          0,               0,               0, 1);
-
-		// or an elegant way to express
-		mat4 A(
-			 w,  z,  y,  x,
-			-z,  w,  x,  y,
-			 y, -x,  w,  z,
-			-x, -y, -z,  w);
-		mat4 B(
-			 w,  z, -y, -x,
-			-z,  w,  x, -y,
-			 y, -x,  w, -z,
-			 x,  y,  z,  w);
-		return A*B;
+		a[0] = 1 - 2*(yy + zz); a[4] =     2*(xy - wz); a[8] =     2*(xz + wy); a[12] = 0;
+		a[1] =     2*(xy + wz); a[5] = 1 - 2*(xx + zz); a[9] =     2*(yz - wx); a[13] = 0;
+		a[2] =     2*(xz - wy); a[6] =     2*(yz + wx); a[10]= 1 - 2*(xx + yy); a[14] = 0;
+		a[3] =               0; a[7] =               0; a[11]=               0; a[15] = 1;
+		
+		if(!columnMajor)
+		{
+			// mat4::transpose()
+			std::swap(a[1], a[4]);
+			std::swap(a[2], a[8]);
+			std::swap(a[6], a[9]);
+		}
 	}
-*/
-	// TODO havn't test yet.
-	vec3<T> eularAngle() const
+	
+	vec3<T> getEularAngle() const
 	{
 		T xx = x*x, yy = y*y, zz = z*z, ww = w*w;
 		T norm = xx + yy + zz + ww;
@@ -283,14 +285,14 @@ public:
 		T test = x*y + z*w;
 		constexpr T HALF = static_cast<T>(0.499);  // for calculation error
 		if(test > HALF * norm)  // singularity at north pole
-			return vec3<T>(0, 2*std::atan2(x, w), M_PI/2);
+			return vec3<T>(0, +2 * std::atan2(x, w), +M_PI / 2);
 		else if (test < -HALF * norm)  // singularity at south pole
-			return vec3<T>(0, -2*std::atan2(x, w), -M_PI/2);
+			return vec3<T>(0, -2 * std::atan2(x, w), -M_PI / 2);
 		else
 		{
-			T yaw = std::atan2(2*x*w - 2*y*z, -xx + yy - zz + ww);
-			T roll = std::atan2(2*y*w - 2*x*z, xx - yy - zz + ww);
-			T pitch = std::asin(2*test/norm);
+			T yaw   = std::atan2(2*x*w - 2*y*z, -xx + yy - zz + ww);
+			T roll  = std::atan2(2*y*w - 2*x*z, +xx - yy - zz + ww);
+			T pitch = std::asin(2 * test / norm);
 			return vec3<T>(yaw, roll, pitch);
 		}
 	}

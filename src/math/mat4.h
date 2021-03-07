@@ -53,6 +53,16 @@ public:
 		a[15]= d3;
 	}
 	
+	explicit mat4(const vec3<T>& v)
+	{
+		for(int8_t i = 1; i < 14; ++i)
+			a[i] = static_cast<T>(0);
+		a[0] = v.x;
+		a[5] = v.y;
+		a[10]= v.z;
+		a[15]= 1.0;
+	}
+	
 	explicit mat4(const vec4<T>& v0, const vec4<T>& v1, const vec4<T>& v2, const vec4<T>& v3)
 	{
 		v[0] = v0;
@@ -507,21 +517,12 @@ public:
 			           0,            0,            0, 1);
 	}
 
-	mat4<T>& scale(const vec3<T>& v)
+	mat4<T>& scale(const vec3<T>& s)
 	{
-		// TODO: row major & column major
-		a[0] *= v.x; a[4] *= v.x; a[8]  *= v.x; a[12] *= v.x;
-		a[1] *= v.y; a[5] *= v.y; a[9]  *= v.y; a[13] *= v.y;
-		a[2] *= v.z; a[6] *= v.z; a[10] *= v.z; a[14] *= v.z;
-//		a[3] *= 1.0; a[7] *= 1.0; a[11] *= 1.0; a[15] *= 1.0;
-		return *this;
-	}
-	
-	mat4<T>& scale(const T& s)
-	{
-		a[0] *= s; a[4] *= s; a[8]  *= s; a[12] *= s;
-		a[1] *= s; a[5] *= s; a[9]  *= s; a[13] *= s;
-		a[2] *= s; a[6] *= s; a[10] *= s; a[14] *= s;
+		v[0] *= s.x;
+		v[1] *= s.y;
+		v[2] *= s.z;
+//		v[3] *= 1.0;
 		return *this;
 	}
 

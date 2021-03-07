@@ -327,19 +327,11 @@ public:
 		return *this;
 	}
 #endif
-	mat3<T>& scale(const vec2<T>& v)
+	mat3<T>& scale(const vec2<T>& s)
 	{
-		a[0] *= v.x; a[3] *= v.x; a[6] *= v.x;
-		a[1] *= v.y; a[4] *= v.y; a[7] *= v.y;
-//		a[2] *= 1.0; a[5] *= 1.0; a[8] *= 1.0;
-		return *this;
-	}
-
-	mat3<T>& scale(const T& s)
-	{
-		a[0] *= s; a[3] *= s; a[6] *= s;
-		a[1] *= s; a[4] *= s; a[7] *= s;
-//		a[2] *= 1; a[5] *= 1; a[8] *= 1;
+		v[0] *= s.x;
+		v[1] *= s.y;
+//		v[2] *= 1.0;
 		return *this;
 	}
 	

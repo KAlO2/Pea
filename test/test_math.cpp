@@ -430,19 +430,24 @@ TEST_CASE("quaternion", tag)
 	float b = 2.718281828459045;
 	float c = 0.57721566490153286060;
 	const vec3f abc(a, b, c), cab(c, a, b), a_cb(a, -c, b);
+	mat3f rotation;
 #if COLUMN_MAJOR
-	REQUIRE(cab == q.mat3_cast() * abc);
+	q.mat3_cast(rotation.data(), true);
+	REQUIRE(cab == rotation * abc);
 #else
-	REQUIRE(cab == abc * q.mat3_cast());
+	q.mat3_cast(rotation.data(), false);
+	REQUIRE(cab == abc * rotation);
 #endif
 	// rotate x axis pi/2 radians counter-clockwise.
 	q = quaternionf(0, abc);  // a random number
-	quaternionf p(vec3f(1.0F, 0, 0), static_cast<float>(M_PI/2));  // rotate X axis 90 degrees.
-
+	quaternionf p(vec3f(1, 0, 0), static_cast<float>(M_PI/2));  // rotate X axis 90 degrees.
+	
 #if COLUMN_MAJOR
-	REQUIRE(a_cb == p.mat3_cast() * abc);
+	p.mat3_cast(rotation.data(), true);
+	REQUIRE(a_cb == rotation * abc);
 #else
-	REQUIRE(a_cb == abc * p.mat3_cast());
+	p.mat3_cast(rotation.data(), false);
+	REQUIRE(a_cb == abc * rotation);
 #endif
 	REQUIRE(a_cb == vec3f(abc).rotateX(a/2));
 //	REQUIRE(quaternionf(0, a, -c, b), );

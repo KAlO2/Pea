@@ -247,19 +247,30 @@ public:
 	}
 };
 
+/**
+ * A node can have either a matrix or any combination of translation/rotation/scale (TRS)
+ * properties. When a node is targeted for animation (referenced by an animation.channel.target),
+ * only TRS properties may be present; matrix will not be present.
+ */
 struct Node
 {
 	std::string name;
-	int32_t camera;
+	
 	std::vector<uint32_t> children;
-	mat4f matrix;
 	int32_t mesh;
+	int32_t camera;
+	
+	mat4f matrix;
+	
+	vec3f translation;
 	quaternionf rotation;
 	vec3f scale;
-	vec3f translation;
+	bool hasMatrix;
+	
 	std::vector<float> weights;
 public:
-	void clearTransformation();
+	void resetTransform();
+	mat4f getTransform() const;
 };
 
 struct Scene

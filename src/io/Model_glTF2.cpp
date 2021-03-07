@@ -537,12 +537,25 @@ constexpr quaternionf defaultRotation;
 constexpr vec3f defaultTranslation(0, 0, 0);
 constexpr vec3f defaultScale(1, 1, 1);
 
-void Node::clearTransformation()
+void Node::resetTransform()
 {
 	matrix.setIdentity();
 	rotation = defaultRotation;
 	scale = defaultScale;
 	translation = defaultTranslation;
+}
+
+mat4f Node::getTransform() const
+{
+	if(hasMatrix)
+		return matrix;
+	
+	// TRS properties are converted to matrices and postmultiplied in the T * R * S order to compose
+	// the transformation matrix; first the scale is applied to the vertices, then the rotation,
+	// and then the translation.
+	mat4f S(scale), R;
+	rotation.mat4_cast(R.data(), true);
+	return (R * S).translate(translation);
 }
 
 void to_json(json& j, const Node& node)
@@ -557,23 +570,26 @@ void to_json(json& j, const Node& node)
 	if(node.mesh >= 0)
 		j["mesh"] = node.mesh;
 	
-	if(node.matrix != mat4f(1.0f))
+	if(node.hasMatrix)
 	{
 		json& matrix = j["matrix"];
 		for(int8_t i = 0; i < 4; ++i)
 			for(int8_t j = 0; j < 4; ++j)
 				matrix.push_back(node.matrix[j][i]);
 	}
-	const quaternionf& rotation = node.rotation;
-	const vec3f& scale = node.scale;
-	const vec3f& translation = node.translation;
-	if(rotation != defaultRotation)
-		j["rotation"] = {rotation.x, rotation.y, rotation.z, rotation.w};
-	if(scale != defaultScale)
-		j["scale"] = {scale.x, scale.y, scale.z};
-	if(translation != defaultTranslation)
-		j["translation"] = {translation.x, translation.y, translation.z};
-	
+	else
+	{
+		const vec3f& translation = node.translation;
+		const quaternionf& rotation = node.rotation;
+		const vec3f& scale = node.scale;
+
+		if(translation != defaultTranslation)
+			j["translation"] = {translation.x, translation.y, translation.z};
+		if(rotation != defaultRotation)
+			j["rotation"] = {rotation.x, rotation.y, rotation.z, rotation.w};
+		if(scale != defaultScale)
+			j["scale"] = {scale.x, scale.y, scale.z};
+	}
 }
 
 template <typename T>
@@ -633,25 +649,26 @@ void from_json(const json& j, Node& node)
 	extract(j, "mesh", node.mesh);
 	
 	mat4f& matrix = node.matrix;
-	if(j.contains("matrix"))
+	node.hasMatrix = j.contains("matrix");
+	if(node.hasMatrix)
 		from_json(j["matrix"], matrix);
 	else
-		matrix.setIdentity();
-	
-	if(j.contains("rotation"))
-		from_json(j["rotation"], node.rotation);
-	else
-		node.rotation = defaultRotation;
-	
-	if(j.contains("scale"))
-		from_json(j["scale"], node.scale);
-	else
-		node.scale = defaultScale;
-	
-	if(j.contains("translation"))
-		from_json(j["translation"], node.translation);
-	else
-		node.translation = defaultTranslation;
+	{
+		if(j.contains("translation"))
+			from_json(j["translation"], node.translation);
+		else
+			node.translation = defaultTranslation;
+		
+		if(j.contains("rotation"))
+			from_json(j["rotation"], node.rotation);
+		else
+			node.rotation = defaultRotation;
+		
+		if(j.contains("scale"))
+			from_json(j["scale"], node.scale);
+		else
+			node.scale = defaultScale;
+	}
 }
 
 void to_json(json& j, const Scene& scene)
